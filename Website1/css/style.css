@@ -36,7 +36,7 @@ li{
 
 .hero{
   min-height: 90vh;
-  background-image: url('/img/CollectTheStars.jpeg');
+  background-image: url('/Website1/img/CollectTheStars.jpeg');
   background-size: cover;
   /* background-size: 500px 100px; */
   background-position: center;
