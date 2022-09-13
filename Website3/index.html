@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="description" content="Travel Agency Portfolio"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+  <!--Type of characters to use in website-->
+  <meta name="robots" content="index, follow"/>
+  <!--tells web crawlers to index website on Google-->
+  <link rel="icon" href="/Website3/img/private-jet.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,500;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pattaya&display=swap" rel="stylesheet">
+  <!--scales website to fit page, this is useful for browsing on a phone-->
+  <link rel="stylesheet" href="/Website3/css/style.css"/>
+  <title>Travelly | Travelling Agency</title>
+</head>
+<body>
+  <header class="main-head">
+    <nav>
+      <h1 id="logo">Travelly</h1>
+      <ul>
+        <li><a href="#locations">Locations</a></li>
+        <li><a href="#benefits">Benefits</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <section class="intro">
+    <h2>Travel Beyond Limits</h2>
+    <h3>Start your travel at an affordable price with Travelly <br/>
+      Contact us bellow.</h3>
+    <button ><a href="#contact">Book Now</a></button>
+  </section>
+  <section id="locations">
+    <header class="locations-head">
+      <h2>The Perfect Travelling Experience</h2>
+      <h3>We cover everything from picking the perfect hotel, <br/>
+          flight and travelling destination.
+      </h3>
+      <img src="/Website3/img/cloud.png" class="cloud moving-cloud-1" alt=""/>
+      <img src="/Website3/img/cloud.png" class="cloud moving-cloud-2" alt=""/>
+    </header>
+  </section>
+  <section id="benefits">
+    <header class="benefits-head">
+      <h2>The Perfect Travel</h2>
+      <h3>We cover everything from picking the perfect hotel <br>
+        to flight and destination</h3>
+    </header>
+    <div class="flexbox-set">
+      <div class="card">
+        <div class="card-icon">
+          <img src="/Website3/img/travel.png" alt="travel-information">
+        </div>
+        <h4>Travel</h4>
+        <p>Travel in over 250 countries with no effort. </p>
+      </div>
+      <div class="card">
+        <div class="card-icon">
+          <img src="/Website3/img/hotel.svg" alt="hotel-information">
+        </div>
+        <h4>Hotels</h4>
+        <p>We provide hotels located near popular
+          areas and main events in large cities.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">
+          <img src="/Website3/img/plane.png" alt="flight-information">
+        </div>
+        <h4>Flight</h4>
+        <p>Flight included in every purchased trip.</p>
+      </div>
+    </div>
+  </section>
+  <section id="contact">
+    <div class="form-wrapper">
+      <header class="form-head">
+        <h2>Contact Us</h2>
+      </header>
+      <form action="https://formspree.io/f/mlevgyye" method="POST">
+        <div class="name-form">
+          <label for="name">Name:</label>
+          <input id="name" type="text" name="Name" required placeholder="First & Last Name">
+        </div>
+        <div class="email-form">
+          <label for="email">Email: </label>
+          <input id="email" type="email" required name="Email" placeholder="Email Address">
+          <br>
+        </div>
+        <div class="message">
+          <label for="message" type="text"></label>
+          <textarea class="Message" id="message" required name="message" rows="10" cols="50" placeholder="Please leave a message."></textarea>
+        </div>
+        <button type="submit" value="Send">Submit</button>
+      </form>
+    </div>
+  </section>
+  <footer>
+    <div class="footer-wrapper">
+      <h5>Travelly &copy;</h5>
+      <ul>
+        <li>
+          <a class="references" target="_blank" title="Linkedin-Account"
+            href="https://www.linkedin.com/in/christopher-fickess-223a17182/">
+            <img src="/Website3/img/Linkedin-Blue.ico" alt="Linkedin-Account" width="40rem"></a>
+        </li>
+        <li>
+          <!--This link will be for GitHub Profile-->
+          <a class="references" target="_blank" title="Github-Account" href="https://github.com/christopherfickess">
+            <img src="/Website3/img/github-yellow.png" alt="Github-Account" width="40rem"></a>
+        </li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

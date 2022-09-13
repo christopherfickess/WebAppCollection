@@ -1,0 +1,412 @@
+/*   Global Styles   */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html{
+  font-size: 62.5%;
+}
+.box {
+  height: 10rem;
+  width: 10rem;
+}
+
+a {
+  color: black;
+  text-decoration: none;
+}
+
+h1{
+  font-size: 2.6rem;
+  font-family: 'Pattaya', sans-serif;
+  font-weight: 1vh;
+}
+li, button,label, input,p{
+  font-size: 2rem;
+}
+
+h2{
+  font-size:4.8rem;
+}
+
+h3{
+  font-size: 2.5rem;
+  font-weight: normal;
+}
+
+h4,h5{
+  font-size: 2.8rem;
+}
+
+a{
+  color: white;
+  text-decoration: none;
+}
+
+button {
+  padding: 2rem 6rem;
+  border: none;
+  background: #2f629f;
+  font-size: 1.8rem;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background, font-size .5s ease-in-out;
+}
+button:hover {
+  background: #4b75a7;
+  font-size: 2.2rem;
+}
+body{
+  font-family: 'Poppins', sans-serif;
+}
+
+
+
+/* Nav section with HERO */
+.main-head{
+  background: #131c27;
+  color:white;
+  position: sticky;
+  top: 0px;
+  z-index: 3;
+}
+
+nav{
+  display: flex;
+  width: 90%;
+  margin: auto;
+  align-items: center;
+  min-height: 8vh;
+  padding:2rem;
+  flex-wrap: wrap;
+}
+
+nav ul{
+  display: flex;
+  flex: 1 1 40rem;
+  justify-content: space-around;
+  align-items: center;
+}
+#logo {
+  flex: 6 1 40rem;
+}
+li{
+  list-style-type: none;
+  text-size-adjust: 100%;
+}
+
+.intro{
+  min-height: 100vh;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(rgb(0,0,0,0.5), transparent),url("/Website3/img/Landscape1.jpg");
+  background-size: cover;
+  color:white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-position: center;
+}
+
+.intro h3{
+  padding:3rem;
+}
+
+/* Locations Section */
+#locations{
+  min-height: 100vh;
+  background: linear-gradient(rgba(0,0,0,0.5),
+      transparent), url(/Website3/img/newYorkBlackandWhite.png);
+  background-position: bottom;
+  background-size: cover;
+  background-position: bottom;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.locations-head{
+  width:90%;
+  text-align: start;
+  margin:auto;
+}
+
+.locations-head h2{
+  /* padding:1rem 0rem; */
+  color: rgb(255, 255, 255);
+  background: linear-gradient(rgba(52, 10, 10, 0.5),
+      transparent);
+  border-radius: 2rem;
+  width: max-content;
+  text-decoration: underline;
+  text-decoration-thickness: 0.5rem;
+}
+
+.locations-head h3{
+  padding:4rem 0rem;
+  color: white;
+  background: linear-gradient(rgba(52, 10, 10, 0.5), transparent);
+  border-radius: 2rem;
+  width: max-content;
+  font-size: 3rem;
+}
+
+.cloud {
+  position: absolute;
+  top: 0%;
+  right: 0%;
+  width: 70%;
+  pointer-events: none;
+}
+
+.moving-cloud-1{
+  z-index: -1;
+  animation: cloudAnimation 3s infinite alternate ease-in-out;
+}
+
+.moving-cloud-2{
+  top: 10%;
+  z-index: -2;
+  opacity: 0.75;
+  animation: cloudAnimation 4s infinite alternate ease-in-out;
+}
+
+@keyframes cloudAnimation {
+  from{
+    transform:  translate(10%, -10%);
+  }
+  to{
+    transform: translate(0%, 0%);
+  }
+}
+
+/* Benefits Section */
+.benefits-head{
+  background: #343c44;
+  padding:3rem;
+  min-height: 30vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+}
+
+.benefits-head h3{
+  padding: 1rem;
+}
+.flexbox-set {
+  width: 90%;
+  margin: auto;
+  display: flex;
+  min-height: 20vh;
+  /* display: inline-block; */
+  align-items: strech;
+  flex-wrap: wrap;
+}
+.card{
+  margin: 2rem 5rem;
+  /* background: lightcoral; */
+  flex: 1 1 25rem;
+  min-height: 40vh;
+  text-align: center;
+  box-shadow: 0px 10px 10px rgba(0,0,0,0.3), 0px 20px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card h4, p{
+  padding:1rem;
+  line-height: 2;
+}
+
+
+.flexbox-set img{
+  padding: 2rem;
+  height: 150px;
+  max-width: 40%;
+}
+
+.card-icon{
+  background-color: #2f629f;
+}
+
+/* Contact Us Section */
+#contact {
+  min-height: 100vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.5),
+        transparent), url(/Website3/img/landscape2.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-wrapper{
+  background: rgba(19,28,30,0.8);
+  width: 60%;
+  color: white;
+  border-radius: 20px;
+}
+
+.form-head{
+  text-align: center;
+  padding:4rem;
+}
+
+.name-form, .email-form{
+  padding: 1rem 3rem;
+  text-align: center;
+}
+.form-wrapper label {
+  margin: 0rem 3rem;
+  font-size: 3rem;
+}
+.form-wrapper input{
+  font-size: 3rem;
+}
+
+.form-wrapper button{
+  width: 100%;
+  padding: 2rem;
+  margin-top: 8rem;
+  text-align: center;
+  font-size: 3rem;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+}
+
+.form-wrapper textarea{
+  width:50%;
+  font-size: 2.5rem;
+  /* height: 20rem; */
+  text-align:left;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+footer{
+  color: white;
+  background: #131c27;
+}
+.footer-wrapper{
+  display: flex;
+  padding: 2rem;
+  width: 90%;
+  margin: auto;
+  align-items: center;
+  min-height: 10vh;
+  flex-wrap: wrap;
+}
+
+footer ul{
+  display: flex;
+  list-style: none;
+  flex: 1 1 40rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+footer h5{
+  flex: 1 1 40rem;
+}
+
+button:focus{
+  background:#4b75a7;
+  outline-style: solid;
+  outline-color: white;
+}
+
+/* media queryies*/
+@media screen and (max-width: 932px) {
+  html {
+    font-size: 55%;
+  }
+
+  nav {
+    text-align: center;
+  }
+
+  #logo {
+    padding: 1rem;
+  }
+  .cloud{
+    size: 50%;
+  }
+  .form-wrapper {
+    width: 100%;
+    ;
+  }
+
+  footer {
+    text-align: center;
+  }
+
+  footer h5 {
+    padding-bottom: 3rem;
+  }
+}
+
+/* media queryies*/
+@media screen and (max-width: 620px){
+  html{
+    font-size: 45%;
+  }
+  nav{
+    text-align: center;
+  }
+  #logo{
+    padding: 1rem;
+  }
+  .cloud{
+    size: 20%;
+  }
+  .form-wrapper {
+    width: 100%;
+    ;
+  }
+
+  footer {
+    text-align: center;
+  }
+
+  footer h5 {
+    padding-bottom: 3rem;
+  }
+}
+/* media queryies*/
+@media screen and (max-width: 500px) {
+  html {
+    font-size: 55%;
+  }
+
+  nav {
+    text-align: center;
+  }
+
+  #logo {
+    padding: 3rem;
+  }
+
+  .cloud {
+    size: 130%;
+  }
+
+  .form-wrapper{
+    width: 100%;;
+  }
+  footer{
+    text-align: center;
+  }
+
+  footer h5{
+    padding-bottom: 3rem;
+  }
+}
