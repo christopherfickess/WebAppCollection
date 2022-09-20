@@ -119,7 +119,7 @@ li{
 #locations{
   min-height: 100vh;
   background: linear-gradient(rgba(0,0,0,0.5),
-      transparent), url(/Website3/img/newYorkBlackandWhite.png);
+      transparent), url(../img/newYorkBlackandWhite.png);
   background-position: bottom;
   background-size: cover;
   background-position: bottom;
@@ -240,7 +240,7 @@ li{
 #contact {
   min-height: 100vh;
   background: linear-gradient(rgba(0, 0, 0, 0.5),
-        transparent), url(/Website3/img/landscape2.jpg);
+        transparent), url(../img/landscape2.jpg);
   background-size: cover;
   background-repeat: no-repeat;
   display: flex;
