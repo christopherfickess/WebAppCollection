@@ -1,0 +1,165 @@
+$padded: calc(20rem + 1rem);
+.main-head{
+  width: 95%;
+  margin: 0 0 0 auto;
+}
+nav{
+  @include flex(space-between, center, row);
+  min-height: 10vh;
+  width: 80%;
+  padding: 1rem 2rem;
+  flex-wrap: wrap;
+  .logo{
+    @include flex(flex-start, center, row);
+    margin:2rem;
+  }
+  h1{
+    margin: 2rem;
+  }
+  ul{
+    @include flex(space-between, center, row);
+    flex: 1 1 20rem;
+    padding: 1rem 4rem;
+  }
+}
+svg {
+  width: 90%;
+}
+
+.intro{
+  min-height: 90vh;
+  width: 90%;
+  margin: auto;
+  flex-wrap: wrap;
+
+  @include flex(space-between,center,row);
+  h2 {
+    font-size: 8rem;
+    padding-top: 2rem;
+    background: $gradient;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+  }
+  h3{
+    font-size: 6rem;
+    padding: 2rem 0rem;
+  }
+  p{
+    padding-top: 1rem;
+    color: $grey-text;
+  }
+}
+
+.intro-social{
+  margin-top: 4rem;
+  img{
+    width: 10rem;
+  }
+  a{
+    margin-right: 5rem;
+  }
+}
+.splash{
+  position: absolute;
+  top: 0%;
+  right: 0%;
+  height: 90%;
+  z-index: -1;
+}
+
+.active{
+  background: $grey-text;
+  color: white;
+  padding:1rem 3rem;
+  border-radius: 2rem;
+}
+
+.intro-text, .intro-images{
+  flex: 1 1 40rem;
+}
+
+
+#Ball{
+  animation: ball 2.5s ease infinite alternate;
+}
+#Ball_2 {
+  animation: ball 2.5s ease infinite alternate 0.5s;
+}
+
+#Ball_3 {
+  animation: ball 2.5s ease infinite alternate 1s;
+}
+
+#face, #hair{
+  animation: me 3s ease infinite alternate;
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+#minute_hand{
+  animation: min_hand 10s infinite linear;
+  transform-box: fill-box;
+  // transform-origin: bottom;
+}
+
+#hour_hand{
+  animation: hour_hand 110s infinite linear;
+  transform-box: fill-box;
+  transform-origin: right;
+}
+
+#Line{
+  // opacity: 0;
+  animation: forwards infinite;
+
+}
+
+@keyframes text_disappear{
+  0%{
+    opacity: 0;
+  }
+  100%{
+    opacity: 1;
+  }
+
+}
+
+@keyframes me{
+  from {
+      transform: rotateZ(-20deg);
+    }
+    to {
+      transform: rotateZ(10deg);
+    }
+}
+
+@keyframes ball{
+  from{
+    transform: translateY(0%);
+  }
+  to{
+    transform: translateY(20%);
+  }
+}
+
+
+
+@keyframes min_hand{
+  from{
+    transform: rotateZ(0deg);
+  }
+  to{
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes hour_hand {
+  from {
+    transform: rotateZ(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

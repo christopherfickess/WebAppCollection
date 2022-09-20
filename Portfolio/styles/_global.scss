@@ -1,0 +1,55 @@
+/*   Global Styles   */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 62.5%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Ruhl", sans-serif;
+  animation: opening 1s ease-in-out;
+}
+
+li,
+button,
+label,
+input,
+a,
+p {
+  font-size: $text;
+}
+
+h1 {
+  font-size: $header1;
+  font-family: "Vibes", sans-serif;
+}
+
+h2 {
+  font-size: $header2;
+}
+
+h3 {
+  font-size: $header3;
+}
+
+h4,
+h5 {
+  font-size: $header4;
+}
+
+a {
+  text-decoration: none;
+  color: $grey-text;
+}
+
+ul {
+  list-style: none;
+}
+body{
+    font-family: 'Montserrat', sans-serif;
+}

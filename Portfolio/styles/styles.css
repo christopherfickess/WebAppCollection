@@ -1,0 +1,485 @@
+/* VARIABLES */ /*   Global Styles   */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 62.5%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Ruhl", sans-serif;
+  -webkit-animation: opening 1s ease-in-out;
+          animation: opening 1s ease-in-out;
+}
+
+li,
+button,
+label,
+input,
+a,
+p {
+  font-size: 2.5rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-family: "Vibes", sans-serif;
+}
+
+h2 {
+  font-size: 4rem;
+}
+
+h3 {
+  font-size: 2.5rem;
+}
+
+h4,
+h5 {
+  font-size: 2rem;
+}
+
+a {
+  text-decoration: none;
+  color: #2c2c2c;
+}
+
+ul {
+  list-style: none;
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+}
+
+.main-head {
+  width: 95%;
+  margin: 0 0 0 auto;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  min-height: 10vh;
+  width: 80%;
+  padding: 1rem 2rem;
+  flex-wrap: wrap;
+}
+nav .logo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: row;
+  margin: 2rem;
+}
+nav h1 {
+  margin: 2rem;
+}
+nav ul {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  flex: 1 1 20rem;
+  padding: 1rem 4rem;
+}
+
+svg {
+  width: 90%;
+}
+
+.intro {
+  min-height: 90vh;
+  width: 90%;
+  margin: auto;
+  flex-wrap: wrap;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+}
+.intro h2 {
+  font-size: 8rem;
+  padding-top: 2rem;
+  background: linear-gradient(45deg, #00E0FF, #FA00FF);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+.intro h3 {
+  font-size: 6rem;
+  padding: 2rem 0rem;
+}
+.intro p {
+  padding-top: 1rem;
+  color: #2c2c2c;
+}
+
+.intro-social {
+  margin-top: 4rem;
+}
+.intro-social img {
+  width: 10rem;
+}
+.intro-social a {
+  margin-right: 5rem;
+}
+
+.splash {
+  position: absolute;
+  top: 0%;
+  right: 0%;
+  height: 90%;
+  z-index: -1;
+}
+
+.active {
+  background: #2c2c2c;
+  color: white;
+  padding: 1rem 3rem;
+  border-radius: 2rem;
+}
+
+.intro-text, .intro-images {
+  flex: 1 1 40rem;
+}
+
+#Ball {
+  -webkit-animation: ball 2.5s ease infinite alternate;
+          animation: ball 2.5s ease infinite alternate;
+}
+
+#Ball_2 {
+  -webkit-animation: ball 2.5s ease infinite alternate 0.5s;
+          animation: ball 2.5s ease infinite alternate 0.5s;
+}
+
+#Ball_3 {
+  -webkit-animation: ball 2.5s ease infinite alternate 1s;
+          animation: ball 2.5s ease infinite alternate 1s;
+}
+
+#face, #hair {
+  -webkit-animation: me 3s ease infinite alternate;
+          animation: me 3s ease infinite alternate;
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+#minute_hand {
+  -webkit-animation: min_hand 10s infinite linear;
+          animation: min_hand 10s infinite linear;
+  transform-box: fill-box;
+}
+
+#hour_hand {
+  -webkit-animation: hour_hand 110s infinite linear;
+          animation: hour_hand 110s infinite linear;
+  transform-box: fill-box;
+  transform-origin: right;
+}
+
+#Line {
+  -webkit-animation: forwards infinite;
+          animation: forwards infinite;
+}
+
+@-webkit-keyframes text_disappear {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes text_disappear {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@-webkit-keyframes me {
+  from {
+    transform: rotateZ(-20deg);
+  }
+  to {
+    transform: rotateZ(10deg);
+  }
+}
+@keyframes me {
+  from {
+    transform: rotateZ(-20deg);
+  }
+  to {
+    transform: rotateZ(10deg);
+  }
+}
+@-webkit-keyframes ball {
+  from {
+    transform: translateY(0%);
+  }
+  to {
+    transform: translateY(20%);
+  }
+}
+@keyframes ball {
+  from {
+    transform: translateY(0%);
+  }
+  to {
+    transform: translateY(20%);
+  }
+}
+@-webkit-keyframes min_hand {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes min_hand {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes hour_hand {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes hour_hand {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+footer {
+  background: #154353;
+  min-height: 10vh;
+  padding: 0rem 10rem;
+  margin-top: auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: row;
+}
+footer h4 {
+  font-size: 5rem;
+  color: white;
+}
+footer ul {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: row;
+  padding: 0rem 10rem;
+  margin: 0rem 10rem;
+  flex-wrap: 1 1 40rem;
+}
+footer li {
+  padding: 0rem 5rem;
+}
+footer img {
+  width: 6.5rem;
+  background: white;
+  border-radius: 2rem;
+}
+
+.projects {
+  width: 1000%;
+  min-height: 20vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  background: linear-gradient(45deg, #1b6f79, #7e0980);
+  padding: 4rem 4rem;
+  border-radius: 4rem;
+  text-align: center;
+  flex-wrap: wrap;
+  margin-bottom: 15rem;
+}
+
+h3 {
+  font-size: 2rem;
+  padding: 0rem 2rem;
+}
+
+.travelly, .chris-project {
+  flex: 1 1 40rem;
+}
+.travelly img, .chris-project img {
+  width: 100%;
+  padding: 2rem;
+  border-radius: 5rem;
+}
+.travelly h2, .chris-project h2 {
+  font-size: 4rem;
+  margin: 0rem;
+  padding: 0rem;
+}
+
+.form-section {
+  min-height: 80vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  margin-top: 3rem;
+}
+.form-section form {
+  color: white;
+  margin: 5rem;
+  box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  border-radius: 2rem;
+  background: linear-gradient(45deg, #1b6f79, #7e0980);
+}
+.form-section form label, .form-section form input, .form-section form textarea {
+  margin: 2rem;
+  font-family: "Montserrat", sans-serif;
+  font-size: 3rem;
+}
+.form-section form label:focus, .form-section form input:focus, .form-section form textarea:focus {
+  outline: 2px solid #00E0FF;
+}
+.form-section form textarea {
+  font-family: "Montserrat", sans-serif;
+  font-size: 3rem;
+}
+.form-section form button {
+  width: 100%;
+  padding: 2rem;
+  background: linear-gradient(45deg, #00E0FF, #FA00FF);
+  color: white;
+}
+.form-section form button:focus {
+  background: #00E0FF;
+  color: black;
+}
+
+@media screen and (max-width: 1520px) {
+  html {
+    font-size: 53%;
+  }
+  html .intro-text h2 {
+    font-size: 5rem;
+  }
+  html .intro-text h3 {
+    font-size: 3.5rem;
+  }
+  html .intro-text p {
+    font-size: 2.5rem;
+  }
+  .intro {
+    min-height: 50vh;
+  }
+  svg {
+    width: 90%;
+  }
+  nav {
+    width: 80%;
+    padding: 0rem 2rem;
+  }
+  nav ul {
+    padding: 2rem 5rem;
+  }
+  nav .logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 2rem 0rem;
+  }
+  .intro-social {
+    padding: 0rem 0rem 5rem 0rem;
+  }
+  footer h4 {
+    font-size: 4rem;
+  }
+  footer ul {
+    padding: 0rem;
+    margin: 0rem;
+  }
+}
+@media screen and (max-width: 850px) {
+  html {
+    font-size: 45%;
+  }
+  nav {
+    width: 90%;
+    margin: 2rem;
+    padding: 0rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+  }
+  nav .logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  nav ul {
+    padding: 0rem 2rem;
+  }
+  nav li {
+    padding: 0rem 1.5rem;
+  }
+  .splash {
+    display: none;
+  }
+  .intro-images {
+    background: url("/Portfolio/img/splash.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+  }
+  .travelly,
+.chris-project {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    flex: 1 1 50rem;
+  }
+  footer h4 {
+    font-size: 3rem;
+  }
+  footer ul {
+    padding: 0rem;
+    margin: 0rem;
+  }
+  footer img {
+    width: 5rem;
+  }
+  .intro-image {
+    display: none;
+  }
+  form {
+    padding: 0rem;
+    size: 100%;
+  }
+}/*# sourceMappingURL=styles.css.map */

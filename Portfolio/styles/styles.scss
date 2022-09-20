@@ -1,0 +1,132 @@
+/* VARIABLES */
+$header1: 2.5rem;
+$header2: 4rem;
+$header3: 2.5rem;
+$header4: 2rem;
+$text:    2.5rem;
+$gradient: linear-gradient(45deg, #00E0FF, #FA00FF);
+$background-color: #154353;
+$grey-text: #2c2c2c;
+
+@mixin flex($justify, $align, $direction){
+  display: flex;
+  justify-content: $justify;
+  align-items: $align;
+  flex-direction: $direction;
+}
+
+@import 'global', 'intro', 'footer', 'projects', 'contact';
+
+
+@media screen and (max-width: 1520px){
+  html{
+    font-size: 53%;
+
+    .intro-text h2{
+      font-size: 5rem;
+    }
+    .intro-text h3{
+      font-size: 3.5rem;
+    }
+
+    .intro-text p{
+      font-size: 2.5rem;
+    }
+  }
+
+  .intro {
+    min-height: 50vh;
+  }
+  svg{
+    width: 90%;
+  }
+
+  nav{
+    width: 80%;
+    padding: 0rem 2rem;
+    ul{
+      padding: 2rem 5rem;
+    }
+    .logo {
+      @include flex(center, center, column);
+      padding:2rem 0rem;
+    }
+  }
+  .intro-social{
+    padding: 0rem 0rem 5rem 0rem;
+  }
+
+  footer {
+    // padding: 0rem 0rem;
+    h4 {
+        font-size: 4rem;
+    }
+    ul {
+        padding: 0rem;
+        margin: 0rem;
+    }
+  }
+}
+
+@media screen and (max-width: 850px){
+  html{
+    font-size: 45%;
+  }
+
+  nav {
+      width: 90%;
+        margin:2rem;
+        padding: 0rem 2rem;
+        @include flex(center, center, row);
+    .logo {
+      @include flex(center, center, column);
+    }
+    ul{
+      padding: 0rem 2rem;
+    }
+    li{
+      padding:0rem 1.5rem;
+    }
+  }
+    .splash {
+      display: none;
+    }
+  .intro-images {
+    background: url('/Portfolio/img/splash.png');
+    background-repeat: no-repeat;
+    background-size: contain;
+  }
+  .travelly,
+  .chris-project {
+    @include flex(center,center, column);
+    flex: 1 1 50rem;
+  }
+  footer {
+    // padding: 0rem 0rem;
+
+    h4 {
+      font-size: 3rem;
+    }
+
+    ul {
+      padding: 0rem;
+      margin: 0rem;
+    }
+
+    img {
+      width: 5rem;
+    }
+  }
+
+
+  .intro-image{
+    display: none;
+  }
+  form{
+    padding: 0rem;
+    size: 100%;
+    // -ms-transform: scale(1.1, 1.1);
+    //   -webkit-transform: scale(1.1, 1.1);
+    //   transform: scale(1.1, 1.1);
+  }
+}

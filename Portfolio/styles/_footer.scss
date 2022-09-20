@@ -1,0 +1,28 @@
+$width: calc(6rem + .5rem);
+footer{
+  background: $background-color;
+  min-height: 10vh;
+  padding: 0rem 10rem;
+  margin-top: auto;
+
+  @include flex(space-around, center,row);
+  h4{
+    font-size: 5rem;
+    color: white;
+    // flex: 1 1 40rem;
+  }
+  ul{
+    @include flex(space-around, center, row);
+    padding: 0rem 10rem;
+    margin: 0rem 10rem;
+    flex-wrap: 1 1 40rem;
+  }
+  li{
+    padding: 0rem 5rem;
+  }
+  img{
+    width: $width;
+    background: white;
+    border-radius: 2rem;
+  }
+}

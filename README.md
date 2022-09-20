@@ -10,10 +10,13 @@
 - Open Visual Studio Code in the folder where this repo was cloned
 - Install LiveServer for Visual Studio Code
 
-#### Website 1
+### Portfolio
+- Navigate to the Portfolio folder and run in live Server the index.html file.
+- This should display the images accurately.
+- To be updated later. This will be hosted at netlify I believe.
 
+#### Website 1
 - Then navigate to the Website1 folder and run in live Server flexboxdemo.html
-- This should display the images accurately
 
 #### Website 2
 
