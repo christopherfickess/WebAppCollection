@@ -3,6 +3,11 @@ $padded: calc(20rem + 1rem);
   width: 95%;
   margin: 0 0 0 auto;
 }
+.logo{
+  img {
+      border-radius: 2rem;
+    }
+}
 nav{
   @include flex(space-between, center, row);
   min-height: 10vh;
