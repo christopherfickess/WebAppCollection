@@ -7,17 +7,17 @@
 
 @font-face {
   font-family: 'Ruhl';
-  src: url("/Website2/fonts/Frank_Ruhl_Libre/FrankRuhlLibre-Regular.ttf");
+  src: url("../fonts/Frank_Ruhl_Libre/FrankRuhlLibre-Regular.ttf");
 }
 
 @font-face {
   font-family: 'Ruhl Medium';
-  src: url("/Website2/fonts/Frank_Ruhl_Libre/FrankRuhlLibre-Medium.ttf");
+  src: url("../fonts/Frank_Ruhl_Libre/FrankRuhlLibre-Medium.ttf");
 }
 
 @font-face {
   font-family: 'Vibes';
-  src: url("/Website2/fonts/Great_Vibes/GreatVibes-Regular.ttf");
+  src: url("../fonts/Great_Vibes/GreatVibes-Regular.ttf");
 }
 html {
   font-size: 62.5%;

@@ -100,7 +100,7 @@ li{
 .intro{
   min-height: 100vh;
   background-repeat: no-repeat;
-  background-image: linear-gradient(rgb(0,0,0,0.5), transparent),url("/Website3/img/Landscape1.jpg");
+  background-image: linear-gradient(rgb(0,0,0,0.5), transparent),url("../img/Landscape1.jpg");
   background-size: cover;
   color:white;
   display: flex;
