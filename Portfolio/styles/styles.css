@@ -22,28 +22,38 @@ label,
 input,
 a,
 p {
+  font-family: "Vibes", sans-serif;
   font-size: 2.5rem;
 }
 
+i{
+  font-size: 1.75rem;
+  font-family: "Vibes", sans-serif;
+}
+ 
 h1 {
   font-size: 2.5rem;
   font-family: "Vibes", sans-serif;
 }
 
 h2 {
+  font-family: "Vibes", sans-serif;
   font-size: 4rem;
 }
 
 h3 {
+  font-family: "Vibes", sans-serif;
   font-size: 2.5rem;
 }
 
 h4,
 h5 {
-  font-size: 2rem;
+  font-family: "Vibes", sans-serif;
+  font-size: 2.2rem;
 }
 
 a {
+  font-family: "Vibes", sans-serif;
   text-decoration: none;
   color: #2c2c2c;
 }
