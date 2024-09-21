@@ -1,12 +1,14 @@
 /* VARIABLES */
-$header1: 2.5rem;
+$header1: 3.5rem;
 $header2: 4rem;
 $header3: 2.5rem;
 $header4: 2rem;
 $text:    2.5rem;
 $gradient: linear-gradient(45deg, #00E0FF, #FA00FF);
 $background-color: #154353;
-$grey-text: #2c2c2c;
+$body-background: rgb(14, 15, 15);
+$active-button: rgb(40, 43, 46);
+$grey-text: #dadada;
 
 @mixin flex($justify, $align, $direction){
   display: flex;
@@ -15,10 +17,16 @@ $grey-text: #2c2c2c;
   flex-direction: $direction;
 }
 
+body {
+    
+  background-color: $body-background;
+}
+
 @import 'global', 'intro', 'footer', 'projects', 'contact';
 
-
 @media screen and (max-width: 1520px){
+
+
   html{
     font-size: 53%;
 
@@ -64,6 +72,7 @@ $grey-text: #2c2c2c;
     ul {
         padding: 0rem;
         margin: 0rem;
+        background-color: #154353;
     }
   }
 }

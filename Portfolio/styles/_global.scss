@@ -22,24 +22,29 @@ input,
 a,
 p {
   font-size: $text;
+  color: $grey-text;
 }
 
 h1 {
   font-size: $header1;
+  color: $grey-text;
   font-family: "Vibes", sans-serif;
 }
 
 h2 {
   font-size: $header2;
+  color: $grey-text;
 }
 
 h3 {
   font-size: $header3;
+  color: $grey-text;
 }
 
 h4,
 h5 {
   font-size: $header4;
+  color: $grey-text;
 }
 
 a {
