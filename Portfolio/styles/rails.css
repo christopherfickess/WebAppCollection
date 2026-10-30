@@ -72,6 +72,44 @@ h1, h2, h3, .intro h2, .intro h3 {
   transform: scale(1.08);
 }
 
+/* ---------- intro bio ---------- */
+
+.intro .skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  list-style: none;
+  margin: 1.4rem 0 2rem;
+  padding: 0;
+}
+
+.intro .skills li {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  padding: 0.55rem 1.3rem;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.intro .bio {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  max-width: 54rem;
+}
+
+.intro .bio p {
+  font-family: "Montserrat", sans-serif;
+  font-style: normal;
+  font-size: 1.55rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+  padding-top: 0;
+}
+
 /* ---------- rails ---------- */
 
 .rail {
@@ -265,6 +303,54 @@ h1, h2, h3, .intro h2, .intro h3 {
   font-size: 1.3rem;
   color: var(--text-muted);
   margin-top: 0.5rem;
+}
+
+/* ---------- footer ---------- */
+
+footer {
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+  min-height: auto;
+  padding: 2.4rem 3rem;
+  margin-top: 4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+footer h4 {
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+footer ul {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+footer li {
+  padding: 0;
+}
+
+footer img {
+  width: 3.4rem;
+  height: 3.4rem;
+  background: transparent;
+  border-radius: 10px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+footer img:hover {
+  transform: translateY(-2px);
+  opacity: 0.85;
 }
 
 /* ---------- contact form (production-grade pass) ---------- */
