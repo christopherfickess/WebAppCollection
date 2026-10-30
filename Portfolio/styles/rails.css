@@ -489,6 +489,140 @@ footer .footer-nav a:hover {
   margin: 0;
 }
 
+/* ---------- featured project (Starlight) ---------- */
+
+.featured-project {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 2.5rem;
+  align-items: start;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.4rem 2.6rem;
+  margin-bottom: 3rem;
+}
+
+.featured-label {
+  display: inline-block;
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 1.05rem;
+  color: var(--accent);
+  margin-bottom: 0.8rem;
+}
+
+.featured-project-copy h3 {
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-size: 1.7rem;
+  margin: 0 0 1rem;
+}
+
+.featured-project-copy > p {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0 0 1.4rem;
+  max-width: 60ch;
+}
+
+.featured-facts {
+  list-style: none;
+  margin: 0 0 1.6rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.featured-facts li {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1rem;
+  color: var(--text-muted);
+  padding-left: 1.2rem;
+  position: relative;
+}
+
+.featured-facts li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.featured-facts strong {
+  color: var(--text);
+}
+
+.featured-project .skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.featured-project .skills li {
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 1.05rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 6px;
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  color: var(--accent);
+}
+
+.stack-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stack-layer {
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stack-layer-name {
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.stack-layer-detail {
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.section-divider {
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 1.3rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+@media screen and (max-width: 900px) {
+  .featured-project {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- contact form (production-grade pass) ---------- */
 
 .contact-form form {

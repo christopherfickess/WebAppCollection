@@ -79,9 +79,50 @@
   <section class="projects-page">
     <header class="projects-head">
       <p class="kicker">Projects</p>
-      <h2>Secondary practice builds</h2>
-      <p class="projects-intro">Earlier front-end practice sites — flexbox layout, responsive nav, and form handling exercises, built while learning web development alongside the SRE work.</p>
+      <h2>What I build</h2>
+      <p class="projects-intro">A mix of real infrastructure work and the front-end practice that got me comfortable with the web side of this site. The homelab below is actively maintained; the three sites after it were early learning exercises.</p>
     </header>
+
+    <div class="featured-project">
+      <div class="featured-project-copy">
+        <span class="featured-label">Featured &middot; actively maintained</span>
+        <h3>Starlight &mdash; Personal Kubernetes Homelab</h3>
+        <p>A self-hosted Kubernetes cluster run the way production infrastructure should be: every change goes through Flux and a pull request, nothing gets applied by hand. It's where I test ideas before they go near a real environment &mdash; GitOps workflows, policy enforcement, zero-trust networking &mdash; and where a few of my own tools actually run.</p>
+        <ul class="featured-facts">
+          <li><strong>GitOps</strong> &mdash; every change through Flux + a PR, nothing applied by hand</li>
+          <li><strong>Zero-trust networking</strong> &mdash; admin surfaces are Tailscale-only, never public</li>
+          <li><strong>Policy &amp; runtime security</strong> &mdash; Kyverno, Tetragon (eBPF), Trivy scanning</li>
+          <li><strong>Full observability</strong> &mdash; Grafana, Prometheus, Loki, Alertmanager</li>
+        </ul>
+        <ul class="skills">
+          <li>#kubernetes</li>
+          <li>#flux</li>
+          <li>#terraform</li>
+          <li>#tailscale</li>
+          <li>#kyverno</li>
+        </ul>
+      </div>
+      <div class="stack-card" aria-hidden="true">
+        <div class="stack-layer">
+          <span class="stack-layer-name">GitOps</span>
+          <span class="stack-layer-detail">Flux &middot; PR-reviewed</span>
+        </div>
+        <div class="stack-layer">
+          <span class="stack-layer-name">Security</span>
+          <span class="stack-layer-detail">Kyverno &middot; Tetragon &middot; Trivy</span>
+        </div>
+        <div class="stack-layer">
+          <span class="stack-layer-name">Observability</span>
+          <span class="stack-layer-detail">Grafana &middot; Prometheus &middot; Loki</span>
+        </div>
+        <div class="stack-layer">
+          <span class="stack-layer-name">Platform</span>
+          <span class="stack-layer-detail">Kubernetes &middot; Tailscale</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="section-divider">Earlier practice builds</h3>
     <div class="projects-grid">
       <a class="project-card" href="../../Website1/index.html" target="_blank" rel="noopener">
         <div class="project-thumb">
