@@ -1,0 +1,214 @@
+/* Theme + rail nav layer. Loaded after styles.css — overrides via source order, not !important. */
+
+:root[data-theme="dark"] {
+  --bg: #0e0f0f;
+  --bg-soft: #154353;
+  --border: #22333c;
+  --text: #dadada;
+  --text-muted: #9fb3ba;
+  --accent: #5B9FDE;
+  --chip-bg: #1c2b33;
+}
+
+:root[data-theme="light"] {
+  --bg: #f5f7f8;
+  --bg-soft: #ffffff;
+  --border: #dfe3e5;
+  --text: #16222a;
+  --text-muted: #5b6b73;
+  --accent: #2f6fb0;
+  --chip-bg: #eef2f4;
+}
+
+body {
+  background: var(--bg) !important;
+  color: var(--text);
+  transition: background 0.2s ease, color 0.2s ease;
+  padding-left: 64px;
+  padding-right: 64px;
+}
+
+h1, h2, h3, h4, h5, p, a, li, label, input, button {
+  color: inherit;
+}
+
+.main-head .logo h1 {
+  color: var(--text);
+}
+
+/* ---------- rails ---------- */
+
+.rail {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 2.5rem 0 0 0;
+  background: var(--bg-soft);
+  z-index: 50;
+}
+
+.rail-left {
+  left: 0;
+  border-right: 1px solid var(--border);
+}
+
+.rail-right {
+  right: 0;
+  border-left: 1px solid var(--border);
+}
+
+.rail a,
+.rail button {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.rail a:hover,
+.rail button:hover,
+.rail a.rail-active {
+  background: var(--chip-bg);
+  color: var(--accent);
+}
+
+.rail svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.rail .rail-spacer {
+  flex: 1;
+}
+
+#theme-toggle .icon-moon { display: none; }
+:root[data-theme="dark"] #theme-toggle .icon-sun { display: none; }
+:root[data-theme="dark"] #theme-toggle .icon-moon { display: block; }
+
+/* ---------- burger (mobile) ---------- */
+
+#burger-toggle {
+  display: none;
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 60;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 70;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-soft);
+  border-right: 1px solid var(--border);
+  z-index: 80;
+  padding: 4rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0.6rem;
+  transition: left 0.2s ease;
+}
+
+.mobile-drawer.open {
+  left: 0;
+}
+
+.drawer-overlay.open {
+  display: block;
+}
+
+.mobile-drawer a,
+.mobile-drawer button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mobile-drawer a:hover,
+.mobile-drawer button:hover {
+  background: var(--chip-bg);
+  color: var(--accent);
+}
+
+.mobile-drawer svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.mobile-drawer hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.6rem 0;
+}
+
+.contact-note {
+  font-size: 1.3rem;
+  color: var(--text-muted);
+}
+
+@media screen and (max-width: 850px) {
+  .rail {
+    display: none;
+  }
+
+  #burger-toggle {
+    display: flex;
+  }
+
+  body {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
