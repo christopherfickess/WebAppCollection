@@ -85,9 +85,9 @@ h1, h2, h3, .intro h2, .intro h3 {
 
 .intro .skills li {
   font-family: "Montserrat", sans-serif;
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  padding: 0.55rem 1.3rem;
+  padding: 0.5rem 1.2rem;
   border-radius: 999px;
   background: var(--chip-bg);
   border: 1px solid var(--border);
@@ -97,15 +97,16 @@ h1, h2, h3, .intro h2, .intro h3 {
 .intro .bio {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1rem;
   max-width: 54rem;
 }
 
 .intro .bio p {
   font-family: "Montserrat", sans-serif;
   font-style: normal;
-  font-size: 1.55rem;
-  line-height: 1.65;
+  font-size: 1.15rem;
+  font-weight: 400;
+  line-height: 1.6;
   color: var(--text-muted);
   padding-top: 0;
 }
@@ -311,18 +312,18 @@ footer {
   background: var(--bg-soft);
   border-top: 1px solid var(--border);
   min-height: auto;
-  padding: 2.4rem 3rem;
-  margin-top: 4rem;
+  padding: 1.4rem 2rem;
+  margin-top: 3rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 footer h4 {
   font-family: "Frank Ruhl Libre", Georgia, serif;
-  font-size: 1.6rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -330,7 +331,7 @@ footer h4 {
 footer ul {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.7rem;
   padding: 0;
   margin: 0;
   background: transparent;
@@ -341,10 +342,10 @@ footer li {
 }
 
 footer img {
-  width: 3.4rem;
-  height: 3.4rem;
+  width: 1.8rem;
+  height: 1.8rem;
   background: transparent;
-  border-radius: 10px;
+  border-radius: 6px;
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
