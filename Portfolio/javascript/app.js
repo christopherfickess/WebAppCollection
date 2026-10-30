@@ -2,6 +2,11 @@
   var root = document.documentElement;
   var themeToggle = document.getElementById("theme-toggle");
 
+  var yearEls = document.querySelectorAll(".copyright-year");
+  for (var i = 0; i < yearEls.length; i++) {
+    yearEls[i].textContent = new Date().getFullYear();
+  }
+
   if (themeToggle) {
     themeToggle.addEventListener("click", function () {
       var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
