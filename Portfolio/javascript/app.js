@@ -44,7 +44,7 @@
       var name = (firstName + " " + lastName).trim();
 
       var subject = "Portfolio contact from " + name;
-      var body = message + "\n\n— " + name + " (" + email + ")";
+      var body = message + "\n\n- " + name + " (" + email + ")";
 
       window.location.href =
         "mailto:cfickess20@gmail.com" +

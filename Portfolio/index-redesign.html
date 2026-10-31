@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;1,300&display=swap" rel="stylesheet">
   <link rel="icon" href="./icon/fickess.PNG" />
   <link rel="stylesheet" href="./styles/styles.css" />
-  <link rel="stylesheet" href="./styles/rails.css?v=10" />
+  <link rel="stylesheet" href="./styles/rails.css?v=11" />
   <link rel="stylesheet" href="./styles/compare.css?v=6" />
   <link rel="stylesheet" href="./styles/redesign.css?v=6" />
   <script>
@@ -22,11 +22,11 @@
       document.documentElement.setAttribute("data-theme", theme);
     })();
   </script>
-  <title>AFTER — Christopher Fickess | Site Reliability Engineer</title>
+  <title>AFTER: Christopher Fickess | Site Reliability Engineer</title>
 </head>
 
 <body>
-  <div class="compare-badge compare-badge-after">AFTER — concept, not the live page</div>
+  <div class="compare-badge compare-badge-after">AFTER: concept, not the live page</div>
 
   <nav class="rail rail-left" aria-label="Primary">
     <a href="./index-redesign.html" title="Home" class="rail-active">
@@ -92,8 +92,8 @@
         <li>#zero-trust</li>
       </ul>
       <div class="bio">
-        <p>I build cloud infrastructure that's meant to disappear — distributed systems and high-availability Kubernetes platforms that stay boring to operate, even under load. 6+ years doing this hands-on, the last 3+ as a technical lead, which means as much time setting standards and mentoring as writing Terraform.</p>
-        <p>Infrastructure as code and GitOps are where I'm strongest: environments defined in git, deployed the same way every time, with drift treated as a bug to fix rather than a fact of life. I'm most effective on cost efficiency, deployment automation, and the operational discipline — observability, incident response, disaster recovery that's actually been tested — that makes a platform trustworthy instead of just functional.</p>
+        <p>I build cloud infrastructure that's meant to disappear: distributed systems and high-availability Kubernetes platforms that stay boring to operate, even under load. 6+ years doing this hands-on, the last 3+ as a technical lead, which means as much time setting standards and mentoring as writing Terraform.</p>
+        <p>Infrastructure as code and GitOps are where I'm strongest: environments defined in git, deployed the same way every time, with drift treated as a bug to fix rather than a fact of life. I'm most effective on cost efficiency, deployment automation, and the operational discipline (observability, incident response, disaster recovery that's actually been tested) that makes a platform trustworthy instead of just functional.</p>
         <p>Security gets designed in, not bolted on afterward: zero-trust networking, least-privilege IAM, encryption by default, and compliance frameworks like DoD IL5 and FedRAMP treated as design constraints from day one rather than a checklist at the end.</p>
       </div>
       <div class="cta-row">
@@ -163,23 +163,23 @@
           <div class="status-row"><span class="led"></span><span class="label">IaC coverage</span><span class="value">100%</span></div>
           <div class="status-row"><span class="led"></span><span class="label">drift detected</span><span class="value">0</span></div>
         </div>
-        <div class="status-card-footer">Illustrative placeholder — not yet wired to anything real. See design notes.</div>
+        <div class="status-card-footer">Illustrative placeholder, not yet wired to anything real. See design notes.</div>
       </div>
     </div>
   </section>
 
   <details class="design-notes">
-    <summary>Design notes — what changed from the current page, and why</summary>
+    <summary>Design notes: what changed from the current page, and why</summary>
     <ul>
-      <li><strong>Kept the illustration, reframed it.</strong> It was floating loose against the gradient blob before. Now it sits in its own card (same border/shadow language as the status panel), slightly desaturated, and several of its fills were switched from hardcoded hex to your actual theme variables (<code>var(--accent)</code>, <code>var(--bg-soft)</code>, <code>var(--border)</code>) — so it now recolors with the light/dark toggle instead of staying static.</li>
-      <li><strong>Added a real status panel</strong> next to it (uptime / environments / deploys / IaC coverage) built from plain CSS. <strong>It's currently illustrative only</strong> — not wired to anything live yet. See the note on the card itself and the open question about syncing it to the Starlight cluster safely.</li>
-      <li><strong>Dropped the neon cyan→magenta gradient heading.</strong> It read as a generic "dev portfolio template" cue. Replaced with a small accent-colored kicker label ("SITE RELIABILITY ENGINEER") above a solid-color serif name — a more restrained, editorial hierarchy that still uses your existing brand font and accent blue.</li>
-      <li><strong>Skill list → monospace tags</strong> (<code>#aws #eks #terraform #gitops #zero-trust</code>) instead of three stacked lines, and pulled from your actual resume's weighting rather than generic labels.</li>
-      <li><strong>Bio rewritten from your resume</strong> (<code>~/git/personal/latex-resume-cf</code>) — years of experience, the Boeing EKS/Karpenter/IaC numbers, and the security/observability stack, instead of generic "my goal is to..." filler.</li>
+      <li><strong>Kept the illustration, reframed it.</strong> It was floating loose against the gradient blob before. Now it sits in its own card (same border/shadow language as the status panel), slightly desaturated, and several of its fills were switched from hardcoded hex to your actual theme variables (<code>var(--accent)</code>, <code>var(--bg-soft)</code>, <code>var(--border)</code>), so it now recolors with the light/dark toggle instead of staying static.</li>
+      <li><strong>Added a real status panel</strong> next to it (uptime / environments / deploys / IaC coverage) built from plain CSS. <strong>It's currently illustrative only</strong> and not wired to anything live yet. See the note on the card itself and the open question about syncing it to the Starlight cluster safely.</li>
+      <li><strong>Dropped the neon cyan→magenta gradient heading.</strong> It read as a generic "dev portfolio template" cue. Replaced with a small accent-colored kicker label ("SITE RELIABILITY ENGINEER") above a solid-color serif name: a more restrained, editorial hierarchy that still uses your existing brand font and accent blue.</li>
+      <li><strong>Skill list to monospace tags</strong> (<code>#aws #eks #terraform #gitops #zero-trust</code>) instead of three stacked lines, and pulled from your actual resume's weighting rather than generic labels.</li>
+      <li><strong>Bio rewritten from your resume</strong> (<code>~/git/personal/latex-resume-cf</code>): years of experience, the Boeing EKS/Karpenter/IaC numbers, and the security/observability stack, instead of generic "my goal is to..." filler.</li>
       <li><strong>Added real call-to-action buttons</strong> ("Get in Touch", "View GitHub") instead of only two small icon links.</li>
       <li><strong>Swapped the big gradient-blob background for a subtle dot-grid.</strong> Theme-aware instead of hardcoded.</li>
       <li><strong>Footer</strong> is now pinned to the bottom of the viewport on short pages (flex layout + <code>margin-top: auto</code>) instead of floating mid-page, and shrunk further (icons now 1.5rem).</li>
-      <li><strong>Rail nav, fonts, and light/dark system are untouched</strong> — this is a hero-section concept, not a navigation change.</li>
+      <li><strong>Rail nav, fonts, and light/dark system are untouched.</strong> This is a hero-section concept, not a navigation change.</li>
     </ul>
   </details>
 

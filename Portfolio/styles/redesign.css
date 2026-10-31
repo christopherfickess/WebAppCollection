@@ -1,4 +1,4 @@
-/* "After" concept hero — scoped entirely to .hero-v2 so it never touches
+/* "After" concept hero, scoped entirely to .hero-v2 so it never touches
    the real .intro styling used on index.html/projects/contact. */
 
 .hero-v2 {

@@ -1,4 +1,4 @@
-/* Theme + rail nav layer. Loaded after styles.css — overrides via source order, not !important. */
+/* Theme + rail nav layer. Loaded after styles.css, overrides via source order, not !important. */
 
 @font-face {
   font-family: "Frank Ruhl Libre";
@@ -12,6 +12,10 @@
   src: url("../fonts/Frank_Ruhl_Libre/FrankRuhlLibre-Medium.ttf") format("truetype");
   font-weight: 600;
   font-display: swap;
+}
+
+:root {
+  --icon-gradient: linear-gradient(135deg, #26beff, #d81dff);
 }
 
 :root[data-theme="dark"] {
@@ -175,25 +179,22 @@ h1, h2, h3, .intro h2, .intro h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text);
-  background: var(--chip-bg);
-  border: 1px solid var(--border);
+  color: #fff;
+  background: var(--icon-gradient);
+  border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .rail a:hover,
 .rail button:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  filter: brightness(1.12);
   transform: translateY(-1px);
 }
 
 .rail a.rail-active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px #fff;
 }
 
 .rail svg {
@@ -208,18 +209,6 @@ h1, h2, h3, .intro h2, .intro h3 {
 .rail a[title="GitHub"] svg {
   fill: currentColor;
   stroke: none;
-}
-
-.rail a[title="LinkedIn"],
-.rail a[title="GitHub"] {
-  background: transparent;
-  border-color: transparent;
-}
-
-.rail a[title="LinkedIn"]:hover,
-.rail a[title="GitHub"]:hover {
-  background: var(--chip-bg);
-  border-color: var(--border);
 }
 
 /* Sun/moon: fill the solid shapes (circle/crescent) but keep the sun's rays stroked */
