@@ -1,0 +1,57 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+<BaseLayout
+  title="Observability | Christopher Fickess"
+  description="Live signal from the infrastructure and code behind this site"
+  current="observability"
+  pageTitle="Observability"
+>
+  <section class="observability-page">
+    <header class="observability-head">
+      <p class="kicker">Observability</p>
+      <h2>Live Signal</h2>
+      <p class="observability-intro">The same discipline I apply at work, pointed at my own stuff: real data instead of a static claim that everything's fine. Nothing here is staged.</p>
+    </header>
+
+    <div class="obs-section">
+      <h3 class="obs-section-title">Uptime</h3>
+      <div class="obs-stub-card">
+        <p>Not wired up yet. Checking "is this reachable" from a visitor's own browser doesn't actually measure uptime (it mostly measures their network and gets blocked by CORS on most sites) - the honest way to do this is a real monitoring service running independent checks on a schedule. This section is ready to connect to one (UptimeRobot's free tier, or similar) once that's set up, for:</p>
+        <ul class="obs-stub-list">
+          <li>This portfolio site</li>
+          <li>The three practice sites linked from <a href="/projects/">Projects</a></li>
+          <li>Starlight, the homelab behind the featured project</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="obs-section">
+      <h3 class="obs-section-title">GitHub Contributions</h3>
+      <p class="obs-section-sub">The last year of commit activity, fetched live from GitHub's public contribution calendar.</p>
+      <div id="github-contributions" class="obs-contrib-wrap">
+        <p class="obs-loading">Loading contribution graph&hellip;</p>
+      </div>
+    </div>
+
+    <div class="obs-section">
+      <h3 class="obs-section-title">GitHub Activity</h3>
+      <p class="obs-section-sub">Most recently pushed repos, fetched live from GitHub's public API.</p>
+      <div id="github-activity" class="obs-activity-list">
+        <p class="obs-loading">Loading recent activity&hellip;</p>
+      </div>
+    </div>
+
+    <div class="obs-section">
+      <h3 class="obs-section-title">GitLab Activity</h3>
+      <p class="obs-section-sub">Most recently active projects, fetched live from GitLab's public API.</p>
+      <div id="gitlab-activity" class="obs-activity-list">
+        <p class="obs-loading">Loading recent activity&hellip;</p>
+      </div>
+    </div>
+  </section>
+  <script>
+    import "../../scripts/github-contributions.js";
+    import "../../scripts/observability.js";
+  </script>
+</BaseLayout>

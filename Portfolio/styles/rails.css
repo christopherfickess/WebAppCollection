@@ -38,12 +38,89 @@
   --chip-bg: #eef2f4;
 }
 
+/* ---------- accent presets ----------
+   "Aurora" (blue/magenta) is the compiled-in default above, no block
+   needed here, same as a no-preset state. Each preset recolors the
+   whole page (bg/bg-soft/border/text, not just --accent) so picking
+   one actually reads as a different scheme, in both dark AND light -
+   light presets reuse each dark preset's hue family on a settled
+   "daylight" ground, with the accent itself darkened for legibility on
+   a light background the same way Aurora's own light accent
+   (--accent:#2f6fb0) is already darker than its dark-mode blue. */
+
+:root[data-theme="dark"][data-preset="ember"] {
+  --bg: #15110a;
+  --bg-soft: #2a2015;
+  --border: #3a2f1e;
+  --text: #ece6d2;
+  --text-muted: #bfae8c;
+  --accent: #ffb000;
+  --chip-bg: #241b10;
+  --icon-gradient: linear-gradient(135deg, #ff8a00, #ffd166);
+}
+
+:root[data-theme="dark"][data-preset="verdant"] {
+  --bg: #0c1410;
+  --bg-soft: #16241c;
+  --border: #223a2c;
+  --text: #dfe8e2;
+  --text-muted: #8fa89b;
+  --accent: #2fbf6e;
+  --chip-bg: #152420;
+  --icon-gradient: linear-gradient(135deg, #1fae63, #7ee8a6);
+}
+
+:root[data-theme="dark"][data-preset="signal"] {
+  --bg: #120f1a;
+  --bg-soft: #201a33;
+  --border: #332a4d;
+  --text: #e6e1f5;
+  --text-muted: #a89bc9;
+  --accent: #9d7bf0;
+  --chip-bg: #1c1730;
+  --icon-gradient: linear-gradient(135deg, #7b5cf0, #c89bff);
+}
+
+:root[data-theme="light"][data-preset="ember"] {
+  --bg: #fbf3e7;
+  --bg-soft: #ffffff;
+  --border: #ecdfc8;
+  --text: #2a2015;
+  --text-muted: #8a7556;
+  --accent: #b5700a;
+  --chip-bg: #f6ecd9;
+  --icon-gradient: linear-gradient(135deg, #ff8a00, #ffd166);
+}
+
+:root[data-theme="light"][data-preset="verdant"] {
+  --bg: #f3f8f5;
+  --bg-soft: #ffffff;
+  --border: #dce9e1;
+  --text: #16261d;
+  --text-muted: #51695c;
+  --accent: #1f8a4c;
+  --chip-bg: #eaf4ee;
+  --icon-gradient: linear-gradient(135deg, #1fae63, #7ee8a6);
+}
+
+:root[data-theme="light"][data-preset="signal"] {
+  --bg: #f5f3fa;
+  --bg-soft: #ffffff;
+  --border: #e1dcef;
+  --text: #201a33;
+  --text-muted: #6c6389;
+  --accent: #6b46c1;
+  --chip-bg: #efebf8;
+  --icon-gradient: linear-gradient(135deg, #7b5cf0, #c89bff);
+}
+
 body {
   background: var(--bg) !important;
   color: var(--text);
   transition: background 0.2s ease, color 0.2s ease;
-  padding-left: 64px;
-  padding-right: 64px;
+  padding-top: 68px;
+  padding-left: 52px;
+  padding-right: 46px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -60,16 +137,200 @@ h1, h2, h3, .intro h2, .intro h3 {
 
 .intro h2 {
   font-size: 7rem;
+  /* Drives the name's two-tone gradient off the same --icon-gradient
+     every preset already sets, rather than a hardcoded blue/magenta -
+     this makes the hero name switch tone right along with the rail
+     icons and the preset dots, in both themes, unconditionally (the
+     legacy gradient in styles.css only applied inside a max-width media
+     query). */
+  background: var(--icon-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: inline-block;
 }
 
 .intro h3 {
   font-size: 3.2rem;
 }
 
+.intro .credential-line {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0.6rem 0 0;
+}
+
+.intro .company-history {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.intro .company-history li:not(:last-child)::after {
+  content: "\2022";
+  margin: 0 0.6rem;
+  color: var(--border);
+}
+
+/* ---------- top bar ----------
+   Full-bleed FIXED bar spanning the entire viewport width, like
+   gredin's own Topbar ("a sibling above the sidebar/main/right-rail
+   row... so its background runs edge to edge instead of stopping at a
+   column boundary") - not just sticky within the padded content area
+   between the two rails. The rails themselves start BELOW this bar
+   (see .rail's top offset) rather than running the full viewport
+   height behind it. Reuses the existing .main-head markup (already
+   present on every page) rather than adding a second header. */
+
+.main-head {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 55;
+  height: 68px;
+  width: 100%;
+  margin: 0;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--border);
+}
+
+.main-head nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0 1.75rem;
+  margin: 0;
+}
+
+#rail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--chip-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#rail-toggle:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+
+#rail-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.main-head .logo {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.main-head .logo img {
+  width: 42px;
+  height: 42px;
+  margin: 0;
+}
+
+/* The octopus mark (Resume page) is a flat vector logo, not a portrait
+   photo - the round-crop + accent-ring treatment the profile photo
+   uses (.logo img, base rule) would clip and frame it oddly. */
+.main-head .logo-mark {
+  border-radius: 0;
+  border: none;
+  object-fit: contain;
+}
+
 .main-head .logo h1 {
   color: var(--text);
-  font-size: 2.2rem;
+  font-size: 1.35rem;
   letter-spacing: 0.01em;
+  margin: 0;
+}
+
+.topbar-page {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding-left: 1rem;
+  border-left: 1px solid var(--border);
+}
+
+/* ---------- rail expand/collapse ----------
+   Toggled by #rail-toggle in the top bar: widens .rail-left from an
+   icon-only strip into an icon+label panel, like gredin's own sidebar
+   collapse (Sidebar.css), scoped to the LEFT rail only - the right
+   rail (theme/preset/socials) stays icon-only always. */
+
+.rail-left {
+  transition: width 0.2s ease;
+}
+
+body {
+  transition: background 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+}
+
+:root[data-rail-expanded="true"] .rail-left {
+  width: 220px;
+  align-items: stretch;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+:root[data-rail-expanded="true"] .rail-left a {
+  width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  gap: 0.85rem;
+}
+
+:root[data-rail-expanded="true"] body {
+  padding-left: 220px;
+}
+
+.rail-label {
+  display: none;
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+:root[data-rail-expanded="true"] .rail-label {
+  display: inline-block;
 }
 
 /* ---------- profile photo ---------- */
@@ -94,7 +355,7 @@ h1, h2, h3, .intro h2, .intro h3 {
   flex-wrap: wrap;
   gap: 0.8rem;
   list-style: none;
-  margin: 1.4rem 0 2rem;
+  margin: 1.8rem 0 2rem;
   padding: 0;
 }
 
@@ -146,9 +407,9 @@ h1, h2, h3, .intro h2, .intro h3 {
 
 .rail {
   position: fixed;
-  top: 0;
+  top: 68px;
   bottom: 0;
-  width: 64px;
+  width: 52px;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -156,7 +417,7 @@ h1, h2, h3, .intro h2, .intro h3 {
   justify-content: flex-start;
   align-items: center;
   gap: 1.1rem;
-  padding: 2.5rem 0 0 0;
+  padding: 1.5rem 0 0 0;
   background: var(--bg-soft);
   z-index: 50;
 }
@@ -168,14 +429,15 @@ h1, h2, h3, .intro h2, .intro h3 {
 
 .rail-right {
   right: 0;
+  width: 46px;
   border-left: 1px solid var(--border);
 }
 
 .rail a,
 .rail button {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -197,9 +459,44 @@ h1, h2, h3, .intro h2, .intro h3 {
   box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px #fff;
 }
 
+/* ---------- rails: flat, muted panel ----------
+   The colorful gradient-filled tile per icon read as too saturated -
+   gredin's own sidebar is one flat, accent-tinted panel with plain
+   icon rows, the active row just a slightly lighter fill, no per-item
+   color blocks. Both rails now share this treatment (left and right
+   the same tint) rather than just the left. ".rail.rail-left,
+   .rail.rail-right" (two classes + a type) beats the earlier ".rail a,
+   .rail button" (one class + a type) on specificity regardless of
+   source order - see the .preset-dot specificity bug fixed earlier in
+   this file for why that matters. */
+.rail.rail-left,
+.rail.rail-right {
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg-soft));
+}
+
+.rail.rail-left a,
+.rail.rail-right a {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.rail.rail-left a:hover,
+.rail.rail-right a:hover {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--text);
+  filter: none;
+  transform: none;
+}
+
+.rail.rail-left a.rail-active {
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  color: #fff;
+  box-shadow: none;
+}
+
 .rail svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
 }
@@ -211,19 +508,154 @@ h1, h2, h3, .intro h2, .intro h3 {
   stroke: none;
 }
 
-/* Sun/moon: fill the solid shapes (circle/crescent) but keep the sun's rays stroked */
-#theme-toggle svg {
-  fill: currentColor;
-  stroke: currentColor;
-}
-
 .rail .rail-spacer {
   flex: 1;
 }
 
-#theme-toggle .icon-moon { display: none; }
-:root[data-theme="dark"] #theme-toggle .icon-sun { display: none; }
-:root[data-theme="dark"] #theme-toggle .icon-moon { display: block; }
+/* ---------- topbar: theme switch + display dropdown ----------
+   Replaces the old single sun/moon toggle button and the inline row of
+   preset dots, both moved from the rail into the top bar: a 3-way
+   Light/Auto/Dark segmented control (matching gredin's own ThemeToggle
+   - "system" is a real, persisted preference, not just a transient
+   pass-through) plus a dropdown listing the named color presets
+   (gredin's own ColorPresetPicker, as a menu here instead of an always-
+   visible swatch grid). */
+
+.main-head nav > .theme-switch {
+  margin-left: auto;
+}
+
+.theme-switch {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--chip-bg);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.theme-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 32px;
+  padding: 0 0.85rem;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-opt:last-child {
+  border-right: none;
+}
+
+.theme-opt svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.theme-opt[data-active="true"] {
+  color: var(--accent);
+}
+
+.display-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+#display-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 32px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#display-toggle:hover {
+  border-color: var(--accent);
+}
+
+#display-toggle svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.display-caret {
+  width: 11px !important;
+  height: 11px !important;
+  color: var(--text-muted);
+}
+
+.display-dropdown {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  min-width: 175px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  z-index: 60;
+}
+
+.display-dropdown[hidden] {
+  display: none;
+}
+
+.display-option {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.display-option:hover {
+  background: var(--chip-bg);
+}
+
+.display-option[data-active="true"] {
+  background: var(--chip-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.display-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px var(--border);
+}
 
 /* ---------- burger (mobile) ---------- */
 
@@ -439,6 +871,73 @@ footer .footer-nav a:hover {
   color: var(--accent);
 }
 
+/* ---------- contact page ---------- */
+
+.contact-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-self: center;
+  box-sizing: border-box;
+  padding: 4rem 3rem 3rem;
+}
+
+.contact-head {
+  max-width: 60ch;
+  margin-bottom: 2.5rem;
+}
+
+.contact-head .kicker {
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 1.15rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.6rem;
+}
+
+.contact-head h2 {
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-weight: 600;
+  font-size: 2.2rem;
+  margin: 0 0 0.9rem;
+}
+
+.contact-intro {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.space-illustration-card {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.space-illustration {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media screen and (max-width: 900px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- resume page ---------- */
 
 .resume-page {
@@ -523,6 +1022,49 @@ footer .footer-nav a:hover {
   line-height: 1.5;
   color: var(--text-muted);
   margin: 0;
+}
+
+.resume-preview {
+  margin-top: 2.5rem;
+}
+
+.resume-preview-label {
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.9rem;
+}
+
+.resume-pdf-frame {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  height: 85vh;
+  min-height: 600px;
+}
+
+.resume-pdf {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.resume-pdf-fallback {
+  padding: 2rem;
+  font-family: "Montserrat", sans-serif;
+  font-size: 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.resume-pdf-fallback a {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* ---------- projects page ---------- */
@@ -759,41 +1301,53 @@ footer .footer-nav a:hover {
   }
 }
 
-/* ---------- contact form (production-grade pass) ---------- */
+/* ---------- contact form ---------- */
 
 .contact-form form {
   background: var(--bg-soft);
   border: 1px solid var(--border);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
   border-radius: 14px;
-  padding: 3rem 3.2rem;
-  margin: 5rem;
+  padding: 2rem 2.2rem;
+  margin: 0;
   width: 100%;
-  max-width: 420px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0;
+  gap: 1.3rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.3rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .contact-form form label {
-  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-family: "Montserrat", sans-serif;
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-muted);
-  margin: 1.4rem 0 0.5rem;
-}
-
-.contact-form form label:first-child {
-  margin-top: 0;
+  margin: 0;
 }
 
 .contact-form form input,
 .contact-form form textarea {
   font-family: "Montserrat", sans-serif;
-  font-size: 1.5rem;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0;
-  padding: 0.8rem 1rem;
+  padding: 0.7rem 0.9rem;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -803,6 +1357,7 @@ footer .footer-nav a:hover {
 .contact-form form input::placeholder,
 .contact-form form textarea::placeholder {
   color: var(--text-muted);
+  opacity: 0.7;
 }
 
 .contact-form form input:focus,
@@ -813,30 +1368,56 @@ footer .footer-nav a:hover {
 
 .contact-form form textarea {
   resize: vertical;
-  min-height: 9rem;
+  min-height: 8rem;
 }
 
-.contact-form form button {
-  margin-top: 2rem;
+.contact-form form .btn {
   width: 100%;
-  padding: 1rem;
-  border-radius: 999px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-family: "Montserrat", sans-serif;
-  font-size: 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
+  margin-top: 0.3rem;
+  justify-content: center;
 }
 
-.contact-form form button:hover,
-.contact-form form button:focus {
-  opacity: 0.88;
-  background: var(--accent);
-  color: #fff;
-  outline: none;
+.contact-note {
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+/* Spam honeypot - present in the DOM for bots to find and fill (which
+   is what gives it away), but never visible to a real visitor. Not
+   display:none - some bots skip fields hidden that way, defeating the
+   point. */
+.form-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-status {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem 2.2rem;
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.05rem;
+  color: var(--text);
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.contact-status-error {
+  color: #d64545;
+}
+
+@media screen and (max-width: 520px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media screen and (max-width: 850px) {
@@ -848,7 +1429,29 @@ footer .footer-nav a:hover {
     display: flex;
   }
 
-  body {
+  #rail-toggle {
+    display: none;
+  }
+
+  /* No room in a phone-width top bar for these - matches mobile's
+     existing scope before this topbar rework, since the theme toggle
+     and preset dots previously lived in .rail-right, already hidden
+     above at this width too. */
+  .theme-switch,
+  .display-menu {
+    display: none;
+  }
+
+  .main-head nav {
+    padding-left: 4.5rem;
+  }
+
+  .resume-pdf-frame {
+    height: 70vh;
+  }
+
+  body,
+  :root[data-rail-expanded="true"] body {
     padding-left: 0;
     padding-right: 0;
   }
@@ -862,4 +1465,96 @@ footer .footer-nav a:hover {
   .form-section form {
     margin: 1.5rem;
   }
+}
+
+/* ---------- starfield backdrop ---------- */
+/* Fixed full-viewport canvas, dark mode only, drawn behind everything
+   (negative z-index) via javascript/starfield.js. Visibility is handled
+   entirely by this opacity rule reusing the same data-theme selector the
+   rest of the theme system already uses, not a second "is it dark"
+   signal in JS. */
+.starfield-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+:root[data-theme="dark"] .starfield-canvas {
+  opacity: 1;
+}
+
+/* ---------- hero illustration stacking ----------
+   .intro-images has no position in the legacy stylesheet, which let
+   .splash's absolute positioning escape to the viewport's own
+   containing block instead of tracking the illustration cluster it's
+   meant to sit behind - scoping it here and making the paint order
+   explicit instead of relying on implicit negative-z-index quirks. */
+.intro-images {
+  position: relative;
+}
+
+.intro-images svg {
+  position: relative;
+  z-index: 1;
+}
+
+/* .splash is now a plain <div>, not an <img> - img/splash.png's own
+   fixed blue/pink gradient can't be recolored by CSS, so the PNG is
+   used purely as an alpha mask (its blob SHAPE) while the actual fill
+   comes from --icon-gradient, the same preset-aware gradient already
+   driving the rail icons and the hero name. That's how it picks up
+   Ember/Verdant/Signal/Aurora automatically instead of staying a fixed
+   blue/pink regardless of the active display option. No intrinsic size
+   to inherit from anymore (divs don't have one), hence the explicit
+   aspect-ratio matching the source file's own 947x911 pixels. */
+.intro-images .splash {
+  z-index: 0;
+  height: 36rem;
+  aspect-ratio: 947 / 911;
+  top: -2rem;
+  right: -2rem;
+  background: var(--icon-gradient);
+  -webkit-mask-image: url(../img/splash.png);
+  mask-image: url(../img/splash.png);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* ---------- hero illustration accent colors ----------
+   The three bouncing dot circles, the blue accent line under each
+   report-card header, and the clock's face circle all shared the same
+   hardcoded #5B9FDE in the source SVG - swapping just these (by ID, not
+   a blanket fill override) to --accent keeps them in step with the
+   active preset too. Deliberately NOT touching Vector_18/19/20 (the
+   person's jacket, the only OTHER elements using that same blue) -
+   recoloring the person's clothing off a UI accent choice wasn't asked
+   for and reads as an unrelated side effect, not a themed element. */
+#Line, #Line_2, #Line_3,
+#Ball, #Ball_2, #Ball_3,
+#Vector_28 {
+  fill: var(--accent);
+}
+
+/* ---------- hero layout: anchor illustration near the top ----------
+   The legacy .intro row used align-items:center, which vertically
+   centers the short illustration column against the now much taller
+   bio-text column - on a normal window that drops the illustration's
+   top (the person's head) above the fold, reading as "chopped off"
+   until you scroll. Top-aligning both columns keeps the whole
+   illustration together right at the top of the page instead. */
+.intro {
+  align-items: flex-start;
+}
+
+.intro-images {
+  padding-top: 2.5rem;
 }

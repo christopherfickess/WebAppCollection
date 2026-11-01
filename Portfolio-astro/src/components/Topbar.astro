@@ -1,0 +1,66 @@
+---
+// Full-bleed top bar: rail-expand toggle, logo, page name, theme
+// switch (Light/Auto/Dark), and the color-preset "Display" dropdown.
+// One copy, used by every page - the interactive bits (theme-opt
+// clicks, display dropdown open/close) are all wired from the single
+// shared src/scripts/site.js module, not duplicated per page either.
+const {
+  pageTitle,
+  logoSrc = "/img/fickess-profile.jpeg",
+  logoAlt = "Chris Fickess",
+  logoIsMark = false,
+} = Astro.props;
+
+// Swatch colors come from a CSS class per preset (rails.css), not an
+// inline style="" attribute - a strict CSP's style-src also governs
+// inline style attributes, and this way style-src 'self' works with no
+// 'unsafe-inline' carve-out needed anywhere on the site.
+const PRESETS = [
+  { key: "aurora", label: "Aurora" },
+  { key: "ember", label: "Ember" },
+  { key: "verdant", label: "Verdant" },
+  { key: "signal", label: "Signal Violet" },
+];
+---
+<header class="main-head">
+  <nav>
+    <button id="rail-toggle" type="button" aria-label="Expand navigation" aria-pressed="false" title="Expand navigation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="logo">
+      <img src={logoSrc} alt={logoAlt} width="90" class={logoIsMark ? "logo-mark" : undefined} />
+      <h1>Chris Fickess</h1>
+    </div>
+    <span class="topbar-page">{pageTitle}</span>
+
+    <div class="theme-switch" role="radiogroup" aria-label="Color theme">
+      <button type="button" class="theme-opt" data-theme-pref="light" title="Light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+        <span>Light</span>
+      </button>
+      <button type="button" class="theme-opt" data-theme-pref="system" title="Auto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
+        <span>Auto</span>
+      </button>
+      <button type="button" class="theme-opt" data-theme-pref="dark" title="Dark">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+        <span>Dark</span>
+      </button>
+    </div>
+
+    <div class="display-menu">
+      <button id="display-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.3" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.7" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="16.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <span>Display</span>
+        <svg class="display-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="display-dropdown" id="display-dropdown" role="menu" hidden>
+        {PRESETS.map((preset) => (
+          <button type="button" class="display-option" data-preset={preset.key} role="menuitem">
+            <span class={`display-swatch display-swatch-${preset.key}`} />{preset.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  </nav>
+</header>

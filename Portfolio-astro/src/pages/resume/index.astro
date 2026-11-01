@@ -1,0 +1,66 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+<BaseLayout
+  title="Resume | Christopher Fickess"
+  description="Christopher Fickess | Resume"
+  current="resume"
+  pageTitle="Resume"
+  logoSrc="/icon/octopus-logo.png"
+  logoAlt="Chris Fickess"
+  logoIsMark={true}
+>
+  <section class="resume-page">
+    <header class="resume-head">
+      <p class="kicker">Resume</p>
+      <h2>Christopher Fickess</h2>
+      <p class="resume-intro">Site Reliability Engineer focused on cloud infrastructure, Kubernetes platforms, and the automation and security practices that keep them running without drama.</p>
+      <a class="btn btn-primary" href="/resume/Christopher_Fickess_Resume.pdf" download>Download Resume (PDF)</a>
+    </header>
+
+    <div class="resume-grid">
+      <div class="resume-card">
+        <h3>Core Stack</h3>
+        <ul class="skills">
+          <li>#aws</li>
+          <li>#eks</li>
+          <li>#terraform</li>
+          <li>#ansible</li>
+          <li>#gitops</li>
+        </ul>
+        <p>Multi-account AWS, high-availability EKS clusters, Terraform-managed IaC, and Ansible automation across Dev/Stage/Prod environments.</p>
+      </div>
+      <div class="resume-card">
+        <h3>Security &amp; Compliance</h3>
+        <ul class="skills">
+          <li>#zero-trust</li>
+          <li>#iam</li>
+          <li>#dod-il5</li>
+          <li>#fedramp</li>
+        </ul>
+        <p>IAM least privilege, KMS encryption, zero-trust network design, and compliance work aligned to DoD IL5 and FedRAMP standards.</p>
+      </div>
+      <div class="resume-card">
+        <h3>Observability</h3>
+        <ul class="skills">
+          <li>#grafana</li>
+          <li>#prometheus</li>
+          <li>#splunk</li>
+          <li>#elasticsearch</li>
+        </ul>
+        <p>SLO/SLI design, incident response and root-cause analysis, and monitoring/alerting pipelines built for fast, confident on-call.</p>
+      </div>
+    </div>
+
+    <div class="resume-preview">
+      <p class="resume-preview-label">Full resume</p>
+      <div class="resume-pdf-frame">
+        <object data="/resume/Christopher_Fickess_Resume.pdf#view=FitH" type="application/pdf" class="resume-pdf">
+          <p class="resume-pdf-fallback">
+            Your browser can't display the PDF inline. <a href="/resume/Christopher_Fickess_Resume.pdf" download>Download it instead</a>.
+          </p>
+        </object>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

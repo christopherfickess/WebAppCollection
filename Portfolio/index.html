@@ -3,6 +3,9 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="description" content="Chris Fickess | Site Reliability Engineer" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,42 +16,48 @@
   <!--Type of characters to use in website-->
   <meta name="robots" content="index, follow" />
   <!--tells web crawlers to index website on Google-->
-  <link rel="icon" href="./icon/fickess.PNG" />
+  <link rel="icon" href="./icon/octopus-favicon.png" />
 
   <!--scales website to fit page, this is useful for browsing on a phone-->
   <link rel="stylesheet" href="./styles/styles.css" />
-  <link rel="stylesheet" href="./styles/rails.css?v=11" />
+  <link rel="stylesheet" href="./styles/rails.css?v=30" />
   <script>
     (function () {
-      var saved = localStorage.getItem("portfolio-theme");
-      var theme = saved || "dark";
-      document.documentElement.setAttribute("data-theme", theme);
+      var themePref = localStorage.getItem("portfolio-theme-pref") || localStorage.getItem("portfolio-theme") || "dark";
+      var appliedTheme = themePref === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : themePref;
+      var preset = localStorage.getItem("portfolio-preset") || "verdant";
+      var railExpanded = localStorage.getItem("rail-expanded") === "true";
+      document.documentElement.setAttribute("data-theme", appliedTheme);
+      document.documentElement.setAttribute("data-theme-pref", themePref);
+      document.documentElement.setAttribute("data-preset", preset);
+      document.documentElement.setAttribute("data-rail-expanded", railExpanded ? "true" : "false");
     })();
   </script>
   <title>Christopher Fickess | Site Reliability Engineer</title>
 </head>
 
 <body>
+  <canvas id="starfield" class="starfield-canvas" aria-hidden="true"></canvas>
   <nav class="rail rail-left" aria-label="Primary">
     <a href="./index.html" title="Home" class="rail-active">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        <span class="rail-label">Home</span>
     </a>
     <a href="./projects/" title="Projects">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <span class="rail-label">Projects</span>
     </a>
     <a href="./resume/" title="Resume">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+        <span class="rail-label">Resume</span>
     </a>
     <a href="./contact/" title="Contact">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
+        <span class="rail-label">Contact</span>
     </a>
   </nav>
 
   <nav class="rail rail-right" aria-label="Utility">
-    <button id="theme-toggle" title="Toggle theme" type="button">
-      <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
-      <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
-    </button>
     <span class="rail-spacer"></span>
     <a href="https://www.linkedin.com/in/christopher-fickess-223a17182/" target="_blank" rel="noopener" title="LinkedIn">
       <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
@@ -74,9 +83,48 @@
 
   <header class="main-head">
     <nav>
+      <button id="rail-toggle" type="button" aria-label="Expand navigation" aria-pressed="false" title="Expand navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
       <div class="logo">
         <img src="./img/fickess-profile.jpeg" alt="logo" width="90rem">
         <h1>Chris Fickess</h1>
+      </div>
+      <span class="topbar-page">Home</span>
+      <div class="theme-switch" role="radiogroup" aria-label="Color theme">
+        <button type="button" class="theme-opt" data-theme-pref="light" title="Light">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+          <span>Light</span>
+        </button>
+        <button type="button" class="theme-opt" data-theme-pref="system" title="Auto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
+          <span>Auto</span>
+        </button>
+        <button type="button" class="theme-opt" data-theme-pref="dark" title="Dark">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+          <span>Dark</span>
+        </button>
+      </div>
+      <div class="display-menu">
+        <button id="display-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.3" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.7" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="16.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+          <span>Display</span>
+          <svg class="display-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="display-dropdown" id="display-dropdown" role="menu" hidden>
+          <button type="button" class="display-option" data-preset="aurora" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #26beff, #d81dff);"></span>Aurora
+          </button>
+          <button type="button" class="display-option" data-preset="ember" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #ff8a00, #ffd166);"></span>Ember
+          </button>
+          <button type="button" class="display-option" data-preset="verdant" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #1fae63, #7ee8a6);"></span>Verdant
+          </button>
+          <button type="button" class="display-option" data-preset="signal" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #7b5cf0, #c89bff);"></span>Signal Violet
+          </button>
+        </div>
       </div>
     </nav>
   </header>
@@ -84,6 +132,12 @@
     <div class="intro-text">
       <h2>Christopher Fickess</h2>
       <h3>Site Reliability Engineer</h3>
+      <p class="credential-line">B.S. Engineering Physics, University of Central Oklahoma</p>
+      <ul class="company-history">
+        <li>Tinker Air Force Base</li>
+        <li>Boeing</li>
+        <li>Mattermost</li>
+      </ul>
       <ul class="skills">
         <li>AWS Cloud Specialist</li>
         <li>Infrastructure as Code (IaC)</li>
@@ -97,6 +151,18 @@
         <div class="bio-section">
           <h4 class="bio-label">UCO, Physics, and the Course Nobody Else Would Teach</h4>
           <p>I went on to the University of Central Oklahoma for a degree in Engineering Physics. Most of the curriculum was required, but I kept signing up for the courses that weren't: Quantum Mechanics, Partial Differential Equations, and one gloriously impractical semester of Nonlinear Dynamics and Chaos Theory, just because I wanted to understand how those systems actually behaved. The one I'm proudest of is General Relativity. It wasn't in the course catalog at all, so I petitioned the university to add it. UCO agreed, the course ran, and turnout ended up higher than the same course drew at the top two universities in Oklahoma, schools several times our size with physics departments built for exactly that kind of class.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">Tinker Air Force Base: Where the Discipline Started</h4>
+          <p>My first engineering role out of UCO was at Tinker Air Force Base, doing DevSecOps on systems that couldn't afford to be wrong. I built Jenkins and Make based CI/CD pipelines in Azure DevOps, cutting build times by 65 percent, and automated RedHat virtualization with Bash so the team spent less time on manual setup and more on the engineering itself. Working alongside the cybersecurity side of that pipeline, where issues got caught long before anything reached production, reinforced the same lesson from the job site in different form, just automated: the earlier you catch the flaw, the cheaper it is to fix, so you build the check into the process instead of hoping someone notices later.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">Boeing: Leading Without Losing the Habit of Building</h4>
+          <p>From there I moved to Boeing, eventually leading the team as Senior Lead Site Reliability Engineer and Senior Lead Platform Engineer over three years in Oklahoma City. I architected multi-AZ, Blue/Green GitOps Kubernetes clusters on Terraform, migrated our EKS workloads to Karpenter for a 35 percent cost reduction, and spent plenty of on-call hours doing real-time incident response and root cause analysis when production broke. But the part of the job I valued most was the coaching: walking junior engineers through Infrastructure as Code until their manual work dropped by 40 percent and they didn't need me in the loop anymore. I also helped lead the migration of on-prem workloads into AWS GovCloud, got the program to DoD IL5 and ISO 27001 compliance, and pushed zero-trust from an afterthought to the default. Leading a team never stopped feeling like being the senior carpenter on a job site: still accountable for the work, just doing more of it through other people's hands.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">Mattermost: Teaching Chat How to Run Operations</h4>
+          <p>My current work is at Mattermost, building agentic chat systems that turn a chat window into an actual operations console. The approach is plug and play: plugins that integrate with the APIs and webhooks a team already has, so an operator can trigger real actions, restart a service, pull a dashboard, kick off a runbook, without ever leaving the conversation they're already having about the incident. A good example of what that enables: a postmortem playbook that runs directly inside Mattermost, so the retrospective isn't a document written after the fact in some other tool; it's captured where the incident actually happened, by the people who were there for it. It's the same thread running through every job I've had: close the gap between knowing something is wrong and doing something about it.</p>
         </div>
         <div class="bio-section">
           <h4 class="bio-label">Same Instinct, Different Materials</h4>
@@ -303,7 +369,7 @@
           </clipPath>
         </defs>
       </svg>
-       <img src="./img/splash.png" alt="" class="splash">
+       <div class="splash" role="presentation" aria-hidden="true"></div>
     </div>
   </section>
   <footer>
@@ -315,7 +381,8 @@
       <a href="./contact/">Contact</a>
     </nav>
   </footer>
-  <script src="./javascript/app.js"></script>
+  <script src="./javascript/starfield.js?v=24"></script>
+  <script src="./javascript/app.js?v=30"></script>
 </body>
 
 </html>
