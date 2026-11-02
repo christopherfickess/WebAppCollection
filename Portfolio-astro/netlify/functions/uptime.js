@@ -26,8 +26,9 @@ function normalizeStatus(raw) {
   return "unknown";
 }
 
-export default async () => {
+export default async (req) => {
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
+  const debugFields = new URL(req.url).searchParams.has("debugfields");
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Uptime monitoring isn't configured yet." }), {
@@ -50,6 +51,30 @@ export default async () => {
 
     const data = await res.json();
     const rawMonitors = Array.isArray(data) ? data : data.data || data.monitors || [];
+
+    // TEMP: ?debugfields=1 echoes a few specific fields (region,
+    // lastDayUptimes, timeout, expected codes) to check whether any
+    // have populated now that the monitor has run longer, without
+    // dumping the whole payload again. Removed once checked.
+    if (debugFields) {
+      return new Response(
+        JSON.stringify(
+          rawMonitors.map((m) => ({
+            regionalData: m.regionalData,
+            lastDayUptimes: m.lastDayUptimes,
+            timeout: m.timeout,
+            gracePeriod: m.gracePeriod,
+            successHttpResponseCodes: m.successHttpResponseCodes,
+            type: m.type,
+            tags: m.tags,
+            maintenanceWindows: m.maintenanceWindows,
+          })),
+          null,
+          2
+        ),
+        { headers: { "content-type": "application/json" } }
+      );
+    }
 
     const monitors = rawMonitors.map((m) => ({
       name: m.friendlyName || m.friendly_name || m.name || "Unnamed monitor",
