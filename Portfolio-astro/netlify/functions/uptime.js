@@ -20,12 +20,45 @@ function normalizeStatus(raw) {
   return "unknown";
 }
 
-export default async () => {
+export default async (req) => {
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
+  const debugRT = new URL(req.url).searchParams.has("debugrt");
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Uptime monitoring isn't configured yet." }), {
       status: 503,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  // TEMP: probes a few candidate v3 response-time endpoint shapes
+  // against the real API and reports which ones actually work, since
+  // the public docs don't give an exact path. Removed once confirmed.
+  if (debugRT) {
+    const monitorsRes = await fetch("https://api.uptimerobot.com/v3/monitors", {
+      headers: { Authorization: "Bearer " + apiKey, Accept: "application/json" },
+    });
+    const monitorsData = await monitorsRes.json();
+    const firstId = (monitorsData.data || monitorsData.monitors || [])[0]?.id;
+
+    const candidates = [
+      "https://api.uptimerobot.com/v3/monitors/" + firstId + "/response-times",
+      "https://api.uptimerobot.com/v3/monitors?responseTimes=1",
+      "https://api.uptimerobot.com/v3/response-times?monitorId=" + firstId,
+      "https://api.uptimerobot.com/v3/monitors/" + firstId + "?include=responseTimes",
+    ];
+
+    const results = {};
+    for (const url of candidates) {
+      try {
+        const r = await fetch(url, { headers: { Authorization: "Bearer " + apiKey, Accept: "application/json" } });
+        const bodyText = await r.text();
+        results[url] = { status: r.status, body: bodyText.slice(0, 600) };
+      } catch (e) {
+        results[url] = { error: String(e) };
+      }
+    }
+    return new Response(JSON.stringify({ firstId, results }, null, 2), {
       headers: { "content-type": "application/json" },
     });
   }
