@@ -25,8 +25,9 @@ function normalizeStatus(raw) {
   return "unknown";
 }
 
-export default async () => {
+export default async (req) => {
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
+  const debug = new URL(req.url).searchParams.has("debug");
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Uptime monitoring isn't configured yet." }), {
@@ -49,6 +50,15 @@ export default async () => {
 
     const data = await res.json();
     const rawMonitors = Array.isArray(data) ? data : data.monitors || data.data || [];
+
+    // TEMP: ?debug=1 echoes the raw UptimeRobot response shape so the
+    // field-name guesses below can be corrected against real data,
+    // then this block gets removed once confirmed correct.
+    if (debug) {
+      return new Response(JSON.stringify(data, null, 2), {
+        headers: { "content-type": "application/json" },
+      });
+    }
 
     const monitors = rawMonitors.map((m) => ({
       name: m.friendly_name || m.friendlyName || m.name || "Unnamed monitor",
