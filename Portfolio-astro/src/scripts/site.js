@@ -32,7 +32,7 @@
   }
 
   if (themeOpts.length) {
-    applyThemePreference(root.getAttribute("data-theme-pref") || "dark");
+    applyThemePreference(root.getAttribute("data-theme-pref") || "system");
     themeOpts.forEach(function (btn) {
       btn.addEventListener("click", function () {
         applyThemePreference(btn.dataset.themePref);

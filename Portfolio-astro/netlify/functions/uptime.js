@@ -14,6 +14,8 @@
 // are real fields already in this same payload at no extra request
 // cost; they're null unless the account enables SSL/domain checking
 // on a given monitor (an UptimeRobot-side setting, not ours to flip).
+// lastDayUptimes stayed an empty histogram even after the monitor had
+// run for hours, so it's not a usable uptime-percentage source either.
 
 function normalizeStatus(raw) {
   if (typeof raw === "string") {
@@ -26,9 +28,8 @@ function normalizeStatus(raw) {
   return "unknown";
 }
 
-export default async (req) => {
+export default async () => {
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
-  const debugFields = new URL(req.url).searchParams.has("debugfields");
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Uptime monitoring isn't configured yet." }), {
@@ -52,30 +53,6 @@ export default async (req) => {
     const data = await res.json();
     const rawMonitors = Array.isArray(data) ? data : data.data || data.monitors || [];
 
-    // TEMP: ?debugfields=1 echoes a few specific fields (region,
-    // lastDayUptimes, timeout, expected codes) to check whether any
-    // have populated now that the monitor has run longer, without
-    // dumping the whole payload again. Removed once checked.
-    if (debugFields) {
-      return new Response(
-        JSON.stringify(
-          rawMonitors.map((m) => ({
-            regionalData: m.regionalData,
-            lastDayUptimes: m.lastDayUptimes,
-            timeout: m.timeout,
-            gracePeriod: m.gracePeriod,
-            successHttpResponseCodes: m.successHttpResponseCodes,
-            type: m.type,
-            tags: m.tags,
-            maintenanceWindows: m.maintenanceWindows,
-          })),
-          null,
-          2
-        ),
-        { headers: { "content-type": "application/json" } }
-      );
-    }
-
     const monitors = rawMonitors.map((m) => ({
       name: m.friendlyName || m.friendly_name || m.name || "Unnamed monitor",
       url: m.url || m.link || null,
@@ -93,6 +70,11 @@ export default async (req) => {
         : null,
       monitoringSince: m.createDateTime || null,
       type: m.type || null,
+      region: Array.isArray(m.regionalData?.REGION) ? m.regionalData.REGION.join(", ") : null,
+      timeoutSeconds: typeof m.timeout === "number" ? m.timeout : null,
+      expectedCodes: Array.isArray(m.successHttpResponseCodes) ? m.successHttpResponseCodes : null,
+      tags: Array.isArray(m.tags) ? m.tags : [],
+      maintenanceWindowCount: Array.isArray(m.maintenanceWindows) ? m.maintenanceWindows.length : 0,
     }));
 
     return new Response(JSON.stringify({ monitors }), {

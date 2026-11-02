@@ -1,5 +1,5 @@
 (function () {
-  var themePref = localStorage.getItem("portfolio-theme-pref") || localStorage.getItem("portfolio-theme") || "dark";
+  var themePref = localStorage.getItem("portfolio-theme-pref") || localStorage.getItem("portfolio-theme") || "system";
   var appliedTheme = themePref === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : themePref;
   var preset = localStorage.getItem("portfolio-preset") || "verdant";
   var railExpanded = localStorage.getItem("rail-expanded") === "true";

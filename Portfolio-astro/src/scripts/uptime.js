@@ -95,10 +95,16 @@ function monitorCard(monitor) {
   const items = [
     dataItem(monitor.status === "down" ? "Down for" : "Up for", duration),
     dataItem("Checks every", monitor.intervalSeconds && monitor.intervalSeconds % 60 === 0 ? monitor.intervalSeconds / 60 + " min" : null),
+    dataItem("Checked from", monitor.region ? monitor.region.toUpperCase() : null),
+    dataItem("Expects", monitor.expectedCodes && monitor.expectedCodes.length ? monitor.expectedCodes.join(", ") : null),
+    dataItem("Monitor type", monitor.type),
+    dataItem("Timeout", monitor.timeoutSeconds ? monitor.timeoutSeconds + "s" : null),
     dataItem("Monitoring since", monitoringSince),
     dataItem("SSL cert", ssl.value, ssl.warn),
     dataItem("Domain", domain.value, domain.warn),
     dataItem("Last incident", incident.value, incident.warn, true),
+    monitor.tags && monitor.tags.length ? dataItem("Tags", monitor.tags.map(escapeHtml).join(", "), false, true) : "",
+    monitor.maintenanceWindowCount ? dataItem("Maintenance windows", String(monitor.maintenanceWindowCount), false, true) : "",
   ]
     .filter(Boolean)
     .join("");
