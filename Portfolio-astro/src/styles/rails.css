@@ -1941,24 +1941,64 @@ footer .footer-nav a:hover {
   color: var(--text-muted);
 }
 
-/* ---------- uptime status list ---------- */
+/* ---------- uptime dashboard ---------- */
 
-.obs-uptime-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.obs-uptime-row {
+.obs-uptime-summary {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.6rem;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
   background: var(--bg-soft);
   border: 1px solid var(--border);
+}
+
+.obs-uptime-summary-up {
+  color: #2fbf6e;
+}
+
+.obs-uptime-summary-down {
+  color: #e5484d;
+}
+
+.obs-uptime-summary-paused {
+  color: var(--text-muted);
+}
+
+.obs-uptime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.obs-uptime-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   border-radius: 10px;
-  padding: 0.8rem 1.1rem;
+  padding: 1rem 1.1rem;
   font-family: "Montserrat", sans-serif;
-  font-size: 0.9rem;
+}
+
+.obs-uptime-card-up {
+  border-left-color: #2fbf6e;
+}
+
+.obs-uptime-card-down {
+  border-left-color: #e5484d;
+}
+
+.obs-uptime-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .obs-uptime-dot {
@@ -1981,27 +2021,13 @@ footer .footer-nav a:hover {
   background: var(--text-muted);
 }
 
-.obs-uptime-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-}
-
-.obs-uptime-name a {
-  color: inherit;
-  font-size: inherit;
-}
-
 .obs-uptime-badge {
   flex: 0 0 auto;
   font-family: "SFMono-Regular", Consolas, Menlo, monospace;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0.2rem 0.55rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 999px;
 }
 
@@ -2021,8 +2047,27 @@ footer .footer-nav a:hover {
   background: var(--chip-bg);
 }
 
-.obs-uptime-ratio {
-  flex: 0 0 auto;
+.obs-uptime-card-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obs-uptime-card-name a {
+  color: inherit;
+  font-size: inherit;
+}
+
+.obs-uptime-duration {
+  font-size: 0.8rem;
   color: var(--text-muted);
-  font-size: 0.78rem;
+}
+
+.obs-uptime-interval {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  opacity: 0.8;
 }

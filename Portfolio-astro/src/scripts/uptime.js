@@ -11,22 +11,66 @@ const STATUS_LABEL = {
   unknown: "Unknown",
 };
 
-function monitorRow(monitor) {
+function formatDuration(seconds) {
+  if (seconds === null || seconds === undefined) return null;
+  if (seconds < 60) return "under 1m";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + "m";
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + "h " + (minutes % 60) + "m";
+  const days = Math.floor(hours / 24);
+  return days + "d " + (hours % 24) + "h";
+}
+
+function monitorCard(monitor) {
   const label = STATUS_LABEL[monitor.status] || STATUS_LABEL.unknown;
-  const ratio =
-    monitor.uptimeRatio !== null && monitor.uptimeRatio !== undefined
-      ? '<span class="obs-uptime-ratio">' + Number(monitor.uptimeRatio).toFixed(2) + "% (30d)</span>"
+  const duration = formatDuration(monitor.stateDurationSeconds);
+  const durationText = duration
+    ? '<span class="obs-uptime-duration">' +
+      (monitor.status === "up" ? "Up for " : monitor.status === "down" ? "Down for " : "For ") +
+      duration +
+      "</span>"
+    : "";
+  const intervalText =
+    monitor.intervalSeconds && monitor.intervalSeconds % 60 === 0
+      ? '<span class="obs-uptime-interval">checked every ' + monitor.intervalSeconds / 60 + "m</span>"
       : "";
-  const name = monitor.url
+  const nameEl = monitor.url
     ? '<a href="' + monitor.url + '" target="_blank" rel="noopener">' + monitor.name + "</a>"
     : monitor.name;
 
   return (
-    '<div class="obs-uptime-row">' +
+    '<div class="obs-uptime-card obs-uptime-card-' + monitor.status + '">' +
+    '<div class="obs-uptime-card-head">' +
     '<span class="obs-uptime-dot obs-uptime-' + monitor.status + '"></span>' +
-    '<span class="obs-uptime-name">' + name + "</span>" +
     '<span class="obs-uptime-badge obs-uptime-' + monitor.status + '">' + label + "</span>" +
-    ratio +
+    "</div>" +
+    '<div class="obs-uptime-card-name">' + nameEl + "</div>" +
+    durationText +
+    intervalText +
+    "</div>"
+  );
+}
+
+function summaryBar(monitors) {
+  const total = monitors.length;
+  const upCount = monitors.filter((m) => m.status === "up").length;
+  const downCount = monitors.filter((m) => m.status === "down").length;
+
+  let tone = "up";
+  let text = "All systems operational (" + upCount + "/" + total + " up)";
+  if (downCount > 0) {
+    tone = "down";
+    text = downCount + " of " + total + " down right now";
+  } else if (upCount < total) {
+    tone = "paused";
+    text = upCount + "/" + total + " up, rest paused or unchecked";
+  }
+
+  return (
+    '<div class="obs-uptime-summary obs-uptime-summary-' + tone + '">' +
+    '<span class="obs-uptime-dot obs-uptime-' + tone + '"></span>' +
+    text +
     "</div>"
   );
 }
@@ -53,7 +97,11 @@ async function loadUptime(container) {
       return;
     }
 
-    container.innerHTML = data.monitors.map(monitorRow).join("");
+    container.innerHTML =
+      summaryBar(data.monitors) +
+      '<div class="obs-uptime-grid">' +
+      data.monitors.map(monitorCard).join("") +
+      "</div>";
   } catch (err) {
     container.innerHTML =
       '<p class="obs-empty">Not wired up yet - this section is ready to go the moment a monitor and API key are in place.</p>';

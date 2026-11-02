@@ -6,9 +6,10 @@
 // needs to render a status list.
 
 function normalizeStatus(raw) {
-  // v3 is expected to use a string status; fall back to legacy v2's
-  // numeric codes (0 paused, 1 not-checked-yet, 2 up, 8 seems-down,
-  // 9 down) in case the account/endpoint still answers in that shape.
+  // Confirmed live against the real v3 response: status is an
+  // uppercase string like "UP". Matched loosely in case other values
+  // ("SEEMS_DOWN", "NOT_CHECKED_YET", etc.) show up for other monitor
+  // states.
   if (typeof raw === "string") {
     const s = raw.toLowerCase();
     if (s.includes("down")) return "down";
@@ -16,18 +17,11 @@ function normalizeStatus(raw) {
     if (s.includes("up")) return "up";
     return "unknown";
   }
-  if (typeof raw === "number") {
-    if (raw === 2) return "up";
-    if (raw === 9 || raw === 8) return "down";
-    if (raw === 0) return "paused";
-    return "unknown";
-  }
   return "unknown";
 }
 
-export default async (req) => {
+export default async () => {
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
-  const debug = new URL(req.url).searchParams.has("debug");
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Uptime monitoring isn't configured yet." }), {
@@ -49,27 +43,15 @@ export default async (req) => {
     }
 
     const data = await res.json();
-    const rawMonitors = Array.isArray(data) ? data : data.monitors || data.data || [];
-
-    // TEMP: ?debug=1 echoes the raw UptimeRobot response shape so the
-    // field-name guesses below can be corrected against real data,
-    // then this block gets removed once confirmed correct.
-    if (debug) {
-      return new Response(JSON.stringify(data, null, 2), {
-        headers: { "content-type": "application/json" },
-      });
-    }
+    const rawMonitors = Array.isArray(data) ? data : data.data || data.monitors || [];
 
     const monitors = rawMonitors.map((m) => ({
-      name: m.friendly_name || m.friendlyName || m.name || "Unnamed monitor",
+      name: m.friendlyName || m.friendly_name || m.name || "Unnamed monitor",
       url: m.url || m.link || null,
       status: normalizeStatus(m.status),
-      uptimeRatio:
-        m.custom_uptime_ratio ??
-        m.uptime_ratio ??
-        m.uptimeRatio ??
-        (m.uptime && m.uptime.ratio) ??
-        null,
+      stateDurationSeconds:
+        typeof m.currentStateDuration === "number" ? m.currentStateDuration : null,
+      intervalSeconds: typeof m.interval === "number" ? m.interval : null,
     }));
 
     return new Response(JSON.stringify({ monitors }), {
