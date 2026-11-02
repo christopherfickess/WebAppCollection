@@ -4,8 +4,8 @@
 // serverless runtime) this route doesn't exist, so it fails closed
 // into the same "not configured" message rather than throwing.
 
-const STATUS_LABEL = {
-  up: "Up",
+const STATUS_WORD = {
+  up: "Operational",
   down: "Down",
   paused: "Paused",
   unknown: "Unknown",
@@ -17,7 +17,7 @@ function escapeHtml(str) {
 
 function hostnameOf(url) {
   try {
-    return new URL(url).hostname;
+    return new URL(url).hostname + new URL(url).pathname.replace(/\/$/, "");
   } catch (e) {
     return url;
   }
@@ -48,46 +48,57 @@ function daysUntil(dateString) {
   return Math.ceil((target - Date.now()) / 86400000);
 }
 
-function detailRow(text, warn) {
-  return '<div class="obs-uptime-detail' + (warn ? " obs-uptime-detail-warn" : "") + '">' + text + "</div>";
+function dataItem(label, value, warn, full) {
+  if (!value) return "";
+  return (
+    '<div class="obs-uptime-data-item' +
+    (full ? " obs-uptime-data-full" : "") +
+    '"><dt>' +
+    label +
+    "</dt><dd" +
+    (warn ? ' class="obs-uptime-data-warn"' : "") +
+    ">" +
+    value +
+    "</dd></div>"
+  );
 }
 
-function expiryDetail(label, dateString) {
+function expiryValue(dateString) {
   const days = daysUntil(dateString);
-  if (days === null) return "";
-  const urgent = days <= 14;
-  const text = days < 0 ? label + " cert expired" : label + " expires in " + days + "d";
-  return detailRow(text, urgent);
+  if (days === null) return { value: null, warn: false };
+  if (days < 0) return { value: "Expired", warn: true };
+  return { value: days + " days", warn: days <= 14 };
 }
 
-function incidentDetail(incident) {
-  if (!incident || !incident.startedAt) return detailRow("No incidents recorded");
+function incidentValue(incident) {
+  if (!incident || !incident.startedAt) return { value: "None recorded", warn: false };
   const started = new Date(incident.startedAt).getTime();
-  if (Number.isNaN(started)) return "";
+  if (Number.isNaN(started)) return { value: "None recorded", warn: false };
   if (!incident.endedAt) {
-    return detailRow("Ongoing incident since " + (formatDate(incident.startedAt) || "recently"), true);
+    return { value: "Ongoing since " + (formatDate(incident.startedAt) || "recently"), warn: true };
   }
   const daysAgo = Math.floor((Date.now() - started) / 86400000);
-  return detailRow("Last incident " + (daysAgo <= 0 ? "today" : daysAgo + "d ago"));
+  return { value: daysAgo <= 0 ? "Today" : daysAgo + "d ago", warn: false };
 }
 
 function monitorCard(monitor) {
-  const label = STATUS_LABEL[monitor.status] || STATUS_LABEL.unknown;
+  const statusWord = STATUS_WORD[monitor.status] || STATUS_WORD.unknown;
   const duration = formatDuration(monitor.stateDurationSeconds);
-  const sinceWord = monitor.status === "up" ? "Up for " : monitor.status === "down" ? "Down for " : "For ";
   const name = escapeHtml(monitor.name);
   const host = monitor.url ? escapeHtml(hostnameOf(monitor.url)) : "";
+  const showHost = host && host !== name;
   const monitoringSince = formatDate(monitor.monitoringSince);
+  const ssl = expiryValue(monitor.sslExpiryDateTime);
+  const domain = expiryValue(monitor.domainExpireDate);
+  const incident = incidentValue(monitor.lastIncident);
 
-  const details = [
-    duration ? detailRow(sinceWord + duration) : "",
-    monitor.intervalSeconds && monitor.intervalSeconds % 60 === 0
-      ? detailRow("Checked every " + monitor.intervalSeconds / 60 + "m")
-      : "",
-    monitoringSince ? detailRow("Monitoring since " + monitoringSince) : "",
-    expiryDetail("SSL", monitor.sslExpiryDateTime),
-    expiryDetail("Domain", monitor.domainExpireDate),
-    incidentDetail(monitor.lastIncident),
+  const items = [
+    dataItem(monitor.status === "down" ? "Down for" : "Up for", duration),
+    dataItem("Checks every", monitor.intervalSeconds && monitor.intervalSeconds % 60 === 0 ? monitor.intervalSeconds / 60 + " min" : null),
+    dataItem("Monitoring since", monitoringSince),
+    dataItem("SSL cert", ssl.value, ssl.warn),
+    dataItem("Domain", domain.value, domain.warn),
+    dataItem("Last incident", incident.value, incident.warn, true),
   ]
     .filter(Boolean)
     .join("");
@@ -98,13 +109,13 @@ function monitorCard(monitor) {
 
   return (
     '<div class="obs-uptime-card obs-uptime-card-' + monitor.status + '">' +
-    '<div class="obs-uptime-card-head">' +
-    '<span class="obs-uptime-dot obs-uptime-' + monitor.status + '"></span>' +
-    '<span class="obs-uptime-badge obs-uptime-' + monitor.status + '">' + label + "</span>" +
+    '<div class="obs-uptime-card-status">' +
+    '<span class="obs-uptime-ring obs-uptime-ring-' + monitor.status + '"><span class="obs-uptime-dot obs-uptime-' + monitor.status + '"></span></span>' +
+    '<span class="obs-uptime-status-word obs-uptime-status-word-' + monitor.status + '">' + statusWord + "</span>" +
     "</div>" +
     '<div class="obs-uptime-card-name">' + nameEl + "</div>" +
-    (host ? '<div class="obs-uptime-card-host">' + host + "</div>" : "") +
-    '<div class="obs-uptime-details">' + details + "</div>" +
+    (showHost ? '<div class="obs-uptime-card-host">' + host + "</div>" : "") +
+    '<dl class="obs-uptime-datagrid">' + items + "</dl>" +
     "</div>"
   );
 }
@@ -126,7 +137,7 @@ function summaryBar(monitors) {
 
   return (
     '<div class="obs-uptime-summary obs-uptime-summary-' + tone + '">' +
-    '<span class="obs-uptime-dot obs-uptime-' + tone + '"></span>' +
+    '<span class="obs-uptime-ring obs-uptime-ring-' + tone + '"><span class="obs-uptime-dot obs-uptime-' + tone + '"></span></span>' +
     text +
     "</div>"
   );
