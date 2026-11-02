@@ -11,6 +11,18 @@ const STATUS_LABEL = {
   unknown: "Unknown",
 };
 
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function hostnameOf(url) {
+  try {
+    return new URL(url).hostname;
+  } catch (e) {
+    return url;
+  }
+}
+
 function formatDuration(seconds) {
   if (seconds === null || seconds === undefined) return null;
   if (seconds < 60) return "under 1m";
@@ -22,22 +34,67 @@ function formatDuration(seconds) {
   return days + "d " + (hours % 24) + "h";
 }
 
+function formatDate(dateString) {
+  if (!dateString) return null;
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function daysUntil(dateString) {
+  if (!dateString) return null;
+  const target = new Date(dateString).getTime();
+  if (Number.isNaN(target)) return null;
+  return Math.ceil((target - Date.now()) / 86400000);
+}
+
+function detailRow(text, warn) {
+  return '<div class="obs-uptime-detail' + (warn ? " obs-uptime-detail-warn" : "") + '">' + text + "</div>";
+}
+
+function expiryDetail(label, dateString) {
+  const days = daysUntil(dateString);
+  if (days === null) return "";
+  const urgent = days <= 14;
+  const text = days < 0 ? label + " cert expired" : label + " expires in " + days + "d";
+  return detailRow(text, urgent);
+}
+
+function incidentDetail(incident) {
+  if (!incident || !incident.startedAt) return detailRow("No incidents recorded");
+  const started = new Date(incident.startedAt).getTime();
+  if (Number.isNaN(started)) return "";
+  if (!incident.endedAt) {
+    return detailRow("Ongoing incident since " + (formatDate(incident.startedAt) || "recently"), true);
+  }
+  const daysAgo = Math.floor((Date.now() - started) / 86400000);
+  return detailRow("Last incident " + (daysAgo <= 0 ? "today" : daysAgo + "d ago"));
+}
+
 function monitorCard(monitor) {
   const label = STATUS_LABEL[monitor.status] || STATUS_LABEL.unknown;
   const duration = formatDuration(monitor.stateDurationSeconds);
-  const durationText = duration
-    ? '<span class="obs-uptime-duration">' +
-      (monitor.status === "up" ? "Up for " : monitor.status === "down" ? "Down for " : "For ") +
-      duration +
-      "</span>"
-    : "";
-  const intervalText =
+  const sinceWord = monitor.status === "up" ? "Up for " : monitor.status === "down" ? "Down for " : "For ";
+  const name = escapeHtml(monitor.name);
+  const host = monitor.url ? escapeHtml(hostnameOf(monitor.url)) : "";
+  const monitoringSince = formatDate(monitor.monitoringSince);
+
+  const details = [
+    duration ? detailRow(sinceWord + duration) : "",
     monitor.intervalSeconds && monitor.intervalSeconds % 60 === 0
-      ? '<span class="obs-uptime-interval">checked every ' + monitor.intervalSeconds / 60 + "m</span>"
-      : "";
+      ? detailRow("Checked every " + monitor.intervalSeconds / 60 + "m")
+      : "",
+    monitoringSince ? detailRow("Monitoring since " + monitoringSince) : "",
+    expiryDetail("SSL", monitor.sslExpiryDateTime),
+    expiryDetail("Domain", monitor.domainExpireDate),
+    incidentDetail(monitor.lastIncident),
+  ]
+    .filter(Boolean)
+    .join("");
+
   const nameEl = monitor.url
-    ? '<a href="' + monitor.url + '" target="_blank" rel="noopener">' + monitor.name + "</a>"
-    : monitor.name;
+    ? '<a href="' + monitor.url + '" target="_blank" rel="noopener" title="' + name + '">' + name + "</a>"
+    : name;
 
   return (
     '<div class="obs-uptime-card obs-uptime-card-' + monitor.status + '">' +
@@ -46,8 +103,8 @@ function monitorCard(monitor) {
     '<span class="obs-uptime-badge obs-uptime-' + monitor.status + '">' + label + "</span>" +
     "</div>" +
     '<div class="obs-uptime-card-name">' + nameEl + "</div>" +
-    durationText +
-    intervalText +
+    (host ? '<div class="obs-uptime-card-host">' + host + "</div>" : "") +
+    '<div class="obs-uptime-details">' + details + "</div>" +
     "</div>"
   );
 }

@@ -4,12 +4,18 @@
 // stays on the server. Only a trimmed, normalized shape goes back to
 // the client: no account-wide details beyond what the Uptime section
 // needs to render a status list.
+//
+// Field mapping confirmed live against the real v3 response (GET
+// /v3/monitors): top level is {data: [...]}, name is friendlyName,
+// status is an uppercase string. Response-time data (min/max/avg/p95)
+// does not appear to exist in v3 yet - probed the obvious query-param
+// and sub-resource shapes and none added a responseTimes field, only
+// a v2-era blog post mentions it. SSL/domain expiry and last-incident
+// are real fields already in this same payload at no extra request
+// cost; they're null unless the account enables SSL/domain checking
+// on a given monitor (an UptimeRobot-side setting, not ours to flip).
 
 function normalizeStatus(raw) {
-  // Confirmed live against the real v3 response: status is an
-  // uppercase string like "UP". Matched loosely in case other values
-  // ("SEEMS_DOWN", "NOT_CHECKED_YET", etc.) show up for other monitor
-  // states.
   if (typeof raw === "string") {
     const s = raw.toLowerCase();
     if (s.includes("down")) return "down";
@@ -20,49 +26,12 @@ function normalizeStatus(raw) {
   return "unknown";
 }
 
-export default async (req) => {
+export default async () => {
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
-  const debugRT = new URL(req.url).searchParams.has("debugrt");
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Uptime monitoring isn't configured yet." }), {
       status: 503,
-      headers: { "content-type": "application/json" },
-    });
-  }
-
-  // TEMP: probes a few candidate v3 response-time endpoint shapes
-  // against the real API and reports which ones actually work, since
-  // the public docs don't give an exact path. Removed once confirmed.
-  if (debugRT) {
-    const monitorsRes = await fetch("https://api.uptimerobot.com/v3/monitors", {
-      headers: { Authorization: "Bearer " + apiKey, Accept: "application/json" },
-    });
-    const monitorsData = await monitorsRes.json();
-    const firstId = (monitorsData.data || monitorsData.monitors || [])[0]?.id;
-
-    const candidates = [
-      "https://api.uptimerobot.com/v3/monitors?responseTimes=1",
-      "https://api.uptimerobot.com/v3/monitors/" + firstId + "?include=responseTimes",
-    ];
-
-    const results = {};
-    for (const url of candidates) {
-      try {
-        const r = await fetch(url, { headers: { Authorization: "Bearer " + apiKey, Accept: "application/json" } });
-        const bodyJson = await r.json();
-        const keys = Array.isArray(bodyJson.data)
-          ? Object.keys(bodyJson.data[0] || {})
-          : Object.keys(bodyJson);
-        const responseTimeSample = Array.isArray(bodyJson.data)
-          ? bodyJson.data[0]?.responseTimes || bodyJson.data[0]?.response_times
-          : bodyJson.responseTimes || bodyJson.response_times;
-        results[url] = { status: r.status, keys, responseTimeSample };
-      } catch (e) {
-        results[url] = { error: String(e) };
-      }
-    }
-    return new Response(JSON.stringify({ firstId, results }, null, 2), {
       headers: { "content-type": "application/json" },
     });
   }
@@ -89,6 +58,16 @@ export default async (req) => {
       stateDurationSeconds:
         typeof m.currentStateDuration === "number" ? m.currentStateDuration : null,
       intervalSeconds: typeof m.interval === "number" ? m.interval : null,
+      sslExpiryDateTime: m.sslExpiryDateTime || null,
+      domainExpireDate: m.domainExpireDate || null,
+      lastIncident: m.lastIncident
+        ? {
+            startedAt: m.lastIncident.startedAt || m.lastIncident.started_at || null,
+            endedAt: m.lastIncident.endedAt || m.lastIncident.ended_at || null,
+          }
+        : null,
+      monitoringSince: m.createDateTime || null,
+      type: m.type || null,
     }));
 
     return new Response(JSON.stringify({ monitors }), {

@@ -2061,13 +2061,31 @@ footer .footer-nav a:hover {
   font-size: inherit;
 }
 
-.obs-uptime-duration {
-  font-size: 0.8rem;
+.obs-uptime-card-host {
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: -0.1rem;
+}
+
+.obs-uptime-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.4rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.obs-uptime-detail {
+  font-size: 0.78rem;
   color: var(--text-muted);
 }
 
-.obs-uptime-interval {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  opacity: 0.8;
+.obs-uptime-detail-warn {
+  color: #e5a53e;
+  font-weight: 600;
 }
