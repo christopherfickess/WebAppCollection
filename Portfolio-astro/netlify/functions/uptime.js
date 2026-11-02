@@ -42,9 +42,7 @@ export default async (req) => {
     const firstId = (monitorsData.data || monitorsData.monitors || [])[0]?.id;
 
     const candidates = [
-      "https://api.uptimerobot.com/v3/monitors/" + firstId + "/response-times",
       "https://api.uptimerobot.com/v3/monitors?responseTimes=1",
-      "https://api.uptimerobot.com/v3/response-times?monitorId=" + firstId,
       "https://api.uptimerobot.com/v3/monitors/" + firstId + "?include=responseTimes",
     ];
 
@@ -52,8 +50,14 @@ export default async (req) => {
     for (const url of candidates) {
       try {
         const r = await fetch(url, { headers: { Authorization: "Bearer " + apiKey, Accept: "application/json" } });
-        const bodyText = await r.text();
-        results[url] = { status: r.status, body: bodyText.slice(0, 600) };
+        const bodyJson = await r.json();
+        const keys = Array.isArray(bodyJson.data)
+          ? Object.keys(bodyJson.data[0] || {})
+          : Object.keys(bodyJson);
+        const responseTimeSample = Array.isArray(bodyJson.data)
+          ? bodyJson.data[0]?.responseTimes || bodyJson.data[0]?.response_times
+          : bodyJson.responseTimes || bodyJson.response_times;
+        results[url] = { status: r.status, keys, responseTimeSample };
       } catch (e) {
         results[url] = { error: String(e) };
       }
