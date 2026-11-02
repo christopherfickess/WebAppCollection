@@ -2005,6 +2005,24 @@ footer .footer-nav a:hover {
   gap: 0.6rem;
 }
 
+.obs-uptime-percent {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.obs-uptime-percent small {
+  font-weight: 500;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
 /* Big glowing status ring - the dominant visual per card, not a tiny
    dot buried next to an abbreviation. */
 .obs-uptime-ring {

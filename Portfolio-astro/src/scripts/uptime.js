@@ -92,6 +92,8 @@ function monitorCard(monitor) {
   const domain = expiryValue(monitor.domainExpireDate);
   const incident = incidentValue(monitor.lastIncident);
 
+  const mtbf = formatDuration(monitor.mtbfSeconds);
+
   const items = [
     dataItem(monitor.status === "down" ? "Down for" : "Up for", duration),
     dataItem("Checks every", monitor.intervalSeconds && monitor.intervalSeconds % 60 === 0 ? monitor.intervalSeconds / 60 + " min" : null),
@@ -100,6 +102,8 @@ function monitorCard(monitor) {
     dataItem("Monitor type", monitor.type),
     dataItem("Timeout", monitor.timeoutSeconds ? monitor.timeoutSeconds + "s" : null),
     dataItem("Monitoring since", monitoringSince),
+    dataItem("Incidents (30d)", monitor.incidentCount30d !== null ? String(monitor.incidentCount30d) : null),
+    dataItem("Avg between incidents", mtbf),
     dataItem("SSL cert", ssl.value, ssl.warn),
     dataItem("Domain", domain.value, domain.warn),
     dataItem("Last incident", incident.value, incident.warn, true),
@@ -113,11 +117,17 @@ function monitorCard(monitor) {
     ? '<a href="' + monitor.url + '" target="_blank" rel="noopener" title="' + name + '">' + name + "</a>"
     : name;
 
+  const uptimePercentText =
+    monitor.uptimePercent30d !== null && monitor.uptimePercent30d !== undefined
+      ? '<span class="obs-uptime-percent">' + monitor.uptimePercent30d.toFixed(2) + "%<small>30d</small></span>"
+      : "";
+
   return (
     '<div class="obs-uptime-card obs-uptime-card-' + monitor.status + '">' +
     '<div class="obs-uptime-card-status">' +
     '<span class="obs-uptime-ring obs-uptime-ring-' + monitor.status + '"><span class="obs-uptime-dot obs-uptime-' + monitor.status + '"></span></span>' +
     '<span class="obs-uptime-status-word obs-uptime-status-word-' + monitor.status + '">' + statusWord + "</span>" +
+    uptimePercentText +
     "</div>" +
     '<div class="obs-uptime-card-name">' + nameEl + "</div>" +
     (showHost ? '<div class="obs-uptime-card-host">' + host + "</div>" : "") +
