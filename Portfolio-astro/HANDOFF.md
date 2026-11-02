@@ -1,0 +1,143 @@
+# Portfolio redesign — session handoff
+
+Status snapshot for picking this back up later. Read this before assuming
+anything about "the live site" — there are two deployments in play right now.
+
+## Where things actually are
+
+- **Repo**: `christopherfickess/WebAppCollection` (GitHub). This Astro
+  project lives at `WebAppCollection/Portfolio-astro/` inside it — the repo
+  root on GitHub *is* `WebAppCollection`, not the `websites/` folder above it.
+- **Branch**: `redesign/rails-nav-theme`, pushed to `origin`. **Not merged to
+  `main`.**
+- **Production** (untouched all session): `main--fickess.netlify.app`, still
+  serving the old hand-written site at `WebAppCollection/Portfolio/`.
+- **Test deployment** (new Astro site): Netlify site `starlight-dogfood-test-1`,
+  building from `redesign/rails-nav-theme`, base directory `Portfolio-astro`.
+  - Bookmark **`https://redesign-rails-nav-theme--starlight-dogfood-test-1.netlify.app/`**
+    — this is the stable branch alias that always reflects the latest push.
+  - Any URL with a long hash prefix (e.g. `6ae7fc79...--starlight-dogfood-test-1.netlify.app`)
+    is a **pinned snapshot of one specific deploy** and will never update —
+    don't use these for ongoing checks, only for referencing a specific past build.
+  - Env var `UPTIMEROBOT_API_KEY` is already set on this Netlify site
+    (All scopes, same value pasted into Production/Deploy Previews/Branch
+    deploys/Preview Server contexts since the free tier doesn't allow one
+    shared value across all contexts).
+
+## What got built this session
+
+**1. Full Astro migration** (from a hand-written, 4x-duplicated static site)
+- New project at `Portfolio-astro/`, sibling to the untouched original `Portfolio/`.
+- Shared components instead of 4 copy-pasted HTML files: `BaseLayout`,
+  `NavRail`, `UtilityRail`, `MobileDrawer`, `Topbar`, `Footer`, `Starfield`,
+  `HeroIllustration`. One shared `site.js` / `starfield.js` instead of 4
+  inline script copies.
+- Content-hashed asset filenames (kills the old manual `?v=N` cache-busting
+  that caused real bugs all session).
+- Strict CSP + security headers via `public/_headers` (`script-src`/`style-src`
+  `'self'`, no `unsafe-inline` — had to externalize the theme-boot script and
+  remove one inline `style=""` attribute to get there).
+- Self-hosted fonts (Montserrat, Frank Ruhl Libre) instead of Google Fonts CDN.
+- `astro:assets` `<Image>` for the 3 project screenshots (319KB/217KB/568KB
+  PNG → 10KB/18KB/19KB WebP).
+- `index-before.html` / `index-redesign.html` deliberately **not** ported into
+  the component system — preserved as literal static files in `public/` with
+  their own legacy CSS/JS copies, because `index-before.html` is a frozen
+  snapshot that must never get content edits.
+- Starfield canvas extended to light mode (was dark-only) with a warm-gold
+  star palette instead of white.
+- Contact form layout fixed, favicon + Resume header photo swapped to the
+  octopus mark, light/dark bug chased down to the **Dark Reader browser
+  extension**, not a code bug (see memory `feedback-incognito-works-extension-suspect`).
+- Theme default fixed: first-time visitors (no stored preference) now land on
+  **Auto** (follows OS light/dark), not hardcoded dark. Explicit Light/Dark
+  picks still override and persist as before.
+
+**2. New 5th page: Observability** (`/observability/`), added to the nav
+between Resume and Contact
+- **GitHub Activity** — most recently pushed repos, public GitHub REST API,
+  client-side fetch.
+- **GitLab Activity** — same idea via GitLab's public API. Currently always
+  shows "no public projects" for the account given (`christopher.fickess20`)
+  — confirmed via direct API check that whatever project they meant isn't
+  public under that namespace. Not a bug, just no data to show.
+- **GitHub Contributions** — a GitHub-style contribution calendar, built from
+  a public third-party proxy (`github-contributions-api.jogruber.de`) since
+  GitHub's own contribution calendar isn't in their public REST/GraphQL API
+  without an auth token. Confirmed its numbers match the real GitHub profile
+  exactly. Stretches to fill the card width without growing cell size (CSS
+  grid `justify-content: space-between`); a scrollbar bug (1px rounding +
+  month-label text overflow) is fixed.
+- **Uptime** — the big one. Architecture: a Netlify Function
+  (`netlify/functions/uptime.js`) proxies UptimeRobot's v3 API, so the real
+  API key stays server-side and the browser only ever calls our own
+  `/api/uptime`. Cards show: status (big glowing ring + spelled-out word,
+  not a tiny dot+badge), 30-day uptime %, up/down duration, check interval,
+  region checked from, expected HTTP status codes, monitor type, timeout,
+  monitoring-since date, SSL/domain cert expiry (populates once you enable
+  those checks per-monitor in UptimeRobot), last incident, 30-day incident
+  count, mean-time-between-failures, tags and maintenance-window count
+  (conditional, only shown if non-empty). Cached server-side via **Netlify
+  Blobs** (150s TTL, stale-on-error fallback) — this was necessary, not just
+  nice-to-have: direct testing proved the function had zero caching
+  originally and re-hit UptimeRobot on every single request, which is how we
+  hit real 429 rate limits mid-session.
+
+**3. Git practice**: started making regular local commits partway through
+this session (explicit ask), then had to start *pushing* to `origin` too
+once Netlify needed to build from GitHub. Nothing has touched `main` or the
+real production site.
+
+## Known gaps / things to watch
+
+- **Response-time data isn't wired in.** It exists (`GET
+  /monitors/{id}/stats/response-time`, confirmed via UptimeRobot's official
+  OpenAPI spec at `cdn.uptimerobot.com/api/openapi.yaml`), but adding it
+  per-monitor alongside uptime % would mean `1 + 2` API calls per monitor —
+  at 5 monitors that's 16 calls in one refresh, over the free tier's 10
+  req/min cap. Needs a lighter design before adding (see Next steps).
+- **Only 1 UptimeRobot monitor exists**, and it's pointed at an old
+  hash-pinned test-deploy URL with an auto-generated ugly name. Needs
+  renaming + the rest of the monitors added (see Next steps).
+- **No custom 404 page** (`public/404.html` doesn't exist) — not requested
+  yet, just noting the gap.
+- SSL cert / domain expiry card fields will stay empty until SSL/domain
+  checking is turned on per-monitor in UptimeRobot's own settings (not
+  something the API/our code can enable).
+
+## Next steps — suggested features discussed but not yet built
+
+In roughly the order they came up:
+
+1. **Finish UptimeRobot monitor setup**: rename the existing monitor to
+   something clean (e.g. "Portfolio — Home"), add monitors for the 3 practice
+   sites (`/Website1/index.html`, `/Website2/index.html`,
+   `/Website3/index.html` — note these are sub-paths of the *same* host as
+   the portfolio, not independent infrastructure) and for Starlight (need the
+   actual public URL — wasn't provided yet).
+2. **Recent Incidents feed** — one `GET /incidents` call for the whole
+   account (not per-monitor, so it's cheap on the rate limit) showing
+   `reason`/`duration`/which monitor/when, across all monitors. This was the
+   suggested path to both "show incident detail" and "add response-time"
+   without blowing the call budget — a shared feed instead of N per-monitor
+   calls.
+3. **Response-time stats**, once there's a call-budget plan (e.g. alternating
+   which stat refreshes, or only fetching it for 1-2 "primary" monitors
+   instead of all of them).
+4. **Decide and execute the real domain cutover** — point
+   `main--fickess.netlify.app` (or a real custom domain) at `Portfolio-astro`
+   instead of the old `Portfolio/` site, once everything above is verified.
+   The `starlight-dogfood.me` domain was discussed purely as a hypothetical
+   (it's branded to the Starlight homelab project, not this portfolio) and
+   wasn't acted on.
+5. **Optional / lower priority, discussed but not committed to:**
+   - Lighthouse/performance scores via a GitHub Actions workflow on deploy.
+   - Real traffic analytics via a privacy-friendly service with a public
+     dashboard feature (GoatCounter was the specific suggestion) — flagged as
+     "neat to have" rather than clearly valuable for a low-traffic personal
+     site.
+   - The original seed of the whole Observability page: a "smart icon" right
+     rail (Mattermost-plugin style) — see memory
+     `project-portfolio-rail-smart-icon`. Largely superseded by the
+     Observability page now existing, but the memory is still there if the
+     original framing is wanted.
