@@ -211,7 +211,27 @@ reported these bugs was from the pinned `6ae7fc79…--` deploy URL, which
 never updates. Check fixes on the branch alias
 `redesign-rails-nav-theme--starlight-dogfood-test-1.netlify.app`.
 
+**Follow-up same session — Resume PDF not rendering inline on Netlify.**
+Cause: `public/_headers` sent `X-Frame-Options: DENY` and CSP
+`frame-ancestors 'none'` on *every* response, including the PDF itself.
+The Resume page embeds the PDF with `<object>`, which browsers treat as
+framing, so the PDF refused to load even inside our own page — the box
+showed only the "can't display" fallback. It worked earlier only under
+`astro dev`, which ignores `_headers`. Fix: `SAMEORIGIN` /
+`frame-ancestors 'self'` globally (other sites still can't frame ours).
+Verified with a local server that applies the headers: DENY → blank
+fallback (console: "violates frame-ancestors 'none'"); SAMEORIGIN → PDF
+renders. Changed globally rather than with a `/resume/*` override
+because Netlify's handling of the same header from two matching rules
+isn't something to rely on.
+
 ## Known gaps / things to watch
+
+- **Inline PDF on phones** (added 2026-11-02) — most mobile browsers
+  (Android Chrome, iOS Safari) don't render a PDF inside `<object>` at
+  all; phones get the "Download it instead" fallback. A phone-friendly
+  preview would mean rendering the PDF pages to images at build time —
+  not done.
 
 - **Body text is small on phones site-wide** (added 2026-11-02) — same
   45%-root-font cause as above; only the pieces fixed in the session

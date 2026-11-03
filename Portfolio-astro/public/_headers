@@ -1,9 +1,15 @@
+# Framing: SAMEORIGIN / frame-ancestors 'self' (not DENY / 'none').
+# The Resume page shows the PDF inline via <object>, and browsers treat
+# that as framing the PDF - with DENY/'none' the PDF's own response
+# refused to be embedded even by our own page, so the viewer stayed
+# blank on Netlify (it only worked under `astro dev`, which ignores this
+# file). 'self' still blocks every other site from framing ours.
 /*
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), camera=(), microphone=()
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.github.com https://gitlab.com https://github-contributions-api.jogruber.de; object-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.github.com https://gitlab.com https://github-contributions-api.jogruber.de; object-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
 
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
