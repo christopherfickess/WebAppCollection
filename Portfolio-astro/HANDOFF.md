@@ -232,6 +232,17 @@ isn't something to rely on.
   all; phones get the "Download it instead" fallback. A phone-friendly
   preview would mean rendering the PDF pages to images at build time —
   not done.
+  - **Update (same session): addressed.** User confirmed on a sideways
+    Android phone that only the fallback link showed. The `<object>`'s
+    fallback content is now the resume's two pages as images
+    (`public/resume/pages/page-{1,2}.webp`, 1400px wide) plus
+    "Open the PDF · Download" links. `site.js` adds `.is-image-preview`
+    to the frame when `navigator.pdfViewerEnabled === false` so it grows
+    to fit the pages instead of a fixed-height box. Desktop keeps the
+    real PDF viewer; the images are `loading="lazy"` inside the object,
+    so desktop never downloads them. **When the PDF changes, run
+    `tools/render-resume-pages.sh` and commit the new images** (needs
+    poppler + Pillow locally; not part of the Netlify build).
 
 - **Body text is small on phones site-wide** (added 2026-11-02) — same
   45%-root-font cause as above; only the pieces fixed in the session

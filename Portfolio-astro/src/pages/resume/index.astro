@@ -56,9 +56,18 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <p class="resume-preview-label">Full resume</p>
       <div class="resume-pdf-frame">
         <object data="/resume/Christopher_Fickess_Resume.pdf#view=FitH" type="application/pdf" class="resume-pdf">
-          <p class="resume-pdf-fallback">
-            Your browser can't display the PDF inline. <a href="/resume/Christopher_Fickess_Resume.pdf" download>Download it instead</a>.
-          </p>
+          <!-- Shown by browsers that can't render a PDF inline - most
+               phones (Android Chrome, iOS Safari). Page images rendered
+               from the same PDF by tools/render-resume-pages.sh; re-run
+               it whenever the PDF changes. -->
+          <div class="resume-pages">
+            <img src="/resume/pages/page-1.webp" width="1400" height="1980" alt="Resume, page 1 of 2" loading="lazy" decoding="async" />
+            <img src="/resume/pages/page-2.webp" width="1400" height="1980" alt="Resume, page 2 of 2" loading="lazy" decoding="async" />
+            <p class="resume-pdf-fallback">
+              <a href="/resume/Christopher_Fickess_Resume.pdf" target="_blank" rel="noopener">Open the PDF</a> &middot;
+              <a href="/resume/Christopher_Fickess_Resume.pdf" download>Download</a>
+            </p>
+          </div>
         </object>
       </div>
     </div>

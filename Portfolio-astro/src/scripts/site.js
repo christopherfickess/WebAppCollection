@@ -186,6 +186,17 @@
     });
   }
 
+  // Resume page: browsers with no built-in PDF viewer (most phones)
+  // show the <object>'s fallback - page images - instead of the PDF.
+  // Those need the frame to grow to fit them rather than the fixed-height
+  // viewer box. navigator.pdfViewerEnabled is false on Android Chrome and
+  // iOS; undefined on old browsers, which keep the default (object +
+  // fallback inside the fixed frame, still scrollable).
+  var resumeFrame = document.querySelector(".resume-pdf-frame");
+  if (resumeFrame && navigator.pdfViewerEnabled === false) {
+    resumeFrame.classList.add("is-image-preview");
+  }
+
   // Contact form: posts to Netlify Forms in the background instead of
   // a mailto: link, so submitting never launches a separate mail app.
   var contactForm = document.getElementById("contact-form");

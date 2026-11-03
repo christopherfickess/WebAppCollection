@@ -1390,6 +1390,44 @@ footer .footer-nav a:hover {
   font-weight: 600;
 }
 
+/* Phone preview: the PDF's pages as images (object fallback content). */
+.resume-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.resume-pages img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.resume-pages .resume-pdf-fallback {
+  padding: 8px 0 4px;
+  font-size: 15px;
+}
+
+/* No inline PDF support: let the frame grow to the full page images
+   instead of a fixed-height scroll box inside the scrolling page. */
+.resume-pdf-frame.is-image-preview {
+  height: auto;
+  min-height: 0;
+}
+
+.resume-pdf-frame.is-image-preview .resume-pdf,
+.resume-pdf-frame.is-image-preview .resume-pages {
+  height: auto;
+  overflow: visible;
+}
+
 /* ---------- projects page ---------- */
 
 .projects-page {
