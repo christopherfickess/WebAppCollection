@@ -145,6 +145,23 @@ preset keeps the drawer open so the change is visible. Verified: choice
 applies, both copies stay in sync, persists across reload; drawer
 scrolls on short screens (320×568); desktop dropdown unchanged.
 
+**Follow-up same session — Display as a slide-in sub-panel.** The four
+preset buttons in the drawer were replaced by one collapsed row,
+**Display · <current preset> ›**, which slides in a full-width
+sub-panel (Settings-app style: **‹ Back**, title, the four presets with a
+check on the active one). A flyout to the right was considered and
+rejected: the drawer is ~270px of a ~390px phone, leaving ~120px — too
+narrow for the list. Details:
+- Drawer is now two absolutely-positioned panels
+  (`#drawer-panel-main`, `#drawer-panel-display`) that slide with
+  `transform`; each scrolls independently. The hidden panel is `inert`.
+- Escape steps back one level (sub-panel → main → closed); closing the
+  drawer from the sub-panel always reopens on the main menu.
+- Picking a preset applies immediately and stays on the sub-panel; the
+  collapsed row's swatch + name update via `markActivePreset()`.
+- Theme stays an inline 3-way switch (small enough not to need a panel).
+- Respects `prefers-reduced-motion` (no slide animation).
+
 **Reminder (bit us again this session):** the phone screenshot that
 reported these bugs was from the pinned `6ae7fc79…--` deploy URL, which
 never updates. Check fixes on the branch alias

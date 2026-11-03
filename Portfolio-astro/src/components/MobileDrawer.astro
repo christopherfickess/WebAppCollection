@@ -2,48 +2,77 @@
 import { PRESETS } from "../data/presets.js";
 // Burger toggle + off-canvas drawer shown under 850px, where the two
 // rails hide entirely (see rails.css's own max-width:850px block).
+//
+// The drawer holds two panels side by side: the main menu, and a
+// "Display" sub-panel that slides in over it (Settings-app style) when
+// the Display row is tapped. Only one panel is ever interactive - site.js
+// marks the off-screen one `inert` so it can't be tabbed into.
 ---
 <button id="burger-toggle" aria-label="Open menu" aria-controls="mobile-drawer" aria-expanded="false" type="button">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
 </button>
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile menu">
-  <button id="drawer-close" class="drawer-close" type="button" aria-label="Close menu">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-  </button>
-  <a href="/">Home</a>
-  <a href="/projects/">Projects</a>
-  <a href="/resume/">Resume</a>
-  <a href="/observability/">Observability</a>
-  <a href="/contact/">Contact</a>
-  <hr>
-  <a href="https://www.linkedin.com/in/christopher-fickess-223a17182/" target="_blank" rel="noopener">LinkedIn</a>
-  <a href="https://github.com/christopherfickess" target="_blank" rel="noopener">GitHub</a>
-  <hr>
-  <!-- The top bar's Theme switch and Display menu are hidden under 850px
-       (no room), so the drawer carries its own copies. Same classes and
-       data-* attributes, so site.js wires both sets and keeps them in sync. -->
-  <p class="drawer-label" id="drawer-theme-label">Theme</p>
-  <div class="drawer-theme" role="radiogroup" aria-labelledby="drawer-theme-label">
-    <button type="button" class="theme-opt" data-theme-pref="light" role="radio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
-      <span>Light</span>
+  <div class="drawer-panel drawer-panel-main" id="drawer-panel-main">
+    <button id="drawer-close" class="drawer-close" type="button" aria-label="Close menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
-    <button type="button" class="theme-opt" data-theme-pref="system" role="radio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
-      <span>Auto</span>
-    </button>
-    <button type="button" class="theme-opt" data-theme-pref="dark" role="radio">
-      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
-      <span>Dark</span>
+    <a href="/">Home</a>
+    <a href="/projects/">Projects</a>
+    <a href="/resume/">Resume</a>
+    <a href="/observability/">Observability</a>
+    <a href="/contact/">Contact</a>
+    <hr>
+    <a href="https://www.linkedin.com/in/christopher-fickess-223a17182/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://github.com/christopherfickess" target="_blank" rel="noopener">GitHub</a>
+    <hr>
+    <!-- The top bar's Theme switch and Display menu are hidden under 850px
+         (no room), so the drawer carries its own copies. Same classes and
+         data-* attributes, so site.js wires both sets and keeps them in sync. -->
+    <p class="drawer-label" id="drawer-theme-label">Theme</p>
+    <div class="drawer-theme" role="radiogroup" aria-labelledby="drawer-theme-label">
+      <button type="button" class="theme-opt" data-theme-pref="light" role="radio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+        <span>Light</span>
+      </button>
+      <button type="button" class="theme-opt" data-theme-pref="system" role="radio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
+        <span>Auto</span>
+      </button>
+      <button type="button" class="theme-opt" data-theme-pref="dark" role="radio">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+        <span>Dark</span>
+      </button>
+    </div>
+    <!-- Collapsed Display row: shows the current preset; tapping it slides
+         in the full option list. site.js keeps the swatch + name current. -->
+    <button type="button" class="drawer-display-row" id="drawer-display-open" aria-controls="drawer-panel-display" aria-expanded="false">
+      <span class="drawer-display-row-label">Display</span>
+      <span class="drawer-display-row-value">
+        <span class="display-swatch" id="drawer-display-swatch"></span>
+        <span id="drawer-display-name"></span>
+      </span>
+      <svg class="drawer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
     </button>
   </div>
-  <p class="drawer-label" id="drawer-display-label">Display</p>
-  <div class="drawer-presets" role="group" aria-labelledby="drawer-display-label">
-    {PRESETS.map((preset) => (
-      <button type="button" class="display-option" data-preset={preset.key}>
-        <span class={`display-swatch display-swatch-${preset.key}`} />{preset.label}
+
+  <div class="drawer-panel drawer-panel-sub" id="drawer-panel-display" role="group" aria-labelledby="drawer-display-title" inert>
+    <div class="drawer-sub-head">
+      <button type="button" class="drawer-back" id="drawer-display-back" aria-label="Back to menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span>Back</span>
       </button>
-    ))}
+      <p class="drawer-sub-title" id="drawer-display-title">Display</p>
+    </div>
+    <p class="drawer-sub-note">Accent color used across the site.</p>
+    <div class="drawer-presets">
+      {PRESETS.map((preset) => (
+        <button type="button" class="display-option" data-preset={preset.key} data-label={preset.label}>
+          <span class={`display-swatch display-swatch-${preset.key}`} />
+          <span class="display-option-name">{preset.label}</span>
+          <svg class="display-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </button>
+      ))}
+    </div>
   </div>
 </nav>

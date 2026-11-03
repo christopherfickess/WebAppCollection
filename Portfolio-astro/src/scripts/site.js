@@ -86,12 +86,20 @@
 
   // Preset buttons exist twice (top-bar dropdown + mobile drawer); mark
   // active by preset key, not by element, so both copies stay in sync.
+  var drawerDisplaySwatch = document.getElementById("drawer-display-swatch");
+  var drawerDisplayName = document.getElementById("drawer-display-name");
+
   function markActivePreset(preset) {
+    var label = "";
     displayOptions.forEach(function (o) {
       var active = o.dataset.preset === preset;
       o.setAttribute("data-active", active);
       o.setAttribute("aria-pressed", active ? "true" : "false");
+      if (active && o.dataset.label) label = o.dataset.label;
     });
+    // Mobile drawer's collapsed "Display" row shows the current choice.
+    if (drawerDisplaySwatch) drawerDisplaySwatch.className = "display-swatch display-swatch-" + preset;
+    if (drawerDisplayName) drawerDisplayName.textContent = label;
   }
 
   markActivePreset(root.getAttribute("data-preset") || "verdant");
@@ -124,6 +132,21 @@
   var overlay = document.getElementById("drawer-overlay");
 
   var drawerClose = document.getElementById("drawer-close");
+  var panelMain = document.getElementById("drawer-panel-main");
+  var panelDisplay = document.getElementById("drawer-panel-display");
+  var displayOpen = document.getElementById("drawer-display-open");
+  var displayBack = document.getElementById("drawer-display-back");
+
+  // Slide the Display sub-panel in/out. The off-screen panel is `inert`
+  // so keyboard focus and screen readers only ever see the visible one.
+  function setDisplayPanel(open, moveFocus) {
+    if (!panelMain || !panelDisplay) return;
+    drawer.classList.toggle("show-sub", open);
+    panelMain.inert = open;
+    panelDisplay.inert = !open;
+    if (displayOpen) displayOpen.setAttribute("aria-expanded", open ? "true" : "false");
+    if (moveFocus) (open ? displayBack : displayOpen).focus();
+  }
 
   // One place sets open/closed so the classes, aria-expanded and the
   // body scroll lock never drift out of sync with each other.
@@ -132,6 +155,7 @@
     overlay.classList.toggle("open", open);
     burger.setAttribute("aria-expanded", open ? "true" : "false");
     document.body.classList.toggle("drawer-open", open);
+    if (!open) setDisplayPanel(false, false); // always reopen on the main menu
     if (open && drawerClose) drawerClose.focus();
   }
 
@@ -147,8 +171,13 @@
     });
     overlay.addEventListener("click", closeDrawer);
     if (drawerClose) drawerClose.addEventListener("click", closeDrawer);
+    if (displayOpen) displayOpen.addEventListener("click", function () { setDisplayPanel(true, true); });
+    if (displayBack) displayBack.addEventListener("click", function () { setDisplayPanel(false, true); });
+    // Escape steps back one level: sub-panel -> main menu -> closed.
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeDrawer();
+      if (e.key !== "Escape") return;
+      if (drawer.classList.contains("show-sub")) setDisplayPanel(false, true);
+      else closeDrawer();
     });
     // Rotating a phone/tablet past the 850px breakpoint hides the
     // burger; don't leave an invisible open drawer + scroll lock behind.

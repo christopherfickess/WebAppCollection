@@ -787,12 +787,24 @@ body {
   height: 100%;
   height: 100dvh;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
   visibility: hidden;
   background: var(--bg-soft);
   border-right: 1px solid var(--border);
   z-index: 80;
+  padding: 0;
+  display: block;
+  transition: left 0.2s ease, visibility 0s linear 0.2s;
+}
+
+/* Two stacked panels - main menu and the Display sub-panel - that slide
+   horizontally inside the drawer. Each scrolls on its own. */
+.mobile-drawer .drawer-panel {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg-soft);
   padding: 72px 16px 24px;
   display: flex;
   flex-direction: column;
@@ -800,7 +812,26 @@ body {
   justify-content: flex-start;
   align-items: stretch;
   gap: 4px;
-  transition: left 0.2s ease, visibility 0s linear 0.2s;
+  transition: transform 0.24s ease;
+}
+
+.mobile-drawer .drawer-panel-sub {
+  transform: translateX(100%);
+}
+
+.mobile-drawer.show-sub .drawer-panel-main {
+  transform: translateX(-30%);
+}
+
+.mobile-drawer.show-sub .drawer-panel-sub {
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-drawer,
+  .mobile-drawer .drawer-panel {
+    transition: none;
+  }
 }
 
 .mobile-drawer.open {
@@ -880,11 +911,106 @@ body.drawer-open {
   background: var(--bg-soft);
 }
 
+/* Collapsed Display row on the main panel: label left, current preset
+   + chevron right. Tapping it slides in the sub-panel. */
+.mobile-drawer .drawer-display-row {
+  margin-top: 4px;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px;
+  background: var(--chip-bg);
+}
+
+.mobile-drawer .drawer-display-row-label {
+  font-family: "Montserrat", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.mobile-drawer .drawer-display-row-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 15px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mobile-drawer .drawer-chevron {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  color: var(--text-muted);
+}
+
+/* Sub-panel header: Back on the left, title centered over the panel. */
+.mobile-drawer .drawer-sub-head {
+  position: absolute;
+  top: 13px;
+  left: 0;
+  right: 0;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-drawer .drawer-back {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  height: 42px;
+  min-height: 42px;
+  gap: 4px;
+  padding: 0 10px 0 6px;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.mobile-drawer .drawer-back svg {
+  fill: none;
+}
+
+.mobile-drawer .drawer-sub-title {
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mobile-drawer .drawer-sub-note {
+  margin: 0 12px 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .mobile-drawer .drawer-presets {
   display: flex;
   flex-direction: column;
   gap: 2px;
   flex-shrink: 0;
+}
+
+.mobile-drawer .display-option-name {
+  flex: 1 1 auto;
+}
+
+.mobile-drawer .display-check {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  visibility: hidden;
+}
+
+.mobile-drawer .display-option[data-active="true"] .display-check {
+  visibility: visible;
 }
 
 .mobile-drawer .display-option {
