@@ -225,7 +225,33 @@ renders. Changed globally rather than with a `/resume/*` override
 because Netlify's handling of the same header from two matching rules
 isn't something to rely on.
 
+## Session update — 2026-11-03: Gredin Travel Advisor template
+
+New `public/travel-advisor/` (served at `/travel-advisor/`), a modern
+rebuild of Website3 (Travelly), which is left untouched. User asked for
+it named "Gredin Travel Advisor" and built **OOP-style**: the header,
+itinerary, steps, trip cards, included list and footer are JS classes
+extending a shared `Component` base (`js/core.js`, itself a native
+custom element), each rendering content from one `js/data.js` via a
+`data-from` path; `TripGrid` composes `TripCard`s. Hero copy and the
+Netlify contact form (`name="travel-advisor"`) stay as static HTML on
+purpose — see `public/travel-advisor/README.md` for structure and why.
+Fonts self-hosted (Bricolage Grotesque + Newsreader, OFL) because the
+site CSP blocks font CDNs. Verified under the real CSP headers locally:
+all components render, no console errors, fonts load, no sideways
+scroll at 1440 / 844×390 / 390×844, phone Menu opens/closes.
+Added to the **Projects** page under a new "Templates" heading (above
+"Earlier practice builds"); `.projects-grid` switched `auto-fit` →
+`auto-fill` so a lone card keeps normal width.
+
 ## Known gaps / things to watch
+
+- **Travel Advisor photos are carried over from Website3** (added
+  2026-11-03) — two show photographer credits (Mike Mezeul II, Russ
+  Burden). Replace with own or licensed photos before real use.
+- **Travel Advisor needs JS for its components** (added 2026-11-03) —
+  with JS off, header/itinerary/trips/footer don't render (hero copy and
+  form still do).
 
 - **Inline PDF on phones** (added 2026-11-02) — most mobile browsers
   (Android Chrome, iOS Safari) don't render a PDF inside `<object>` at

@@ -4,6 +4,7 @@ import { Image } from "astro:assets";
 import website1 from "../../assets/img/Website1.PNG";
 import website2 from "../../assets/img/Website2.PNG";
 import website3 from "../../assets/img/Website3.PNG";
+import travelAdvisor from "../../assets/img/TravelAdvisor.png";
 ---
 <BaseLayout
   title="Christopher Fickess | Site Reliability Engineer"
@@ -16,7 +17,7 @@ import website3 from "../../assets/img/Website3.PNG";
     <header class="projects-head">
       <p class="kicker">Projects</p>
       <h2>What I build</h2>
-      <p class="projects-intro">A mix of real infrastructure work and the front-end practice that got me comfortable with the web side of this site. The homelab below is actively maintained; the three sites after it were early learning exercises.</p>
+      <p class="projects-intro">A mix of real infrastructure work and the front-end practice that got me comfortable with the web side of this site. The homelab below is actively maintained; after it come a modern site template and the three early learning exercises it grew out of.</p>
     </header>
 
     <div class="featured-project">
@@ -56,6 +57,19 @@ import website3 from "../../assets/img/Website3.PNG";
           <span class="stack-layer-detail">Kubernetes &middot; Tailscale</span>
         </div>
       </div>
+    </div>
+
+    <h3 class="section-divider">Templates</h3>
+    <div class="projects-grid">
+      <a class="project-card" href="/travel-advisor/" target="_blank" rel="noopener">
+        <div class="project-thumb">
+          <Image src={travelAdvisor} alt="Gredin Travel Advisor template screenshot" width={640} format="webp" quality={70} loading="lazy" />
+        </div>
+        <div class="project-copy">
+          <h3>Gredin Travel Advisor</h3>
+          <p>Modern rebuild of Travelly: itinerary-route hero, component classes rendered from one data file, Netlify form.</p>
+        </div>
+      </a>
     </div>
 
     <h3 class="section-divider">Earlier practice builds</h3>

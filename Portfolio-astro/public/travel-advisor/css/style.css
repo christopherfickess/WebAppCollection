@@ -1,0 +1,800 @@
+/* Gredin Travel Advisor - template
+   Fonts are self-hosted (the site's CSP only allows same-origin fonts):
+   Bricolage Grotesque for headings and UI, Newsreader for reading text.
+   Both SIL OFL, licenses in ../fonts/. */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("../fonts/bricolage-grotesque.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("../fonts/newsreader.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("../fonts/newsreader-italic.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ---------- tokens ---------- */
+:root {
+  --mist: #edf1ef;     /* page */
+  --paper: #ffffff;    /* itinerary sheet, form fields */
+  --ink: #14262e;      /* text, dark bands */
+  --ink-soft: #4a5d64; /* secondary text */
+  --petrol: #1e5a66;   /* actions, links */
+  --saffron: #e3a92b;  /* the route: line, stops, focus */
+  --rule: #c8d2ce;     /* hairlines */
+
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --read: "Newsreader", Georgia, "Times New Roman", serif;
+
+  /* Type scale: 1.25 ratio from an 18px base. */
+  --t-sm: 0.889rem;
+  --t-base: 1rem;
+  --t-md: 1.25rem;
+  --t-lg: 1.563rem;
+  --t-xl: 1.953rem;
+  --t-hero: clamp(2.6rem, 1.4rem + 4.6vw, 4.8rem);
+
+  --gutter: clamp(1rem, 0.5rem + 2.5vw, 3rem);
+  --max: 1180px;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 112.5%; /* 18px base */
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+  background: var(--mist);
+  color: var(--ink);
+  font-family: var(--read);
+  font-size: var(--t-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+dt {
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--petrol);
+  text-underline-offset: 0.18em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--saffron);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--mist);
+  font-family: var(--display);
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--petrol);
+  color: var(--paper);
+  font-family: var(--display);
+  font-size: var(--t-base);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn:hover {
+  background: var(--ink);
+}
+
+.btn-small {
+  min-height: 40px;
+  padding: 0 1.1rem;
+  font-size: var(--t-sm);
+}
+
+.link {
+  font-family: var(--display);
+  font-weight: 600;
+}
+
+/* ---------- components ----------
+   Custom elements are inline by default; every component here is a
+   block-level wrapper. Reserved heights keep the page from jumping while
+   the JS renders them. */
+gta-header,
+gta-itinerary,
+gta-steps,
+gta-trip-grid,
+gta-trip,
+gta-included,
+gta-footer {
+  display: block;
+}
+
+gta-header:not(:has(*)) {
+  min-height: 66px;
+}
+
+gta-itinerary:not(:has(*)) {
+  min-height: 460px;
+}
+
+/* ---------- header ---------- */
+/* The host element is what sticks: sticky only works relative to the
+   parent, and the inner <header> fills this host exactly. */
+gta-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--mist);
+  border-bottom: 1px solid var(--rule);
+}
+
+.site-head {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0.9rem var(--gutter);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.menu-toggle {
+  display: none;
+  min-height: 40px;
+  padding: 0 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.wordmark-mark {
+  width: 28px;
+  height: 28px;
+  align-self: center;
+  fill: var(--ink);
+}
+
+.wordmark-mark path {
+  fill: none;
+  stroke: var(--mist);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 4.2;
+}
+
+.wordmark-mark .wordmark-dot {
+  fill: var(--saffron);
+}
+
+.wordmark-name {
+  font-family: var(--display);
+  font-size: var(--t-md);
+  font-weight: 800;
+  font-stretch: 85%;
+}
+
+.wordmark-tag {
+  font-family: var(--read);
+  font-style: italic;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.site-nav ul {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-nav ul a {
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-nav ul a:hover {
+  color: var(--petrol);
+  text-decoration: underline;
+}
+
+/* ---------- section rhythm ---------- */
+main > section {
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: clamp(3.5rem, 2rem + 5vw, 6.5rem) var(--gutter);
+}
+
+main > section h2 {
+  font-size: var(--t-xl);
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.section-head p {
+  color: var(--ink-soft);
+  max-width: 40ch;
+}
+
+/* ---------- hero ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+  align-items: center;
+  padding-top: clamp(2.5rem, 1rem + 5vw, 5.5rem) !important;
+}
+
+.hero h1 {
+  font-size: var(--t-hero);
+  font-weight: 800;
+  font-stretch: 82%;
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+  max-width: 12ch;
+}
+
+.lede {
+  margin-top: 1.5rem;
+  font-size: var(--t-md);
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 34ch;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  margin-top: 2.25rem;
+}
+
+/* The itinerary sheet: the page's one bold element. */
+.itinerary {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  padding: 1.75rem 1.75rem 1.5rem;
+  box-shadow: 0 1px 0 var(--rule), 0 24px 48px -28px rgba(20, 38, 46, 0.45);
+}
+
+.itinerary-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.itinerary-head h2 {
+  font-size: var(--t-lg);
+}
+
+.itinerary-head p {
+  font-style: italic;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.route {
+  position: relative;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The route line: drawn once on load, top to bottom. */
+.route::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 0.55rem;
+  bottom: 0.9rem;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--saffron);
+  transform-origin: top;
+  animation: draw-route 1.4s cubic-bezier(0.5, 0, 0.2, 1) 0.2s both;
+}
+
+.route li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 6.2rem 1fr;
+  column-gap: 0.75rem;
+  padding: 0 0 1.1rem 2rem;
+}
+
+.route li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 3px solid var(--saffron);
+}
+
+.route li:first-child::before,
+.route li:last-child::before {
+  background: var(--saffron);
+}
+
+.route-days {
+  grid-row: span 2;
+  padding-top: 0.15rem;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.route-place {
+  font-family: var(--display);
+  font-size: var(--t-md);
+  font-weight: 700;
+}
+
+.route-note {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.itinerary-foot {
+  padding-top: 1rem;
+  border-top: 1px dashed var(--rule);
+  font-style: italic;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+@keyframes draw-route {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* ---------- how it works (a real sequence, so it's numbered) ---------- */
+.how {
+  background: var(--ink);
+  color: var(--mist);
+  max-width: none !important;
+}
+
+.how > * {
+  max-width: var(--max);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 2.5rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--saffron);
+}
+
+.steps li::before {
+  content: counter(step);
+  display: block;
+  margin-bottom: 0.9rem;
+  font-family: var(--display);
+  font-size: var(--t-xl);
+  font-weight: 300;
+  font-stretch: 80%;
+  line-height: 1;
+  color: var(--saffron);
+}
+
+.steps h3 {
+  font-size: var(--t-md);
+  margin-bottom: 0.5rem;
+}
+
+.steps p {
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: #c3cfcb;
+}
+
+/* ---------- sample trips ---------- */
+.trip-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 1.75rem 2.25rem;
+}
+
+gta-trip[feature] {
+  grid-row: span 2;
+}
+
+.trip img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.trip-feature img {
+  aspect-ratio: 4 / 3.4;
+}
+
+.trip-copy {
+  padding-top: 1rem;
+  max-width: 52ch;
+}
+
+.trip h3 {
+  font-size: var(--t-lg);
+}
+
+.trip-feature h3 {
+  font-size: var(--t-xl);
+}
+
+.trip-meta {
+  margin: 0.25rem 0 0.5rem;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--petrol);
+}
+
+.trip-copy > p:last-child {
+  color: var(--ink-soft);
+}
+
+/* ---------- included ---------- */
+.included {
+  border-top: 1px solid var(--rule);
+}
+
+.included-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.5rem;
+  margin: 2rem 0 0;
+}
+
+.included-list dt {
+  font-size: var(--t-md);
+  margin-bottom: 0.5rem;
+}
+
+.included-list dd {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* ---------- contact ---------- */
+.contact {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+  align-items: start;
+  border-top: 1px solid var(--rule);
+}
+
+.contact-copy p {
+  margin-top: 1rem;
+  font-size: var(--t-md);
+  color: var(--ink-soft);
+  max-width: 30ch;
+}
+
+.contact-form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field span {
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-base);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #8a9a9f;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline-offset: 0;
+  border-color: var(--petrol);
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.contact-form .btn {
+  justify-self: start;
+}
+
+.honeypot {
+  position: absolute;
+  left: -9999px;
+}
+
+/* ---------- footer ---------- */
+.site-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 2rem;
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 2rem var(--gutter) 2.5rem;
+  border-top: 1px solid var(--rule);
+  font-size: var(--t-sm);
+}
+
+.foot-brand {
+  font-family: var(--display);
+  font-weight: 700;
+}
+
+.foot-note {
+  color: var(--ink-soft);
+  margin-right: auto;
+}
+
+.foot-links {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--display);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 960px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 2.5rem;
+  }
+}
+
+@media (max-width: 860px) {
+  /* Nav collapses behind the Menu button (SiteHeader toggles .is-open). */
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .site-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: 0.75rem var(--gutter) 1.25rem;
+    background: var(--mist);
+    border-bottom: 1px solid var(--rule);
+    box-shadow: 0 18px 30px -24px rgba(20, 38, 46, 0.5);
+  }
+
+  gta-header.is-open .site-nav {
+    display: flex;
+  }
+
+  .site-nav ul {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .site-nav ul a {
+    display: block;
+    padding: 0.7rem 0;
+    font-size: var(--t-base);
+  }
+
+  .site-nav .btn {
+    margin-top: 0.5rem;
+  }
+
+  .hero,
+  .contact {
+    grid-template-columns: 1fr;
+  }
+
+  .trip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  gta-trip[feature] {
+    grid-row: auto;
+  }
+
+  .trip-feature img {
+    aspect-ratio: 16 / 10;
+  }
+
+  .included-list {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 560px) {
+  html {
+    font-size: 106.25%; /* 17px */
+  }
+
+  .wordmark-tag {
+    display: none;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .itinerary {
+    padding: 1.25rem 1.1rem 1.1rem;
+  }
+
+  .route li {
+    grid-template-columns: 1fr;
+  }
+
+  .route-days {
+    grid-row: auto;
+    padding-top: 0;
+  }
+
+  .contact-form .btn {
+    justify-self: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .route::before {
+    animation: none;
+  }
+}
