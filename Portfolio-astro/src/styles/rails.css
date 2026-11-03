@@ -1896,60 +1896,49 @@ footer .footer-nav a:hover {
   padding-top: 2.5rem;
 }
 
-/* ---------- hero composition: same at every screen size ----------
-   Previously the art and the blob were sized on different scales: the
-   SVG kept a fixed 568px-tall box (so on narrow columns the artwork
-   floated in the middle of a lot of empty space) while the blob was a
-   fixed 36rem, so their relationship shifted with every width. And
-   under 850px legacy-styles.css hid the themed blob entirely and
-   swapped in the raw blue/pink splash.png as a background - which is
-   why phones showed a different-colored, differently-placed blob that
-   ignored the Display preset.
+/* ---------- hero composition on smaller screens ----------
+   On a normal desktop window the hero keeps its original rules above
+   (fixed 568px-tall SVG box, 36rem blob) - that's the reference look.
+   Those fixed sizes only hold up while the illustration column is wide;
+   on a sideways phone the blob dwarfed the art, and under 850px
+   legacy-styles.css hid the themed blob altogether and put the raw
+   blue/pink splash.png behind the art instead (different color, shape
+   and position, ignoring the Display preset).
 
-   Now everything is a percentage of the illustration column's width, so
-   the picture is the same shape on a phone, a rotated phone, and a
-   desktop - it just scales. Proportions are measured from the desktop
-   layout (art 90% of the column; blob ~58% of the art's width, sitting
-   ~28% of the art's width above it and poking ~14% past its right
-   edge). */
-.intro-images svg {
-  display: block;
-  width: 90%;
-  height: auto;
-  margin-top: 25%;
-}
+   So below 1100px the same picture is rebuilt with every size and offset
+   as a percentage of the column width, measured off the original
+   desktop render at 1440px (column 604px: art 544px wide starting
+   137.5px down; blob 317px wide, its top 17px above the column, its
+   right edge 17px past it). It's the desktop composition, scaled.
+   Margins (not top/right) carry the vertical offsets because margin
+   percentages are relative to width, which keeps everything locked to
+   one scale. */
+@media screen and (max-width: 1100px) {
+  .intro-images {
+    padding-top: 0;
+  }
 
-.intro-images .splash {
-  display: block;
-  position: absolute;
-  top: 0;
-  right: -2.6%;
-  width: 52.4%;
-  height: auto;
+  .intro-images svg {
+    display: block;
+    width: 90%;
+    height: auto;
+    margin-top: 22.77%;
+  }
+
+  .intro-images .splash {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: -2.8%;
+    margin-top: -2.8%;
+    width: 52.5%;
+    height: auto;
+  }
 }
 
 @media screen and (max-width: 850px) {
   .intro-images {
     background: none;
-    width: 100%;
-    padding-top: 1rem;
-  }
-
-  /* Phones: let the art use the full column width, keeping the same
-     proportions (blob still ~58% of the art, same offsets). */
-  .intro-images svg {
-    width: 100%;
-    margin-top: 28%;
-  }
-
-  /* right: 0 rather than poking past the edge - there's no gutter to
-     spill into on a phone, so it would just get clipped. */
-  .intro-images .splash {
-    width: 58.2%;
-    right: 0;
-  }
-
-  .intro-images {
     margin-bottom: 24px;
   }
 }

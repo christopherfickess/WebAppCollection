@@ -181,6 +181,20 @@ just scales. Legacy PNG background removed under 850px; themed blob shown
 instead. Desktop is visually unchanged (blob within a few px of before).
 Verified at 1440, 1280, 915×412, 844×390, 390×844; no sideways scroll.
 
+**Correction (same session):** that first pass *did* shift the desktop
+hero (art ~35px lower, blob overlapping less) — the user flagged it as
+off from the original design. Reworked: **desktop (>1100px) is back on
+the original rules, untouched** — pixel-diffed against the pre-change
+render at 1440px with zero differences. The proportional rebuild now
+only applies **≤1100px**, with every value measured precisely off the
+original 1440px render (art 90% of the column starting 22.77% of column
+width down; blob 52.5% wide, top/right offsets −2.8%; vertical offsets
+use margin percentages so they track width). Result: sideways and
+portrait phones show the desktop composition, scaled. There's a small
+step at the 1100px boundary because the original desktop rules aren't
+proportional themselves (fixed 568px box + 36rem blob) — at 1101px you
+get exactly what the original looked like at that width.
+
 **Reminder (bit us again this session):** the phone screenshot that
 reported these bugs was from the pinned `6ae7fc79…--` deploy URL, which
 never updates. Check fixes on the branch alias
