@@ -2,11 +2,14 @@
 // Burger toggle + off-canvas drawer shown under 850px, where the two
 // rails hide entirely (see rails.css's own max-width:850px block).
 ---
-<button id="burger-toggle" aria-label="Open menu" type="button">
+<button id="burger-toggle" aria-label="Open menu" aria-controls="mobile-drawer" aria-expanded="false" type="button">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
 </button>
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile menu">
+  <button id="drawer-close" class="drawer-close" type="button" aria-label="Close menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
   <a href="/">Home</a>
   <a href="/projects/">Projects</a>
   <a href="/resume/">Resume</a>

@@ -254,6 +254,11 @@ h1, h2, h3, .intro h2, .intro h3 {
    height behind it. Reuses the existing .main-head markup (already
    present on every page) rather than adding a second header. */
 
+/* In-page anchor jumps land below the fixed 68px bar, not under it. */
+html {
+  scroll-padding-top: 76px;
+}
+
 .main-head {
   position: fixed;
   top: 0;
@@ -738,11 +743,15 @@ body {
 
 /* ---------- burger (mobile) ---------- */
 
+/* px, not rem: legacy-styles.css shrinks the root font-size to 53%/45%
+   at narrow widths, so rem-based offsets here shrank while the 42px
+   button didn't - that's what pushed the burger onto the avatar. Centered
+   vertically in the 68px .main-head: (68 - 42) / 2 = 13px. */
 #burger-toggle {
   display: none;
   position: fixed;
-  top: 1.25rem;
-  left: 1.25rem;
+  top: 13px;
+  left: 16px;
   z-index: 60;
   width: 42px;
   height: 42px;
@@ -763,28 +772,57 @@ body {
   z-index: 70;
 }
 
+/* The drawer is a <nav>, so legacy-styles.css's bare `nav` rules
+   (margin: 2rem, width: 80-90% at small widths) were landing on it too -
+   that margin is what floated it off the top/left edge. margin and
+   max-width reset explicitly; sizes in px for the same root-font reason
+   as #burger-toggle above. */
 .mobile-drawer {
   position: fixed;
   top: 0;
-  left: -280px;
-  width: 260px;
+  left: -300px;
+  width: 270px;
+  max-width: 85vw;
+  margin: 0;
   height: 100%;
+  height: 100dvh;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  visibility: hidden;
   background: var(--bg-soft);
   border-right: 1px solid var(--border);
   z-index: 80;
-  padding: 4rem 1.5rem 2rem;
+  padding: 72px 16px 24px;
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: stretch;
-  gap: 0.6rem;
-  transition: left 0.2s ease;
+  gap: 4px;
+  transition: left 0.2s ease, visibility 0s linear 0.2s;
 }
 
 .mobile-drawer.open {
   left: 0;
+  visibility: visible;
+  transition: left 0.2s ease, visibility 0s;
+}
+
+.drawer-close {
+  position: absolute;
+  top: 13px;
+  right: 14px;
+  width: 42px;
+  height: 42px;
+  padding: 0 !important;
+  justify-content: center;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px;
+}
+
+body.drawer-open {
+  overflow: hidden;
 }
 
 .drawer-overlay.open {
@@ -796,13 +834,14 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.65rem 0.75rem;
+  min-height: 44px;
+  padding: 10px 12px;
   border-radius: 8px;
   color: var(--text);
   background: transparent;
   border: none;
   text-decoration: none;
-  font-size: 1.4rem;
+  font-size: 16px;
   cursor: pointer;
   text-align: left;
 }
@@ -1521,8 +1560,26 @@ footer .footer-nav a:hover {
     display: none;
   }
 
+  /* 16px burger offset + 42px burger + 14px breathing room. */
   .main-head nav {
-    padding-left: 4.5rem;
+    gap: 12px;
+    padding-left: 72px;
+    padding-right: 16px;
+  }
+
+  .main-head .logo {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .main-head .logo h1 {
+    white-space: nowrap;
+  }
+
+  .topbar-page {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .resume-pdf-frame {
@@ -1833,11 +1890,7 @@ footer .footer-nav a:hover {
   padding-bottom: 0.2rem;
 }
 
-@media screen and (max-width: 640px) {
-  .gh-contrib-scroll {
-    overflow-x: auto;
-  }
-}
+
 
 .gh-contrib-graph {
   display: flex;
@@ -1939,6 +1992,52 @@ footer .footer-nav a:hover {
   font-family: "Montserrat", sans-serif;
   font-size: 0.72rem;
   color: var(--text-muted);
+}
+
+/* A full year (53 weeks) can't fit a phone at a readable cell size, so
+   it scrolls sideways - with real 3px gaps (space-between collapsed them
+   to 0 once the grid hit its min width, so cells ran together), months
+   spaced on the same 14px pitch so labels stay over their weeks, and
+   github-contributions.js starts it scrolled to the most recent end. */
+@media screen and (max-width: 640px) {
+  .gh-contrib-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gh-contrib-graph {
+    width: max-content;
+  }
+
+  .gh-contrib-weeks {
+    column-gap: 3px;
+    justify-content: start;
+  }
+
+  .gh-contrib-months {
+    gap: 3px;
+    justify-content: flex-start;
+    overflow: visible;
+    font-size: 10px;
+  }
+
+  /* Same root-font shrink as the burger: 0.68-0.72rem came out ~5px. */
+  .gh-contrib-daylabels,
+  .gh-contrib-legend {
+    font-size: 10px;
+  }
+
+  /* Mon/Wed/Fri stay pinned on the left while the weeks scroll under. */
+  .gh-contrib-daylabels {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--bg-soft);
+    margin-right: 0;
+    padding-right: 3px;
+    flex-basis: 31px;
+    width: 31px;
+  }
 }
 
 /* ---------- uptime dashboard ---------- */

@@ -88,7 +88,64 @@ this session (explicit ask), then had to start *pushing* to `origin` too
 once Netlify needed to build from GitHub. Nothing has touched `main` or the
 real production site.
 
+## Session update — 2026-11-02: mobile layout fixes
+
+Done directly on `redesign/rails-nav-theme` (it's the dev branch; still
+nothing on `main` or production). Verified headless at 320/360/390px and
+1280px, light and dark, with sample contribution data (the calendar's
+third-party API isn't reachable from the build sandbox).
+
+**Root cause of most of it:** `legacy-styles.css` drops the root
+font-size to 62.5% → 53% → **45%** as the viewport narrows, so anything
+sized in `rem` shrinks on phones (at 45%, `1rem` ≈ 7.2px) while fixed-px
+things don't. Fixes below switch the affected mobile pieces to px.
+
+- **Burger overlapping the avatar** — burger offsets were rem
+  (`top/left: 1.25rem`) and the top bar's left padding was `4.5rem`
+  (≈32px) while the burger itself is 42px wide. Now px: burger at
+  `top: 13px; left: 16px` (vertically centered in the 68px bar), top bar
+  `padding-left: 72px`. Page title ellipsizes instead of crowding.
+- **Mobile drawer offset from the screen edge** — the drawer is a
+  `<nav>`, so legacy's bare `nav { margin: 2rem; width: 90% }` rules hit
+  it. Reset `margin: 0`; width 270px (max 85vw), full `100dvh`, scrolls
+  internally if tall.
+- **Drawer had no way to close except tapping the dim overlay** — added
+  an X close button, Escape key, focus moves to the X on open and back to
+  the burger on close, `aria-expanded` on the burger, body scroll lock
+  while open, and it auto-closes if the viewport grows past 850px.
+  Drawer links are 16px with 44px tap targets (were `1.4rem` ≈ 10px).
+- **Contribution calendar on phones** — it scrolls sideways (53 weeks
+  can't fit), but it opened on the *oldest* months, cells ran together
+  (`space-between` collapsed the gaps to 0), and month/day labels were
+  ~5px. Now: opens scrolled to the newest weeks, 3px gaps, 10px labels
+  aligned to the week columns, Mon/Wed/Fri pinned while scrolling.
+  Desktop layout unchanged. Note: the mobile CSS block must stay
+  *after* the base `.gh-contrib-*` rules — same specificity, so source
+  order decides (first attempt failed for exactly that reason).
+- **Anchor jumps** — `html { scroll-padding-top: 76px }` so in-page
+  links land below the fixed bar.
+- The "Live Signal heading cut off" in the reported screenshot was just
+  the page scrolled under the fixed header — expected, not a bug.
+
+Files touched: `src/components/MobileDrawer.astro`,
+`src/scripts/site.js`, `src/scripts/github-contributions.js`,
+`src/styles/rails.css`.
+
+**Reminder (bit us again this session):** the phone screenshot that
+reported these bugs was from the pinned `6ae7fc79…--` deploy URL, which
+never updates. Check fixes on the branch alias
+`redesign-rails-nav-theme--starlight-dogfood-test-1.netlify.app`.
+
 ## Known gaps / things to watch
+
+- **Body text is small on phones site-wide** (added 2026-11-02) — same
+  45%-root-font cause as above; only the pieces fixed in the session
+  update were switched to px. A proper fix is removing the legacy
+  root-font shrink and re-tuning sizes, which touches every page — not
+  done yet.
+- **Calendar month labels scroll under the pinned day labels** on phones
+  (added 2026-11-02) — cosmetic; the day-label column is sticky, the
+  month row isn't.
 
 - **Response-time data isn't wired in.** It exists (`GET
   /monitors/{id}/stats/response-time`, confirmed via UptimeRobot's official

@@ -112,17 +112,38 @@
   var drawer = document.getElementById("mobile-drawer");
   var overlay = document.getElementById("drawer-overlay");
 
+  var drawerClose = document.getElementById("drawer-close");
+
+  // One place sets open/closed so the classes, aria-expanded and the
+  // body scroll lock never drift out of sync with each other.
+  function setDrawer(open) {
+    drawer.classList.toggle("open", open);
+    overlay.classList.toggle("open", open);
+    burger.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.classList.toggle("drawer-open", open);
+    if (open && drawerClose) drawerClose.focus();
+  }
+
   function closeDrawer() {
-    drawer.classList.remove("open");
-    overlay.classList.remove("open");
+    if (!drawer.classList.contains("open")) return;
+    setDrawer(false);
+    burger.focus();
   }
 
   if (burger && drawer && overlay) {
     burger.addEventListener("click", function () {
-      drawer.classList.toggle("open");
-      overlay.classList.toggle("open");
+      setDrawer(!drawer.classList.contains("open"));
     });
     overlay.addEventListener("click", closeDrawer);
+    if (drawerClose) drawerClose.addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeDrawer();
+    });
+    // Rotating a phone/tablet past the 850px breakpoint hides the
+    // burger; don't leave an invisible open drawer + scroll lock behind.
+    window.matchMedia("(min-width: 851px)").addEventListener("change", function (e) {
+      if (e.matches) setDrawer(false);
+    });
   }
 
   // Contact form: posts to Netlify Forms in the background instead of

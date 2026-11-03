@@ -99,6 +99,10 @@ async function loadContributions(container) {
       return;
     }
     renderCalendar(container, data);
+    // On phones the calendar scrolls sideways; start at the newest weeks
+    // (the right end) instead of a year ago. No-op when it all fits.
+    const scroller = container.querySelector(".gh-contrib-scroll");
+    if (scroller) scroller.scrollLeft = scroller.scrollWidth;
   } catch (err) {
     container.innerHTML =
       '<p class="obs-error">Couldn\'t load the contribution graph right now (rate limit or network). Check <a href="https://github.com/' +
