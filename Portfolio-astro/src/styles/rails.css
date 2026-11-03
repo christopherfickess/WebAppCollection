@@ -1907,9 +1907,11 @@ footer .footer-nav a:hover {
 
    So below 1100px the same picture is rebuilt with every size and offset
    as a percentage of the column width, measured off the original
-   desktop render at 1440px (column 604px: art 544px wide starting
-   137.5px down; blob 317px wide, its top 17px above the column, its
-   right edge 17px past it). It's the desktop composition, scaled.
+   desktop render at 1536px wide - the proportions picked as the
+   reference look (art 90% of the column, starting 19.95% of column
+   width down; blob 64.3% of the art's width, top 25.7% of art width
+   above the art, right edge 14.5% of art width past it). It's that
+   desktop composition, scaled.
    Margins (not top/right) carry the vertical offsets because margin
    percentages are relative to width, which keeps everything locked to
    one scale. */
@@ -1922,23 +1924,26 @@ footer .footer-nav a:hover {
     display: block;
     width: 90%;
     height: auto;
-    margin-top: 22.77%;
+    margin-top: 19.95%;
   }
 
   .intro-images .splash {
     display: block;
     position: absolute;
     top: 0;
-    right: -2.8%;
-    margin-top: -2.8%;
-    width: 52.5%;
+    right: -3.05%;
+    margin-top: -3.18%;
+    width: 57.87%;
     height: auto;
   }
 }
 
 @media screen and (max-width: 850px) {
+  /* margin-top: on phones the art stacks under the bio, and the blob's
+     small upward offset would otherwise touch the last line of text. */
   .intro-images {
     background: none;
+    margin-top: 16px;
     margin-bottom: 24px;
   }
 }

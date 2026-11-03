@@ -195,6 +195,17 @@ step at the 1100px boundary because the original desktop rules aren't
 proportional themselves (fixed 568px box + 36rem blob) — at 1101px you
 get exactly what the original looked like at that width.
 
+**Reference size changed to 1536px (user's pick).** The original desktop
+rules aren't proportional, so the blob-to-art relationship differs by
+monitor (at 1920 the blob is ~51% of the art's width and sits low; at
+1366 it's ~62% and rides high). Shown the four common PC widths
+side by side, the user chose the **1536px** look. The ≤1100px rules now
+reproduce that exactly (verified: blob 64.3% of art width, top 25.7% of
+art width above it, right edge 14.5% past it — identical numbers at
+1536 desktop, 1100, 915×412 and 390×844). Desktop >1100px still uses
+the original rules unchanged. Phones also get a 16px gap above the art
+so the blob doesn't touch the last line of the bio.
+
 **Reminder (bit us again this session):** the phone screenshot that
 reported these bugs was from the pinned `6ae7fc79…--` deploy URL, which
 never updates. Check fixes on the branch alias
