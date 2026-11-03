@@ -1896,6 +1896,64 @@ footer .footer-nav a:hover {
   padding-top: 2.5rem;
 }
 
+/* ---------- hero composition: same at every screen size ----------
+   Previously the art and the blob were sized on different scales: the
+   SVG kept a fixed 568px-tall box (so on narrow columns the artwork
+   floated in the middle of a lot of empty space) while the blob was a
+   fixed 36rem, so their relationship shifted with every width. And
+   under 850px legacy-styles.css hid the themed blob entirely and
+   swapped in the raw blue/pink splash.png as a background - which is
+   why phones showed a different-colored, differently-placed blob that
+   ignored the Display preset.
+
+   Now everything is a percentage of the illustration column's width, so
+   the picture is the same shape on a phone, a rotated phone, and a
+   desktop - it just scales. Proportions are measured from the desktop
+   layout (art 90% of the column; blob ~58% of the art's width, sitting
+   ~28% of the art's width above it and poking ~14% past its right
+   edge). */
+.intro-images svg {
+  display: block;
+  width: 90%;
+  height: auto;
+  margin-top: 25%;
+}
+
+.intro-images .splash {
+  display: block;
+  position: absolute;
+  top: 0;
+  right: -2.6%;
+  width: 52.4%;
+  height: auto;
+}
+
+@media screen and (max-width: 850px) {
+  .intro-images {
+    background: none;
+    width: 100%;
+    padding-top: 1rem;
+  }
+
+  /* Phones: let the art use the full column width, keeping the same
+     proportions (blob still ~58% of the art, same offsets). */
+  .intro-images svg {
+    width: 100%;
+    margin-top: 28%;
+  }
+
+  /* right: 0 rather than poking past the edge - there's no gutter to
+     spill into on a phone, so it would just get clipped. */
+  .intro-images .splash {
+    width: 58.2%;
+    right: 0;
+  }
+
+  .intro-images {
+    margin-bottom: 24px;
+  }
+}
+
 /* ---------- observability page ---------- */
 
 .observability-page {

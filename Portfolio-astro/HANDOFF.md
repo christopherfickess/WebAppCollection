@@ -162,6 +162,25 @@ narrow for the list. Details:
 - Theme stays an inline 3-way switch (small enough not to need a panel).
 - Respects `prefers-reduced-motion` (no slide animation).
 
+**Follow-up same session — home hero illustration on phones.** Reported:
+the hero art looked different on a phone (portrait and sideways) than
+on desktop. Three causes:
+1. Under 850px, `legacy-styles.css` hides the themed `.splash` blob and
+   puts the raw blue/pink `/img/splash.png` behind `.intro-images` as a
+   background — so phones got a differently colored, differently placed
+   blob that ignored the Display preset.
+2. The SVG kept its fixed `height="568"` box at every width; on narrow
+   columns the artwork sat centered in lots of empty space.
+3. The blob was a fixed `36rem` while the art scaled with the column, so
+   their relationship changed with width (sideways phone: blob far too
+   big relative to the art).
+Fix (`rails.css`, "hero composition" block): SVG `height: auto`, and the
+blob's size/offset are percentages of the illustration column measured
+off the desktop layout, so the picture is the same shape everywhere and
+just scales. Legacy PNG background removed under 850px; themed blob shown
+instead. Desktop is visually unchanged (blob within a few px of before).
+Verified at 1440, 1280, 915×412, 844×390, 390×844; no sideways scroll.
+
 **Reminder (bit us again this session):** the phone screenshot that
 reported these bugs was from the pinned `6ae7fc79…--` deploy URL, which
 never updates. Check fixes on the branch alias
