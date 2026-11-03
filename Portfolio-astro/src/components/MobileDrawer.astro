@@ -1,4 +1,5 @@
 ---
+import { PRESETS } from "../data/presets.js";
 // Burger toggle + off-canvas drawer shown under 850px, where the two
 // rails hide entirely (see rails.css's own max-width:850px block).
 ---
@@ -18,4 +19,31 @@
   <hr>
   <a href="https://www.linkedin.com/in/christopher-fickess-223a17182/" target="_blank" rel="noopener">LinkedIn</a>
   <a href="https://github.com/christopherfickess" target="_blank" rel="noopener">GitHub</a>
+  <hr>
+  <!-- The top bar's Theme switch and Display menu are hidden under 850px
+       (no room), so the drawer carries its own copies. Same classes and
+       data-* attributes, so site.js wires both sets and keeps them in sync. -->
+  <p class="drawer-label" id="drawer-theme-label">Theme</p>
+  <div class="drawer-theme" role="radiogroup" aria-labelledby="drawer-theme-label">
+    <button type="button" class="theme-opt" data-theme-pref="light" role="radio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+      <span>Light</span>
+    </button>
+    <button type="button" class="theme-opt" data-theme-pref="system" role="radio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
+      <span>Auto</span>
+    </button>
+    <button type="button" class="theme-opt" data-theme-pref="dark" role="radio">
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+      <span>Dark</span>
+    </button>
+  </div>
+  <p class="drawer-label" id="drawer-display-label">Display</p>
+  <div class="drawer-presets" role="group" aria-labelledby="drawer-display-label">
+    {PRESETS.map((preset) => (
+      <button type="button" class="display-option" data-preset={preset.key}>
+        <span class={`display-swatch display-swatch-${preset.key}`} />{preset.label}
+      </button>
+    ))}
+  </div>
 </nav>

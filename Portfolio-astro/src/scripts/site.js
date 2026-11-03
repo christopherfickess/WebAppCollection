@@ -82,20 +82,31 @@
       }
     });
 
-    var activePreset = root.getAttribute("data-preset") || "verdant";
-    displayOptions.forEach(function (opt) {
-      opt.setAttribute("data-active", opt.dataset.preset === activePreset);
-      opt.addEventListener("click", function () {
-        var preset = opt.dataset.preset;
-        root.setAttribute("data-preset", preset);
-        localStorage.setItem("portfolio-preset", preset);
-        displayOptions.forEach(function (o) {
-          o.setAttribute("data-active", o === opt);
-        });
-        closeDisplayMenu();
-      });
+  }
+
+  // Preset buttons exist twice (top-bar dropdown + mobile drawer); mark
+  // active by preset key, not by element, so both copies stay in sync.
+  function markActivePreset(preset) {
+    displayOptions.forEach(function (o) {
+      var active = o.dataset.preset === preset;
+      o.setAttribute("data-active", active);
+      o.setAttribute("aria-pressed", active ? "true" : "false");
     });
   }
+
+  markActivePreset(root.getAttribute("data-preset") || "verdant");
+  displayOptions.forEach(function (opt) {
+    opt.addEventListener("click", function () {
+      var preset = opt.dataset.preset;
+      root.setAttribute("data-preset", preset);
+      localStorage.setItem("portfolio-preset", preset);
+      markActivePreset(preset);
+      if (displayDropdown && !displayDropdown.hidden) {
+        displayDropdown.hidden = true;
+        displayToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  });
 
   var railToggle = document.getElementById("rail-toggle");
   if (railToggle) {

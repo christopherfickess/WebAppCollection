@@ -15,12 +15,7 @@ const {
 // inline style="" attribute - a strict CSP's style-src also governs
 // inline style attributes, and this way style-src 'self' works with no
 // 'unsafe-inline' carve-out needed anywhere on the site.
-const PRESETS = [
-  { key: "aurora", label: "Aurora" },
-  { key: "ember", label: "Ember" },
-  { key: "verdant", label: "Verdant" },
-  { key: "signal", label: "Signal Violet" },
-];
+import { PRESETS } from "../data/presets.js";
 ---
 <header class="main-head">
   <nav>

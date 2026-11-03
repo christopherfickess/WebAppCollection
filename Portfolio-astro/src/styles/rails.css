@@ -825,6 +825,85 @@ body.drawer-open {
   overflow: hidden;
 }
 
+/* Theme + Display controls inside the drawer (the top-bar copies are
+   hidden under 850px). Selectors are scoped under .mobile-drawer to beat
+   the generic `.mobile-drawer button` link styling above. */
+.mobile-drawer .drawer-label {
+  margin: 6px 12px 2px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.mobile-drawer .drawer-theme {
+  display: flex;
+  margin: 0 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--chip-bg);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mobile-drawer .drawer-theme .theme-opt {
+  flex: 1 1 0;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 6px;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.mobile-drawer .drawer-theme .theme-opt:last-child {
+  border-right: none;
+}
+
+.mobile-drawer .drawer-theme .theme-opt svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+}
+
+.mobile-drawer .drawer-theme .theme-opt[data-theme-pref="dark"] svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.mobile-drawer .drawer-theme .theme-opt[data-active="true"] {
+  color: var(--accent);
+  background: var(--bg-soft);
+}
+
+.mobile-drawer .drawer-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mobile-drawer .display-option {
+  font-size: 15px;
+  min-height: 42px;
+}
+
+.mobile-drawer .display-option svg,
+.mobile-drawer .display-swatch {
+  width: 16px;
+  height: 16px;
+}
+
+.mobile-drawer .display-option[data-active="true"] {
+  background: var(--chip-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .drawer-overlay.open {
   display: block;
 }

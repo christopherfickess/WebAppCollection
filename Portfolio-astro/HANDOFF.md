@@ -131,6 +131,20 @@ Files touched: `src/components/MobileDrawer.astro`,
 `src/scripts/site.js`, `src/scripts/github-contributions.js`,
 `src/styles/rails.css`.
 
+**Follow-up same session — Theme + Display on mobile.** Under 850px the
+top bar hides its Theme switch (Light/Auto/Dark) and Display preset menu
+for lack of room, and nothing replaced them, so phones had no way to
+change either. The drawer now has **Theme** and **Display** sections
+below the links. They reuse the same `.theme-opt` / `.display-option`
+classes and `data-*` attributes, so `site.js` wires both copies; preset
+"active" state is now matched by preset key (not by element) so picking
+in the drawer also updates the desktop dropdown and vice versa. The
+preset list moved to `src/data/presets.js`, imported by both `Topbar`
+and `MobileDrawer`, so there's one list to edit. Choosing a theme or
+preset keeps the drawer open so the change is visible. Verified: choice
+applies, both copies stay in sync, persists across reload; drawer
+scrolls on short screens (320×568); desktop dropdown unchanged.
+
 **Reminder (bit us again this session):** the phone screenshot that
 reported these bugs was from the pinned `6ae7fc79…--` deploy URL, which
 never updates. Check fixes on the branch alias
