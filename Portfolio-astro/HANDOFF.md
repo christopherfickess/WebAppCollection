@@ -311,6 +311,26 @@ Verified under the real CSP at 1440 and 390 wide: all 10 pages render
 with no console errors or sideways scroll, every gallery image loads,
 internal links return 200, autoplay advances and pauses.
 
+### Paris photos (2026-11-03, later)
+
+- Paris guide now has our own photos: 4-scene slideshow header (Eiffel Tower,
+  Pont Alexandre III, Notre-Dame at night, view from the tower), a card photo
+  (Eiffel from a terrace), a 14-photo "From our trip" gallery (Champ de Mars,
+  Arc de Triomphe, Panthéon, Louvre inverted pyramid, Montmartre, catacombs,
+  a croque monsieur, ...), and a Palace of Versailles day-trip section.
+- Photos live in `public/travel-advisor/img/paris/` (3 WebP widths each),
+  refined with `tools/photos/refine-photos.py`. Plates/faces blurred, EXIF
+  stripped. Left out on purpose: a personal ring-box photo and duplicates.
+- New "Catacombs" line in Paris "Before you go" (timed slots only, closed
+  Mondays, 131 steps down / 112 up). Checked Nov 2026 against a third-party
+  guide; re-check on the official catacombs site before relying on it.
+- Verified under the real CSP at 1440 and 390 wide: no console errors, no
+  sideways scroll, all 23 images load.
+- Pending: the user just sent Curaçao photos (Willemstad waterfront and
+  pontoon bridge, beach club, sunsets, dolphins, food, hotel pool). Not yet
+  processed. Several have the phone watermark bottom-left (crop it) and some
+  show people (blur or crop). Curaçao is still a plain-colour guide.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

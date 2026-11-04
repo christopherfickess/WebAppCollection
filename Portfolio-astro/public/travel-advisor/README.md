@@ -43,12 +43,12 @@ basics. Photos are all optional, and decide which header a guide gets:
 
 | Field | Effect | Example |
 | --- | --- | --- |
-| `scenes` | full-bleed photo slideshow header with a labelled scene index | London, Valencia, Barcelona |
+| `scenes` | full-bleed photo slideshow header with a labelled scene index | London, Paris, Valencia, Barcelona |
 | `photo` | one photo beside a colour header | New York |
-| neither | typographic header in the city's colour | Paris and the rest |
+| neither | typographic header in the city's colour | Curaçao, Antigua, San Diego |
 | `cardPhoto` | photo on the city's destination card | London, Valencia, Barcelona |
-| `gallery` | "From our trip" captioned photo mosaic | Valencia, Barcelona |
-| `dayTrips` | "Worth the trip out": text beside a photo pair | London (Kew Gardens) |
+| `gallery` | "From our trip" captioned photo mosaic | Paris, Valencia, Barcelona |
+| `dayTrips` | "Worth the trip out": text beside a photo pair | London (Kew Gardens), Paris (Versailles) |
 
 ## Photos
 
