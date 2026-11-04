@@ -353,6 +353,17 @@ internal links return 200, autoplay advances and pauses.
   la République, Louvre pyramid, Montmartre street, Barcelona/Valencia night
   streets. Add if wanted.
 
+### New York photos (2026-11-03, later)
+
+- New York now has a 5-scene slideshow header (Midtown from above, Chrysler,
+  Empire State, Rockefeller tree, Washington Square Arch), a card photo and a
+  9-photo gallery (holiday bar, Madison Square tree, lit passage, mirror room,
+  Harry Potter store, the Met, Central Park in autumn). Files in
+  `img/new-york/nyc-*`. Old B&W skyline file remains but is unused.
+- Added an "In winter" line to its "Before you go". Left out: the photo of a
+  person dancing by the tree (personal) and others with people up close;
+  passersby blurred/cropped in the rest.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

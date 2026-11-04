@@ -498,7 +498,7 @@ export const destinations = {
     intro:
       "New York is best planned by neighbourhood, not by landmark. Group each day around one part of the city and you'll spend it walking and eating instead of crossing town on the subway.",
     seasons: [0, 0, 1, 2, 2, 2, 1, 1, 2, 2, 1, 1],
-    seasonNote: "Late spring and autumn are ideal. July and August are humid. December has the holiday windows and the Rockefeller Center tree.",
+    seasonNote: "Late spring and autumn are ideal. July and August are humid. December has the holiday windows, the Rockefeller Center tree, and trees in Madison Square and Washington Square parks.",
     neighbourhoods: [
       { name: "Lower Manhattan", note: "The 9/11 Memorial, Battery Park, and the Staten Island Ferry." },
       { name: "West Village", note: "Tree-lined streets and some of the city's best small restaurants." },
@@ -525,13 +525,27 @@ export const destinations = {
       { term: "Getting there", text: "JFK, LaGuardia (LGA), or Newark (EWR). Domestic flights need a REAL ID or passport." },
       { term: "Money", text: "Tipping of 18 to 20 percent is expected at restaurants and bars." },
       { term: "Timing", text: "Museums like the Met and MoMA are busiest on weekends; go on weekday mornings." },
+      { term: "In winter", text: "Late November to early January is the holiday season: lit trees at Rockefeller Center and in the parks, decorated bars, and the biggest crowds. Book observation decks for dusk, and dress for the cold." },
     ],
-    photo: {
-      file: "img/new-york/nyc-skyline",
-      width: 1600,
-      height: 743,
-      alt: "Lower Manhattan skyline in black and white",
-    },
+    scenes: [
+      { file: "img/new-york/nyc-midtown-night", width: 1600, height: 2133, alt: "Midtown Manhattan at night from above, with the lit spire of One Bryant Park and the ice rink glowing blue", label: "Midtown from above", position: "50% 35%" },
+      { file: "img/new-york/nyc-chrysler", width: 1600, height: 1200, alt: "The lit crown of the Chrysler Building above the East River at night", label: "The Chrysler Building", position: "50% 45%" },
+      { file: "img/new-york/nyc-empire-deck", width: 1600, height: 2133, alt: "The Empire State Building lit in red and green above the Midtown grid at night", label: "Empire State, lit for the holidays", position: "50% 40%" },
+      { file: "img/new-york/nyc-rockefeller-tree", width: 1600, height: 1958, alt: "The Rockefeller Center Christmas tree covered in multicoloured lights between two towers", label: "Rockefeller Center", position: "50% 55%" },
+      { file: "img/new-york/nyc-washington-arch", width: 1600, height: 1727, alt: "The floodlit Washington Square Arch framing a lit Christmas tree on a wet night", label: "Washington Square Arch", position: "50% 40%" },
+    ],
+    cardPhoto: { file: "img/new-york/nyc-midtown-night", width: 1600, height: 2133, alt: "Midtown Manhattan lit up at night", position: "50% 40%" },
+    gallery: [
+      { file: "img/new-york/nyc-empire-street", width: 1600, height: 2133, alt: "The top of the Empire State Building glowing red and green behind bare branches", caption: "The Empire State Building from a Chelsea street" },
+      { file: "img/new-york/nyc-madison-tree", width: 1600, height: 2133, alt: "A small Christmas tree strung with warm lights in Madison Square Park at dusk", caption: "Madison Square Park's tree at dusk" },
+      { file: "img/new-york/nyc-lit-passage", width: 1600, height: 2133, alt: "A brick passage with an iron gate and a tunnel of fairy lights leading to a courtyard", caption: "A tunnel of lights beside the High Line" },
+      { file: "img/new-york/nyc-holiday-bar", width: 1600, height: 2133, alt: "A bar covered in Christmas decorations: a stag, glowing reindeer, red poinsettias and garlands", caption: "A bar done up for Christmas, every surface covered" },
+      { file: "img/new-york/nyc-mirror-floor", width: 1600, height: 2133, alt: "Light beams in green and blue repeating endlessly in a mirrored ceiling and glass floor", caption: "The mirrored room at an observation deck" },
+      { file: "img/new-york/nyc-butterbeer", width: 1190, height: 2455, alt: "A ceiling of hundreds of glowing amber bottles above a snack counter", caption: "Hundreds of lit bottles over a Harry Potter shop's snack bar" },
+      { file: "img/new-york/nyc-owl-staircase", width: 1190, height: 2455, alt: "A bronze owl with spread wings on a stone column in the middle of a spiral staircase", caption: "The bronze owl at the heart of the Harry Potter store" },
+      { file: "img/new-york/nyc-met-urn", width: 1600, height: 662, alt: "A carved marble ram's head among vines and grapes on a large urn", caption: "A marble ram's head at the Met" },
+      { file: "img/new-york/nyc-central-park", width: 1600, height: 843, alt: "Autumn trees reflected in a leaf-covered pond in Central Park, with towers behind", caption: "The Pond in Central Park in autumn" },
+    ],
   },
 };
 
