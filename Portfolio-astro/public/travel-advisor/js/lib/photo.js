@@ -22,9 +22,18 @@ export class Photo {
     return WIDTHS.map((w) => `${link(`${this.data.file}-${w}.webp`)} ${Math.min(w, this.data.width)}w`).join(", ");
   }
 
-  tag({ className = "", sizes = "100vw", eager = false } = {}) {
+  get full() {
+    return link(`${this.data.file}-1600.webp`);
+  }
+
+  // zoom: the photo opens in the lightbox when clicked (also by keyboard).
+  // full: only record the large file, for photos opened some other way
+  // (the hero's "Enlarge" button).
+  tag({ className = "", sizes = "100vw", eager = false, zoom = false, full = false } = {}) {
     const d = this.data;
-    return html`<img class="${className}" src="${this.src}" srcset="${this.srcset}" sizes="${sizes}" width="${d.width}" height="${d.height}" alt="${d.alt}"${d.position ? html` data-position="${d.position}"` : ""} ${eager ? html`fetchpriority="high"` : html`loading="lazy"`} decoding="async" />`;
+    const open = zoom || full ? html` data-full="${this.full}"` : "";
+    const key = zoom ? html` tabindex="0" role="button" aria-label="Enlarge photo: ${d.alt}"` : "";
+    return html`<img class="${className}"${open}${key} src="${this.src}" srcset="${this.srcset}" sizes="${sizes}" width="${d.width}" height="${d.height}" alt="${d.alt}"${d.position ? html` data-position="${d.position}"` : ""} ${eager ? html`fetchpriority="high"` : html`loading="lazy"`} decoding="async" />`;
   }
 
   // object-position has to be set through the CSSOM: the site's CSP blocks

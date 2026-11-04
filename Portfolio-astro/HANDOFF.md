@@ -331,6 +331,28 @@ internal links return 200, autoplay advances and pauses.
   processed. Several have the phone watermark bottom-left (crop it) and some
   show people (blur or crop). Curaçao is still a plain-colour guide.
 
+### Curaçao, Antigua photos; slide + zoom (2026-11-03, later)
+
+- Curaçao and Antigua guides now have our own photos (slideshow header, card
+  photo, gallery) in `img/curacao/` and `img/antigua/`. Left out on purpose:
+  photos with identifiable people up close (beach-lounger legs, concert
+  crowd) and the Galaxy-watermark screenshots.
+- Photo hero (`photo-hero.js`) now slides between photos (instead of
+  cross-fading), with prev/next arrows, swipe, the numbered index, and an
+  "Enlarge" button. Direction-aware (wraps forward/back correctly).
+- New `js/lib/lightbox.js`: every gallery and day-trip photo (and the hero via
+  "Enlarge") opens in a full-screen viewer: grows from the clicked photo,
+  click/tap/wheel/pinch zoom with drag-to-pan, arrows/swipe between photos,
+  Esc to close. Photo.tag takes `zoom: true` (clickable + keyboard) or
+  `full: true` (large file only). Uses a <dialog>; all motion is set via the
+  CSSOM so it works under the strict CSP.
+- London: only six London/Kew photos have reached the session so far, and all
+  six are already used (3 header scenes, card, 2 Kew). If there are more,
+  re-attach them.
+- Unused Paris/Barcelona/Valencia photos still in the upload folder: Place de
+  la République, Louvre pyramid, Montmartre street, Barcelona/Valencia night
+  streets. Add if wanted.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

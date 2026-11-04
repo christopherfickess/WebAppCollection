@@ -22,6 +22,10 @@ export class Slideshow {
     this.goTo(this.index + 1);
   }
 
+  prev() {
+    this.goTo(this.index - 1);
+  }
+
   // Never auto-advances for people who asked for reduced motion, while
   // the page is hidden, or while paused (hover or keyboard focus).
   start() {

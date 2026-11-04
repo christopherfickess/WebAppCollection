@@ -15,7 +15,7 @@ export class PhotoGallery extends Component {
           return html`
             <li class="gallery-item${wide ? " is-wide" : ""}">
               <figure>
-                ${new Photo(p).tag({ className: "gallery-img", sizes: wide ? "(max-width: 560px) 100vw, 60vw" : "(max-width: 560px) 50vw, 30vw" })}
+                ${new Photo(p).tag({ className: "gallery-img", zoom: true, sizes: wide ? "(max-width: 560px) 100vw, 60vw" : "(max-width: 560px) 50vw, 30vw" })}
                 <figcaption>${p.caption}</figcaption>
               </figure>
             </li>

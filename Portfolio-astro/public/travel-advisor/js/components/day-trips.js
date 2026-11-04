@@ -17,7 +17,7 @@ export class DayTrips extends Component {
             <p>${trip.text}</p>
           </div>
           <div class="day-trip-photos">
-            ${trip.photos.map((p, i) => new Photo(p).tag({ className: `day-trip-photo day-trip-photo-${i + 1}`, sizes: "(max-width: 860px) 100vw, 30vw" }))}
+            ${trip.photos.map((p, i) => new Photo(p).tag({ className: `day-trip-photo day-trip-photo-${i + 1}`, zoom: true, sizes: "(max-width: 860px) 100vw, 30vw" }))}
           </div>
         </article>
       `

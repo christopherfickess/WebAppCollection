@@ -1061,12 +1061,71 @@ gta-guide .route li:last-child::before {
   position: absolute;
   inset: 0;
   margin: 0;
-  opacity: 0;
-  transition: opacity 1.2s ease;
+  transform: translateX(100%);
+  transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .photo-hero-slide.is-active {
-  opacity: 1;
+  transform: none;
+}
+
+.photo-hero-slide.is-before {
+  transform: translateX(-100%);
+}
+
+.photo-hero-slide.is-after {
+  transform: translateX(100%);
+}
+
+.photo-hero-slide.no-anim {
+  transition: none;
+}
+
+.photo-hero {
+  touch-action: pan-y;
+}
+
+.photo-hero-nav {
+  position: absolute;
+  z-index: 2;
+  top: 1.25rem;
+  right: max(var(--gutter), calc((100% - var(--max)) / 2));
+  display: flex;
+  gap: 0.5rem;
+}
+
+.photo-hero-arrow,
+.photo-hero-enlarge {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(12, 24, 30, 0.45);
+  color: #fff;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.photo-hero-arrow {
+  font-family: system-ui, sans-serif;
+  font-size: 1.9rem;
+  font-weight: 400;
+  line-height: 1;
+  padding: 0 0 0.2rem;
+}
+
+.photo-hero-enlarge {
+  padding: 0 1.1rem;
+}
+
+.photo-hero-arrow:hover,
+.photo-hero-enlarge:hover {
+  background: rgba(12, 24, 30, 0.75);
+  border-color: #fff;
 }
 
 .photo-hero-img {
@@ -1265,6 +1324,182 @@ gta-guide .route li:last-child::before {
   font-size: var(--t-sm);
   font-style: italic;
   color: var(--ink-soft);
+}
+
+/* ---------- lightbox (photo viewer) ---------- */
+.gallery-img,
+.day-trip-photo {
+  cursor: zoom-in;
+  transition: filter 0.25s ease;
+}
+
+.gallery-img:hover,
+.day-trip-photo:hover {
+  filter: brightness(1.06);
+}
+
+.gallery-img:focus-visible,
+.day-trip-photo:focus-visible {
+  outline: 3px solid var(--saffron);
+  outline-offset: 3px;
+}
+
+html.lightbox-open {
+  overflow: hidden;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(9, 17, 21, 0.95);
+  color: #fff;
+  overflow: hidden;
+  animation: lightbox-in 0.3s ease;
+}
+
+.lightbox::backdrop {
+  background: transparent;
+}
+
+.lightbox.is-closing {
+  background: rgba(9, 17, 21, 0);
+  transition: background 0.3s ease;
+}
+
+@keyframes lightbox-in {
+  from {
+    background: rgba(9, 17, 21, 0);
+  }
+}
+
+.lightbox-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.lightbox-img {
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 8rem);
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;
+}
+
+.lightbox.is-zoomed .lightbox-img {
+  cursor: grab;
+}
+
+.lightbox-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem var(--gutter) 1.25rem;
+  background: linear-gradient(to top, rgba(9, 17, 21, 0.85), rgba(9, 17, 21, 0));
+  pointer-events: none;
+}
+
+.lightbox-caption,
+.lightbox-count {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.lightbox-caption {
+  font-style: italic;
+}
+
+.lightbox-count {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.lightbox-btn {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0 0 0.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: 1.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.lightbox-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.lightbox-btn:focus-visible {
+  outline: 3px solid var(--saffron);
+  outline-offset: 2px;
+}
+
+.lightbox-close {
+  top: 1rem;
+  right: 1rem;
+}
+
+.lightbox-zoom {
+  top: 1rem;
+  right: 4.25rem;
+}
+
+.lightbox-prev,
+.lightbox-next {
+  top: 50%;
+  margin-top: -24px;
+}
+
+.lightbox-prev {
+  left: 1rem;
+}
+
+.lightbox-next {
+  right: 1rem;
+}
+
+.lightbox-btn[hidden],
+.lightbox-count[hidden] {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .lightbox-prev,
+  .lightbox-next {
+    top: auto;
+    bottom: 3.5rem;
+    margin-top: 0;
+  }
+
+  .lightbox-img {
+    max-height: calc(100dvh - 12rem);
+  }
 }
 
 /* ---------- responsive ---------- */
@@ -1487,6 +1722,12 @@ gta-guide .route li:last-child::before {
 
   .photo-hero-slide {
     transition: none;
+  }
+
+  .lightbox,
+  .lightbox-img {
+    animation: none;
+    transition: none !important;
   }
 
   .route::before {

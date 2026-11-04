@@ -15,6 +15,7 @@ import { PhotoHero } from "./components/photo-hero.js";
 import { DayTrips } from "./components/day-trips.js";
 import { PhotoGallery } from "./components/photo-gallery.js";
 import { ContactForm } from "./components/contact-form.js";
+import { Lightbox } from "./lib/lightbox.js";
 
 setStore(content);
 
@@ -37,3 +38,4 @@ setStore(content);
 ].forEach((C) => C.define());
 
 ContactForm.attach()?.prefillFromQuery();
+Lightbox.attach();
