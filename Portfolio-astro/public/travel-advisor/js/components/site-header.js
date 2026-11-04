@@ -1,4 +1,4 @@
-import { Component, html } from "../core.js";
+import { Component, html, link } from "../core.js";
 
 // <gta-header data-from="site">
 // Brand, main navigation, and the primary call to action. On narrow
@@ -9,7 +9,7 @@ export class SiteHeader extends Component {
   render(site) {
     return html`
       <header class="site-head">
-        <a class="wordmark" href="#top" aria-label="${site.name}, back to top">
+        <a class="wordmark" href="${link("")}" aria-label="${site.name}, home">
           <svg class="wordmark-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" /><path d="M9 21c4-1 6-10 14-10" /><circle class="wordmark-dot" cx="23" cy="11" r="3" /></svg>
           <span class="wordmark-name">${site.brand}</span>
           <span class="wordmark-tag">${site.tagline}</span>
@@ -17,12 +17,19 @@ export class SiteHeader extends Component {
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
         <nav class="site-nav" id="site-nav" aria-label="Main">
           <ul>
-            ${site.nav.map((item) => html`<li><a href="${item.href}">${item.label}</a></li>`)}
+            ${site.nav.map((item) => html`<li><a href="${link(item.href)}"${this.isCurrent(item.href) ? html` aria-current="page"` : ""}>${item.label}</a></li>`)}
           </ul>
-          <a class="btn btn-small" href="${site.cta.href}">${site.cta.label}</a>
+          <a class="btn btn-small" href="${link(site.cta.href)}">${site.cta.label}</a>
         </nav>
       </header>
     `;
+  }
+
+  // A nav link is "current" when this page is that section (hash links
+  // point into the home page, so they're never current elsewhere).
+  isCurrent(href) {
+    if (href.startsWith("#")) return false;
+    return window.location.pathname.startsWith(link(href));
   }
 
   afterRender() {

@@ -16,8 +16,21 @@ export function setStore(data) {
   store = data;
 }
 
-// Look up "trips.0" or "site.nav" in the store.
-function resolve(path) {
+// The site's settings (base path, name...) from the store.
+export function site() {
+  return store.site || {};
+}
+
+// Turn a site-relative path ("destinations/", "#contact", "img/x.webp")
+// into a link from the site's base, so it works from any page depth.
+// Absolute URLs and root paths ("/projects/") pass through unchanged.
+export function link(path) {
+  if (/^([a-z]+:|\/)/i.test(path)) return path;
+  return (site().base || "./") + path;
+}
+
+// Look up "destinations.london" or "site.nav" in the store.
+export function resolve(path) {
   if (!path) return undefined;
   return path.split(".").reduce((obj, key) => (obj == null ? undefined : obj[key]), store);
 }

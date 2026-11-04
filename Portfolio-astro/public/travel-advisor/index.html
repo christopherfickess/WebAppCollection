@@ -9,7 +9,7 @@
   <link rel="icon" href="./img/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="./fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="./css/style.css" />
-  <!-- UI components (header, itinerary, steps, trips, footer) are classes
+  <!-- UI components (header, itinerary, steps, destinations, footer) are classes
        in ./js/components, rendered from the content in ./js/data.js. -->
   <script type="module" src="./js/main.js"></script>
   <title>Gredin Travel Advisor | Trips planned by a person</title>
@@ -26,7 +26,7 @@
         <p class="lede">Tell Gredin where you want to go and how you like to travel. You get a day-by-day plan, every booking handled, and someone to message when a flight gets cancelled.</p>
         <div class="hero-actions">
           <a class="btn" href="#contact">Book a free planning call</a>
-          <a class="link" href="#trips">See sample trips</a>
+          <a class="link" href="./destinations/">Browse destinations</a>
         </div>
       </div>
 
@@ -39,12 +39,12 @@
       <gta-steps data-from="steps"></gta-steps>
     </section>
 
-    <section class="trips" id="trips" aria-labelledby="trips-title">
+    <section class="trips" id="destinations" aria-labelledby="dest-title">
       <div class="section-head">
-        <h2 id="trips-title">Sample trips</h2>
-        <p>Starting points, not packages. Each one gets rebuilt around you.</p>
+        <h2 id="dest-title">Destinations</h2>
+        <p>Eight places Gredin knows well, each with a full guide: when to go, where to stay, and a sample plan.</p>
       </div>
-      <gta-trip-grid data-from="trips"></gta-trip-grid>
+      <gta-destination-grid data-from="destinationOrder"></gta-destination-grid>
     </section>
 
     <section class="included" id="included" aria-labelledby="included-title">
@@ -73,7 +73,7 @@
         <div class="field-row">
           <label class="field">
             <span>Where to</span>
-            <input type="text" name="destination" placeholder="Iceland, or not sure yet" />
+            <input type="text" name="destination" placeholder="Paris, or not sure yet" />
           </label>
           <label class="field">
             <span>Roughly when</span>

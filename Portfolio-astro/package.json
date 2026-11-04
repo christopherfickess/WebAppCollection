@@ -4,9 +4,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
+    "dev": "node tools/build-guides.mjs && astro dev",
+    "prebuild": "node tools/build-guides.mjs",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "guides": "node tools/build-guides.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.7",

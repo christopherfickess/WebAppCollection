@@ -161,13 +161,31 @@ a {
    block-level wrapper. Reserved heights keep the page from jumping while
    the JS renders them. */
 gta-header,
+gta-footer,
 gta-itinerary,
 gta-steps,
-gta-trip-grid,
-gta-trip,
+gta-definitions,
 gta-included,
-gta-footer {
+gta-places,
+gta-facts,
+gta-seasons,
+gta-destination,
+gta-destination-grid,
+gta-guide {
   display: block;
+}
+
+gta-guide:not(:has(*)) {
+  min-height: 100vh;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 gta-header:not(:has(*)) {
@@ -274,6 +292,12 @@ gta-header {
   font-size: var(--t-sm);
   font-weight: 500;
   text-decoration: none;
+}
+
+.site-nav ul a[aria-current="page"] {
+  color: var(--petrol);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .site-nav ul a:hover {
@@ -506,54 +530,6 @@ main > section h2 {
   color: #c3cfcb;
 }
 
-/* ---------- sample trips ---------- */
-.trip-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  gap: 1.75rem 2.25rem;
-}
-
-gta-trip[feature] {
-  grid-row: span 2;
-}
-
-.trip img {
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
-  border-radius: 14px;
-}
-
-.trip-feature img {
-  aspect-ratio: 4 / 3.4;
-}
-
-.trip-copy {
-  padding-top: 1rem;
-  max-width: 52ch;
-}
-
-.trip h3 {
-  font-size: var(--t-lg);
-}
-
-.trip-feature h3 {
-  font-size: var(--t-xl);
-}
-
-.trip-meta {
-  margin: 0.25rem 0 0.5rem;
-  font-family: var(--display);
-  font-size: var(--t-sm);
-  font-weight: 500;
-  color: var(--petrol);
-}
-
-.trip-copy > p:last-child {
-  color: var(--ink-soft);
-}
-
 /* ---------- included ---------- */
 .included {
   border-top: 1px solid var(--rule);
@@ -682,6 +658,378 @@ gta-trip[feature] {
   font-family: var(--display);
 }
 
+/* ---------- destination cards ----------
+   Each card wears its city's colour (--city / --city-ink, set from
+   data by DestinationCard). No photos needed: the name is the image. */
+.destination-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.destination {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.destination:hover {
+  border-color: var(--city, var(--petrol));
+}
+
+.destination-band {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 9.5rem;
+  padding: 1.1rem 1.25rem 1rem;
+  background: var(--city, var(--ink));
+  color: var(--city-ink, var(--paper));
+}
+
+.destination-name {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 1.4rem + 1.4vw, 2.5rem);
+  font-weight: 800;
+  font-stretch: 78%;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.destination-country {
+  margin-top: 0.35rem;
+  font-style: italic;
+  font-size: var(--t-sm);
+  opacity: 0.85;
+}
+
+.destination-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.2rem;
+}
+
+.destination-summary {
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.destination-best {
+  margin-top: auto;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--petrol);
+}
+
+/* ---------- destinations index ---------- */
+main > .page-head {
+  padding-bottom: 0;
+}
+
+.page-head h1 {
+  font-size: var(--t-hero);
+  font-weight: 800;
+  font-stretch: 82%;
+  letter-spacing: -0.025em;
+}
+
+.page-head p {
+  margin-top: 1rem;
+  max-width: 52ch;
+  font-size: var(--t-md);
+  color: var(--ink-soft);
+}
+
+.region + .region {
+  margin-top: 3.5rem;
+}
+
+.region-title {
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--t-lg) !important;
+}
+
+/* ---------- guide page ---------- */
+.guide-hero {
+  display: grid;
+  background: var(--city);
+  color: var(--city-ink);
+}
+
+.guide-hero.has-photo {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.guide-hero-inner {
+  width: 100%;
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: clamp(2rem, 1rem + 4vw, 4.5rem) var(--gutter) clamp(2.5rem, 1.5rem + 4vw, 5rem);
+}
+
+.has-photo .guide-hero-inner {
+  max-width: calc(var(--max) / 2 + var(--gutter));
+  margin-right: 0;
+}
+
+.guide-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide-crumbs a {
+  color: inherit;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* The city's name is the hero image. */
+.guide-title {
+  margin-top: 1.5rem;
+  font-size: clamp(3.4rem, 1.6rem + 8vw, 9rem);
+  font-weight: 800;
+  font-stretch: 75%;
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+}
+
+.guide-where {
+  margin-top: 1rem;
+  font-family: var(--display);
+  font-size: var(--t-md);
+  font-weight: 500;
+}
+
+.guide-coords {
+  margin-left: 0.6rem;
+  font-family: var(--read);
+  font-style: italic;
+  font-size: var(--t-sm);
+  font-weight: 400;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.guide-intro {
+  margin-top: 1.25rem;
+  max-width: 46ch;
+  font-size: var(--t-md);
+  line-height: 1.55;
+}
+
+.guide-glance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  margin: 2rem 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid currentColor;
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.guide-glance dt {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.guide-glance dd {
+  margin: 0.15rem 0 0;
+  font-family: var(--display);
+  font-size: var(--t-md);
+  font-weight: 700;
+}
+
+.btn-on-city {
+  background: var(--city-ink);
+  color: var(--city);
+}
+
+.btn-on-city:hover {
+  background: var(--city-ink);
+  color: var(--city);
+  opacity: 0.9;
+}
+
+.guide-body {
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter) 2rem;
+}
+
+.guide-section {
+  padding: clamp(2.5rem, 1.5rem + 3vw, 4rem) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.guide-section h2,
+.guide-cta h2 {
+  font-size: var(--t-xl);
+  margin-bottom: 1.5rem;
+}
+
+.guide-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+  align-items: start;
+}
+
+.guide-lede {
+  max-width: 34ch;
+  font-size: var(--t-md);
+  color: var(--ink-soft);
+}
+
+.guide-checked {
+  margin: -0.75rem 0 1.5rem;
+  font-style: italic;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+/* Lists of term + description: neighbourhoods, transport, basics. */
+.definition-list,
+.place-list,
+.fact-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem 2.5rem;
+  margin: 0;
+}
+
+.definition-list dt,
+.place-list dt,
+.fact-list dt {
+  margin-bottom: 0.35rem;
+  font-size: var(--t-md);
+}
+
+.place-list dt {
+  padding-top: 0.75rem;
+  border-top: 3px solid var(--city);
+}
+
+.definition-list dd,
+.place-list dd,
+.fact-list dd {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.fact-list {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+/* Season strip: twelve months, filled by rating in the city's colour. */
+.season-strip {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.season {
+  display: flex;
+  align-items: flex-end;
+  height: 4.5rem;
+  padding: 0.4rem;
+  border-radius: 6px;
+}
+
+.season-month {
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.season-2 {
+  background: var(--city);
+  color: var(--city-ink);
+}
+
+.season-1 {
+  background: color-mix(in srgb, var(--city) 35%, var(--paper));
+  color: var(--ink);
+}
+
+.season-0 {
+  background: var(--paper);
+  color: var(--ink-soft);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+.season-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+}
+
+.season-key li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.season-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.season-note {
+  margin-top: 1rem;
+  max-width: 62ch;
+  color: var(--ink-soft);
+}
+
+.guide-cta {
+  padding: clamp(2.5rem, 1.5rem + 3vw, 4rem) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.guide-cta p {
+  max-width: 48ch;
+  margin-bottom: 1.5rem;
+  font-size: var(--t-md);
+  color: var(--ink-soft);
+}
+
+/* On a guide, the itinerary's route takes the city's colour. */
+gta-guide .route::before,
+gta-guide .route li::before {
+  border-color: var(--city);
+}
+
+gta-guide .route::before,
+gta-guide .route li:first-child::before,
+gta-guide .route li:last-child::before {
+  background: var(--city);
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 960px) {
   .steps {
@@ -691,6 +1039,20 @@ gta-trip[feature] {
 }
 
 @media (max-width: 860px) {
+  .guide-hero.has-photo,
+  .guide-split {
+    grid-template-columns: 1fr;
+  }
+
+  .has-photo .guide-hero-inner {
+    max-width: none;
+  }
+
+  .guide-photo {
+    max-height: 260px;
+    order: -1;
+  }
+
   /* Nav collapses behind the Menu button (SiteHeader toggles .is-open). */
   .menu-toggle {
     display: inline-flex;
@@ -736,17 +1098,6 @@ gta-trip[feature] {
     grid-template-columns: 1fr;
   }
 
-  .trip-grid {
-    grid-template-columns: 1fr;
-  }
-
-  gta-trip[feature] {
-    grid-row: auto;
-  }
-
-  .trip-feature img {
-    aspect-ratio: 16 / 10;
-  }
 
   .included-list {
     grid-template-columns: 1fr;
@@ -755,6 +1106,29 @@ gta-trip[feature] {
 }
 
 @media (max-width: 560px) {
+  /* Compact cards on phones so eight of them don't become a long scroll. */
+  .destination-grid {
+    gap: 0.75rem;
+  }
+
+  .destination-band {
+    min-height: 0;
+    padding-top: 1.6rem;
+  }
+
+  .destination-body {
+    padding: 0.8rem 1.25rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .season-strip {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .season {
+    height: 3.2rem;
+  }
+
   html {
     font-size: 106.25%; /* 17px */
   }
