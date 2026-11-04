@@ -1,8 +1,10 @@
 import { Component, html, link, resolve } from "../core.js";
 import { Seasons } from "../lib/seasons.js";
+import { Photo } from "../lib/photo.js";
 
 // <gta-destination data-from="destinations.london" data-slug="london">
-// A typographic card in the city's own colour, linking to its guide.
+// A card in the city's own colour (with its photo, if it has one),
+// linking to its guide.
 export class DestinationCard extends Component {
   static tag = "gta-destination";
 
@@ -10,7 +12,8 @@ export class DestinationCard extends Component {
     const best = new Seasons(place.seasons).bestRanges();
     return html`
       <a class="destination" href="${link(`destinations/${this.dataset.slug}/`)}">
-        <span class="destination-band">
+        <span class="destination-band${place.cardPhoto ? " has-photo" : ""}">
+          ${place.cardPhoto ? new Photo(place.cardPhoto).tag({ className: "destination-photo", sizes: "(max-width: 560px) 100vw, 320px" }) : ""}
           <span class="destination-name">${place.name}</span>
           <span class="destination-country">${place.country}</span>
         </span>
@@ -26,6 +29,7 @@ export class DestinationCard extends Component {
   // attributes in markup, but not properties set from script.
   afterRender() {
     const place = this.data;
+    Photo.applyPositions(this);
     this.style.setProperty("--city", place.accent);
     this.style.setProperty("--city-ink", place.accentInk);
   }

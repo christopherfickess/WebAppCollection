@@ -1,5 +1,6 @@
-import { Component, html, link } from "../core.js";
-import { Seasons } from "../lib/seasons.js";
+import { Component, html } from "../core.js";
+import { Photo } from "../lib/photo.js";
+import { guideIntro, planHref } from "./guide-intro.js";
 
 // <gta-guide data-from="destinations.london" data-slug="london">
 // A full destination guide. It lays out the page and hands each section
@@ -10,27 +11,21 @@ export class GuidePage extends Component {
   render(place) {
     const path = this.dataset.from;
     const slug = this.dataset.slug;
-    const planHref = link(`?to=${encodeURIComponent(place.name)}#contact`);
-    const best = new Seasons(place.seasons).bestRanges();
+    const plan = planHref(place);
+
+    // Three header styles, picked from the data: a photo slideshow
+    // (scenes), colour + one photo side by side (photo), or colour only.
+    const hero = place.scenes
+      ? html`<gta-photo-hero data-from="${path}"></gta-photo-hero>`
+      : html`
+          <header class="guide-hero${place.photo ? " has-photo" : ""}">
+            <div class="guide-hero-inner">${guideIntro(place)}</div>
+            ${place.photo ? new Photo(place.photo).tag({ className: "guide-photo", sizes: "(max-width: 860px) 100vw, 50vw", eager: true }) : ""}
+          </header>
+        `;
 
     return html`
-      <header class="guide-hero${place.photo ? " has-photo" : ""}">
-        <div class="guide-hero-inner">
-          <p class="guide-crumbs"><a href="${link("destinations/")}">Destinations</a></p>
-          <h1 class="guide-title">${place.name}</h1>
-          <p class="guide-where">${place.country} <span class="guide-coords">${place.coords}</span></p>
-          <p class="guide-intro">${place.intro}</p>
-          <dl class="guide-glance">
-            <div><dt>Currency</dt><dd>${place.currency}</dd></div>
-            <div><dt>Best time</dt><dd>${best}</dd></div>
-            <div><dt>Sample plan</dt><dd>${(place.itinerary.title.match(/\d+ days?/) || [""])[0]}</dd></div>
-          </dl>
-          <a class="btn btn-on-city" href="${planHref}">Plan a trip to ${place.name}</a>
-        </div>
-        ${place.photo
-          ? html`<img class="guide-photo" src="${link(place.photo.src)}" width="${place.photo.width}" height="${place.photo.height}" alt="${place.photo.alt}" />`
-          : ""}
-      </header>
+      ${hero}
 
       <div class="guide-body">
         <section class="guide-section" aria-labelledby="when-title">
@@ -46,10 +41,25 @@ export class GuidePage extends Component {
           <gta-itinerary data-from="${path}.itinerary"></gta-itinerary>
         </section>
 
+        ${place.gallery
+          ? html`<section class="guide-section" aria-labelledby="gallery-title">
+              <h2 id="gallery-title">From our trip</h2>
+              <p class="guide-checked">Photographed on our own visit to ${place.name}.</p>
+              <gta-gallery data-from="${path}.gallery"></gta-gallery>
+            </section>`
+          : ""}
+
         <section class="guide-section" aria-labelledby="where-title">
           <h2 id="where-title">Where to stay and wander</h2>
           <gta-places data-from="${path}.neighbourhoods"></gta-places>
         </section>
+
+        ${place.dayTrips
+          ? html`<section class="guide-section" aria-labelledby="trips-title">
+              <h2 id="trips-title">Worth the trip out</h2>
+              <gta-day-trips data-from="${path}.dayTrips"></gta-day-trips>
+            </section>`
+          : ""}
 
         <section class="guide-section" aria-labelledby="around-title">
           <h2 id="around-title">Getting around</h2>
@@ -65,7 +75,7 @@ export class GuidePage extends Component {
         <section class="guide-cta" aria-labelledby="cta-title">
           <h2 id="cta-title">Want this trip planned for you?</h2>
           <p>Gredin builds the day-by-day plan, books it, and stays on call while you're in ${place.name}.</p>
-          <a class="btn" href="${planHref}">Plan a trip to ${place.name}</a>
+          <a class="btn" href="${plan}">Plan a trip to ${place.name}</a>
         </section>
 
         <section class="guide-section" aria-labelledby="more-title">
@@ -78,6 +88,7 @@ export class GuidePage extends Component {
 
   afterRender() {
     const place = this.data;
+    Photo.applyPositions(this);
     this.style.setProperty("--city", place.accent);
     this.style.setProperty("--city-ink", place.accentInk);
   }

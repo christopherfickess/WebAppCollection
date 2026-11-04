@@ -4,8 +4,13 @@
 //
 // seasons: 12 values, January first. 2 = best, 1 = good, 0 = off-season.
 // accent / accentInk: the city's colour and the text colour that reads on it.
-// photo: optional { src, width, height, alt }. Without one, the guide uses a
-// typographic header in the city's colour; drop a file in img/ and add it here.
+// Photos (all optional; see js/lib/photo.js for the file naming):
+//   scenes:    2+ photos for a full-bleed slideshow header (London)
+//   photo:     one photo beside a colour header (New York)
+//   neither:   a typographic header in the city's colour
+//   cardPhoto: the image on the city's destination card
+//   dayTrips:  places outside the city, each with a pair of photos
+//   gallery:   captioned photos for a "From our trip" mosaic (Valencia)
 //
 // "Before you go" facts are for US passport holders and were checked in
 // November 2026. Entry rules change: re-check them before publishing.
@@ -40,6 +45,62 @@ export const destinations = {
       { term: "Tube and buses", text: "Tap a contactless card or phone at the gates; daily fares cap automatically, so there's no need for an Oyster card." },
       { term: "From Heathrow", text: "The Elizabeth line reaches central London in about 30 minutes; the Piccadilly line is slower and cheaper." },
       { term: "On foot", text: "Many stops are closer than the Tube map suggests. Covent Garden to Leicester Square is a four-minute walk." },
+    ],
+    scenes: [
+      {
+        file: "img/london/london-westminster-aerial",
+        width: 1600,
+        height: 961,
+        alt: "The Houses of Parliament and Big Ben beside the Thames, seen from the London Eye",
+        label: "From the London Eye",
+        position: "50% 60%",
+      },
+      {
+        file: "img/london/london-regent-street",
+        width: 1600,
+        height: 2133,
+        alt: "Union flags strung across Regent Street above a line of black cabs",
+        label: "Regent Street",
+        position: "50% 42%",
+      },
+      {
+        file: "img/london/london-westminster-bridge",
+        width: 1600,
+        height: 1728,
+        alt: "Big Ben and Parliament from Westminster Bridge on a clear day",
+        label: "Westminster Bridge",
+        position: "50% 38%",
+      },
+    ],
+    cardPhoto: {
+      file: "img/london/london-thames",
+      width: 1600,
+      height: 1273,
+      alt: "Parliament, Big Ben and Westminster Bridge across the Thames",
+      position: "50% 35%",
+    },
+    dayTrips: [
+      {
+        name: "Kew Gardens",
+        where: "About 40 minutes on the District line from Westminster, or 30 minutes by train from Waterloo to Kew Bridge.",
+        text: "The Royal Botanic Gardens are a UNESCO World Heritage Site in south-west London. Walk through the Victorian Palm House's rainforest, then find the giant Amazon waterlilies, at their biggest in summer. Allow most of a day and book tickets online.",
+        photos: [
+          {
+            file: "img/london/kew-waterlily-house",
+            width: 1600,
+            height: 1481,
+            alt: "Giant waterlily pads with red rims floating in a glasshouse pond at Kew",
+            position: "50% 55%",
+          },
+          {
+            file: "img/london/kew-palm-house",
+            width: 1321,
+            height: 2576,
+            alt: "Banana plants under the white iron arches of Kew's Palm House",
+            position: "50% 40%",
+          },
+        ],
+      },
     ],
     itinerary: {
       title: "London in 4 days",
@@ -127,15 +188,33 @@ export const destinations = {
       { term: "From the airport", text: "The Aerobús runs to Plaça de Catalunya in about 35 minutes; metro line L9 Sud is the cheaper option." },
       { term: "Watch out", text: "Pickpocketing is common on Las Ramblas and the metro. Keep phones out of back pockets." },
     ],
+    scenes: [
+      { file: "img/barcelona/barcelona-cathedral", width: 1600, height: 739, alt: "The Gothic facade and spires of Barcelona Cathedral under a grey sky, with red umbrellas below", label: "Barcelona Cathedral", position: "50% 40%" },
+      { file: "img/barcelona/barcelona-sagrada-familia", width: 1190, height: 2300, alt: "The Passion facade of the Sagrada Família, with angled stone columns below the spires", label: "Sagrada Família", position: "50% 30%" },
+      { file: "img/barcelona/barcelona-arc-de-triomf", width: 1190, height: 2300, alt: "The red-brick Arc de Triomf at the end of a wide promenade", label: "Arc de Triomf", position: "50% 38%" },
+    ],
+    cardPhoto: { file: "img/barcelona/barcelona-sagrada-familia", width: 1190, height: 2300, alt: "The spires of the Sagrada Família", position: "50% 25%" },
+    gallery: [
+      { file: "img/barcelona/barcelona-placa-reial", width: 1190, height: 2576, alt: "Placa Reial's iron fountain and tall palms on a rainy day", caption: "Plaça Reial after the rain" },
+      { file: "img/barcelona/barcelona-courtyard", width: 1190, height: 2576, alt: "A stone courtyard with a fountain, arches and hanging vines in the Gothic Quarter", caption: "A Gothic Quarter courtyard, a few steps off the busy lanes" },
+      { file: "img/barcelona/barcelona-el-born-street", width: 1190, height: 2576, alt: "A narrow street of tall stone buildings with iron balconies", caption: "El Born's balconied streets" },
+      { file: "img/barcelona/barcelona-gothic-rain", width: 1190, height: 2576, alt: "A wet, lamp-lit Gothic Quarter lane lined with small shops", caption: "Rain brings out the Gothic Quarter's best light" },
+      { file: "img/barcelona/barcelona-cathedral-lane", width: 1190, height: 2576, alt: "A narrow lane beside the cathedral's carved stone wall, paving shining with rain", caption: "The lane along the cathedral's side" },
+      { file: "img/barcelona/barcelona-customs-house", width: 1190, height: 2276, alt: "The ornate old customs house by the port, with lion statues at the Columbus monument", caption: "The old customs house at the bottom of La Rambla" },
+      { file: "img/barcelona/barcelona-shaded-street", width: 1190, height: 2576, alt: "Trees arching over a cobbled street with café tables", caption: "Shaded streets and café terraces" },
+      { file: "img/barcelona/barcelona-tree-square", width: 1190, height: 2576, alt: "A tree-lined pedestrian square with palms", caption: "Plane trees and palms in a city square" },
+      { file: "img/barcelona/barcelona-train-wine", width: 1190, height: 2200, alt: "A small bottle of Spanish red wine and a glass on a train table", caption: "Ribera del Duero on the train from Barcelona to Valencia" },
+    ],
     itinerary: {
-      title: "Barcelona in 4 days",
+      title: "Barcelona in 5 days",
       label: "A sample plan",
-      footnote: "Sagrada Família and Park Güell need timed tickets; book weeks ahead in summer.",
+      footnote: "Sagrada Família and Park Güell need timed tickets; book weeks ahead in summer. Pair this with the Valencia guide for a week in Spain.",
       stops: [
         { days: "Day 1", place: "Gothic Quarter", note: "Cathedral, El Born, tapas crawl in the evening" },
         { days: "Day 2", place: "Sagrada Família", note: "Morning slot, then Casa Batlló on Passeig de Gràcia" },
         { days: "Day 3", place: "Montjuïc", note: "Cable car, Miró Foundation, sunset from the castle" },
         { days: "Day 4", place: "Barceloneta", note: "Beach morning, Park Güell late afternoon" },
+        { days: "Day 5", place: "Train to Valencia", note: "About 3 hours by high-speed train; continue with the Valencia guide" },
       ],
     },
     basics: [
@@ -169,6 +248,24 @@ export const destinations = {
       { term: "Metro and tram", text: "Metrovalencia lines 3 and 5 connect the airport to the centre in about 25 minutes." },
       { term: "By bike", text: "Flat and full of bike lanes. Valenbisi city bikes or a rental cover most trips." },
       { term: "To the beach", text: "Tram or bus from the centre to Malvarrosa in about 20 minutes." },
+    ],
+    scenes: [
+      { file: "img/valencia/valencia-arts-sciences", width: 1600, height: 739, alt: "L'Hemisfèric and the Palau de les Arts reflected in the pools of the City of Arts and Sciences", label: "City of Arts and Sciences", position: "50% 55%" },
+      { file: "img/valencia/valencia-plaza-reina", width: 1600, height: 739, alt: "Palm trees and crowds in Plaza de la Reina on a sunny afternoon", label: "Plaza de la Reina", position: "50% 45%" },
+      { file: "img/valencia/valencia-old-town-night", width: 1600, height: 739, alt: "An ornate old-town facade with iron balconies, lit up at night", label: "The old town at night", position: "50% 35%" },
+    ],
+    cardPhoto: { file: "img/valencia/valencia-palau-arts", width: 1190, height: 2276, alt: "The Palau de les Arts opera house above a reflecting pool", position: "50% 52%" },
+    gallery: [
+      { file: "img/valencia/valencia-science-museum", width: 1600, height: 739, alt: "The white ribbed Science Museum beside a long turquoise pool", caption: "The Science Museum's skeleton of white ribs" },
+      { file: "img/valencia/valencia-paella", width: 1190, height: 1850, alt: "A seafood paella with two large prawns in a black pan", caption: "Seafood paella, ordered at lunch the way locals do" },
+      { file: "img/valencia/valencia-micalet", width: 1190, height: 2276, alt: "The octagonal Micalet bell tower against a deep blue sky", caption: "El Micalet, the cathedral's bell tower" },
+      { file: "img/valencia/valencia-mercado-colon", width: 1190, height: 2576, alt: "The iron and glass roof of Mercado de Colón over cafés on two levels", caption: "Mercado de Colón, a modernist market turned café hall" },
+      { file: "img/valencia/valencia-plaza-ayuntamiento", width: 1600, height: 739, alt: "Plaza del Ayuntamiento lined with grand buildings and palms", caption: "Plaza del Ayuntamiento, the city's main square" },
+      { file: "img/valencia/valencia-ficus", width: 1190, height: 2576, alt: "The buttressed roots of a giant fig tree on a city street", caption: "Giant fig trees shade the city's squares" },
+      { file: "img/valencia/valencia-parade", width: 1190, height: 2100, alt: "Costumed marchers in a palm-lined street packed with spectators", caption: "A festival parade through the centre" },
+      { file: "img/valencia/valencia-pedestrian-street", width: 1190, height: 2576, alt: "A quiet pedestrian street paved in dark stone between pale buildings", caption: "Pedestrian streets off the main squares" },
+      { file: "img/valencia/valencia-street-night", width: 1190, height: 2576, alt: "A lamp-lit old-town street at night", caption: "The old town after dinner" },
+      { file: "img/valencia/valencia-rice-dish", width: 1556, height: 810, alt: "A golden rice dish with prawns in a wide iron pan", caption: "Paella is only the start: the city has dozens of rice dishes" },
     ],
     itinerary: {
       title: "Valencia in 3 days",
@@ -358,7 +455,7 @@ export const destinations = {
       { term: "Timing", text: "Museums like the Met and MoMA are busiest on weekends; go on weekday mornings." },
     ],
     photo: {
-      src: "img/new-york.webp",
+      file: "img/new-york/nyc-skyline",
       width: 1600,
       height: 743,
       alt: "Lower Manhattan skyline in black and white",

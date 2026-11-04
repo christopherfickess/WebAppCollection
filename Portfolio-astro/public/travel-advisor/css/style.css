@@ -171,8 +171,16 @@ gta-facts,
 gta-seasons,
 gta-destination,
 gta-destination-grid,
-gta-guide {
+gta-guide,
+gta-photo-hero,
+gta-day-trips,
+gta-gallery {
   display: block;
+}
+
+gta-photo-hero:not(:has(*)) {
+  min-height: 560px;
+  background: var(--ink);
 }
 
 gta-guide:not(:has(*)) {
@@ -1030,6 +1038,235 @@ gta-guide .route li:last-child::before {
   background: var(--city);
 }
 
+/* ---------- photo hero (guides with scenes) ----------
+   Full-bleed photos that cross-fade, text over a dark scrim, and a
+   labelled scene index you can jump between. */
+.photo-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: max(560px, min(88vh, 880px));
+  overflow: hidden;
+  background: var(--ink);
+  color: #fff;
+  --city-ink: #fff;
+}
+
+.photo-hero-slides {
+  position: absolute;
+  inset: 0;
+}
+
+.photo-hero-slide {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.photo-hero-slide.is-active {
+  opacity: 1;
+}
+
+.photo-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Scrim: darkest bottom-left, where the text sits. */
+.photo-hero-slides::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgba(12, 24, 30, 0.86) 0%, rgba(12, 24, 30, 0.5) 38%, rgba(12, 24, 30, 0.08) 72%),
+    linear-gradient(to right, rgba(12, 24, 30, 0.45) 0%, rgba(12, 24, 30, 0) 60%);
+}
+
+.photo-hero-inner {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem 3rem;
+  width: 100%;
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 6rem var(--gutter) clamp(2rem, 1rem + 3vw, 3.5rem);
+}
+
+.photo-hero-text {
+  min-width: 0;
+  max-width: 42rem;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.35);
+}
+
+.photo-hero .guide-title {
+  margin-top: 1rem;
+}
+
+.photo-hero .btn-on-city {
+  background: #fff;
+  color: var(--ink);
+  text-shadow: none;
+}
+
+.photo-hero-index {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-shrink: 0;
+}
+
+.photo-hero-pick {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.5rem 0 0.5rem 0.9rem;
+  border: 0;
+  border-left: 2px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.photo-hero-pick:hover {
+  color: #fff;
+}
+
+.photo-hero-pick[aria-pressed="true"] {
+  border-left-color: var(--saffron);
+  color: #fff;
+  font-weight: 700;
+}
+
+.pick-num {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+/* ---------- destination card with a photo ---------- */
+.destination-band.has-photo {
+  position: relative;
+  min-height: 12rem;
+  overflow: hidden;
+  color: #fff;
+}
+
+.destination-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.destination-band.has-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(12, 24, 30, 0.8), rgba(12, 24, 30, 0) 70%);
+}
+
+.destination-band.has-photo > span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- day trips: text beside a wide + tall photo pair ---------- */
+.day-trip {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(1.5rem, 1rem + 3vw, 4rem);
+  align-items: center;
+}
+
+.day-trip + .day-trip {
+  margin-top: 3rem;
+}
+
+.day-trip h3 {
+  font-size: var(--t-xl);
+}
+
+.day-trip-where {
+  margin: 0.5rem 0 1rem;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--petrol);
+}
+
+.day-trip-copy > p:last-child {
+  max-width: 44ch;
+  color: var(--ink-soft);
+}
+
+.day-trip-photos {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  height: clamp(280px, 30vw, 440px);
+}
+
+.day-trip-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+/* ---------- photo gallery ("From our trip") ---------- */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery-item.is-wide {
+  grid-column: span 2;
+}
+
+.gallery figure {
+  margin: 0;
+}
+
+.gallery-img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* Two 4:5 tiles side by side are about 8:5, so wide photos line up with
+   the tall ones in the same row. */
+.gallery-item.is-wide .gallery-img {
+  aspect-ratio: 8 / 5;
+}
+
+.gallery figcaption {
+  margin-top: 0.5rem;
+  font-size: var(--t-sm);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 960px) {
   .steps {
@@ -1059,19 +1296,33 @@ gta-guide .route li:last-child::before {
     align-items: center;
   }
 
+  /* Full-screen menu with large type (SiteHeader toggles .is-open). */
   .site-nav {
     display: none;
-    position: absolute;
-    top: 100%;
+    position: fixed;
+    top: 66px;
     left: 0;
     right: 0;
+    bottom: 0;
     flex-direction: column;
     align-items: stretch;
     gap: 0.25rem;
-    padding: 0.75rem var(--gutter) 1.25rem;
+    padding: 1.5rem var(--gutter) 2rem;
+    overflow-y: auto;
     background: var(--mist);
-    border-bottom: 1px solid var(--rule);
-    box-shadow: 0 18px 30px -24px rgba(20, 38, 46, 0.5);
+  }
+
+  body.menu-open {
+    overflow: hidden;
+  }
+
+  .menu-label-close,
+  gta-header.is-open .menu-label-open {
+    display: none;
+  }
+
+  gta-header.is-open .menu-label-close {
+    display: inline;
   }
 
   gta-header.is-open .site-nav {
@@ -1085,12 +1336,50 @@ gta-guide .route li:last-child::before {
 
   .site-nav ul a {
     display: block;
-    padding: 0.7rem 0;
-    font-size: var(--t-base);
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: clamp(2rem, 1.2rem + 4vw, 2.6rem);
+    font-weight: 700;
+    font-stretch: 82%;
+    letter-spacing: -0.02em;
   }
 
   .site-nav .btn {
-    margin-top: 0.5rem;
+    margin-top: 1.5rem;
+    min-height: 52px;
+  }
+
+  .photo-hero-inner {
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 14rem;
+  }
+
+  .photo-hero-index {
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .photo-hero-pick {
+    padding: 0.75rem 1rem 0.5rem 0;
+    border-left: 0;
+    border-top: 2px solid transparent;
+    margin-top: -1px;
+    white-space: nowrap;
+  }
+
+  .photo-hero-pick[aria-pressed="true"] {
+    border-top-color: var(--saffron);
+  }
+
+  .day-trip {
+    grid-template-columns: 1fr;
+  }
+
+  .day-trip-photos {
+    height: 240px;
   }
 
   .hero,
@@ -1106,6 +1395,34 @@ gta-guide .route li:last-child::before {
 }
 
 @media (max-width: 560px) {
+  /* Phones: a wide photo behind tall text only shows a sliver of it, so
+     stack the photo above the text instead. */
+  .photo-hero {
+    min-height: 0;
+  }
+
+  .photo-hero-slides {
+    position: relative;
+    aspect-ratio: 4 / 3;
+  }
+
+  .photo-hero-slides::after {
+    background: linear-gradient(to top, rgba(12, 24, 30, 0.55) 0%, rgba(12, 24, 30, 0) 45%);
+  }
+
+  .photo-hero-inner {
+    padding-top: 1.5rem;
+  }
+
+  .photo-hero-text {
+    text-shadow: none;
+  }
+
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
   /* Compact cards on phones so eight of them don't become a long scroll. */
   .destination-grid {
     gap: 0.75rem;
@@ -1166,6 +1483,10 @@ gta-guide .route li:last-child::before {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .photo-hero-slide {
+    transition: none;
   }
 
   .route::before {

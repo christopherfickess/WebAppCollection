@@ -17,6 +17,8 @@ js/data.js                  site settings and home page content
 js/destinations.js          ALL destination content (one entry per city)
 js/core.js                  Component base class, html`` escaping, link()
 js/lib/seasons.js           Seasons model: monthly ratings -> "May–Sep"
+js/lib/photo.js             Photo: responsive <img> markup from one data entry
+js/lib/slideshow.js         Slideshow: timing/state for the photo hero
 js/components/*.js          one class per UI piece
 js/main.js                  loads the content and registers the components
 fonts/, img/                self-hosted fonts (OFL) and images
@@ -37,9 +39,30 @@ the generated HTML.
 Each entry has its own colour (`accent`, plus `accentInk` for text on it,
 which should have at least 4.5:1 contrast), a 12-month `seasons` rating,
 neighbourhoods, transport tips, a sample itinerary, and "before you go"
-basics. `photo` is optional: without one the guide uses a typographic
-header in the city's colour; with one (see New York) the photo sits beside
-it.
+basics. Photos are all optional, and decide which header a guide gets:
+
+| Field | Effect | Example |
+| --- | --- | --- |
+| `scenes` | full-bleed photo slideshow header with a labelled scene index | London, Valencia, Barcelona |
+| `photo` | one photo beside a colour header | New York |
+| neither | typographic header in the city's colour | Paris and the rest |
+| `cardPhoto` | photo on the city's destination card | London, Valencia, Barcelona |
+| `gallery` | "From our trip" captioned photo mosaic | Valencia, Barcelona |
+| `dayTrips` | "Worth the trip out": text beside a photo pair | London (Kew Gardens) |
+
+## Photos
+
+Each photo is stored at three widths, `img/<city>/<name>-640.webp`,
+`-960.webp` and `-1600.webp`, and referenced in the data by its base path
+(`file: "img/london/london-thames"`) plus the largest file's real `width`
+and `height`. `js/lib/photo.js` builds the responsive `srcset`; an
+optional `position` ("50% 30%") sets how it crops.
+
+The travel photos are our own, refined with
+`../../tools/photos/refine-photos.py`: haze and colour correction, crops
+(for example to remove the phone's "Galaxy S24 Ultra" watermark), blurred
+number plates, and all EXIF/GPS metadata stripped. Run it on new photos
+with a small JSON file of crop/tone settings (usage is in the script).
 
 The "before you go" facts are written for US passport holders and were
 checked in November 2026. Entry rules change: re-check them (UK ETA, EU
@@ -58,7 +81,10 @@ as a custom tag that reads its content by path via `data-from`:
 | `<gta-steps>` | `StepList` | numbered "How it works" steps |
 | `<gta-destination>` | `DestinationCard` | one city card in its own colour |
 | `<gta-destination-grid>` | `DestinationGrid` | all cards; `grouped` for region headings, `data-exclude` to skip one |
-| `<gta-guide>` | `GuidePage` | a full guide, composed of the components below |
+| `<gta-guide>` | `GuidePage` | a full guide, composed of the components below; picks the header style from the data |
+| `<gta-photo-hero>` | `PhotoHero` | full-bleed cross-fading photos with a scene index, using `Slideshow` and `Photo` |
+| `<gta-gallery>` | `PhotoGallery` | "From our trip" mosaic; wide photos span two columns |
+| `<gta-day-trips>` | `DayTrips` | places outside the city, text beside a photo pair |
 | `<gta-seasons>` | `SeasonChart` | the 12-month "When to go" strip, using `Seasons` |
 | `<gta-definitions>` | `DefinitionList` | term + description pairs (base class) |
 | `<gta-places>` | `PlaceList` | neighbourhoods (extends `DefinitionList`) |

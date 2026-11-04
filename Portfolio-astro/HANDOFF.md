@@ -273,6 +273,44 @@ Antigua, Paris, Barcelona, Valencia, San Diego, and New York City; chose
   390 wide, no console errors, no sideways scroll, every internal link
   returns 200, and `?to=` pre-fill is escaped (tested with markup).
 
+**Follow-up same session — our own travel photos + Nomade-inspired
+styling.** User pointed at nomaderealty.com as a style reference ("some of
+the features, not all") and sent their own photos for London + Kew
+Gardens (6), Valencia (13), and Barcelona (16). nomaderealty.com couldn't
+be opened in a browser from the sandbox, only its page text, so the
+borrowing is from its structure, not exact styling:
+- **Full-bleed photo hero with a labelled scene index** (`PhotoHero`,
+  `Slideshow`): London, Valencia, Barcelona guides. Cross-fades every
+  6.5 s; pauses on hover/focus or when a scene is picked; never
+  auto-advances with reduced motion or in a hidden tab. On phones (≤560px)
+  the photo stacks above the text instead of sitting behind it.
+- **Split image/text block** (`DayTrips`): London's "Worth the trip out"
+  → Kew Gardens (District line ~40 min from Westminster, or train
+  Waterloo → Kew Bridge ~30 min).
+- **Large-type full-screen phone menu** (`SiteHeader`, body scroll lock,
+  Menu/Close label).
+- Plus: photo destination cards (`cardPhoto`) and a "From our trip"
+  captioned mosaic (`PhotoGallery`) on Valencia and Barcelona.
+Skipped from Nomade: numbered section markers, two-tone italic headlines,
+and arrows on every link — they'd fight the existing design and are
+common template tells.
+
+Photos: `tools/photos/refine-photos.py` (per-channel levels to lift haze,
+gentle contrast/colour, light sharpening; separate night and food modes;
+crops; plate blurs) → 640/960/1600 WebP, all metadata stripped (one
+Valencia original carried a capture date; none had GPS). Blurred readable
+plates in the London taxi and Barcelona port shots; cropped the "Galaxy
+S24 Ultra" watermark off the Barcelona photos that had it. Left out on
+purpose: a blurry night plaza and an estate-agent window (Valencia); the
+car-window and bus-window shots (Barcelona: glare, plates, dash). The wine
+photo is captioned as the Barcelona → Valencia train (per user), and
+Barcelona's sample plan gained a Day 5 train to Valencia. The New York
+photo moved to `img/new-york/` and the new naming scheme.
+
+Verified under the real CSP at 1440 and 390 wide: all 10 pages render
+with no console errors or sideways scroll, every gallery image loads,
+internal links return 200, autoplay advances and pauses.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

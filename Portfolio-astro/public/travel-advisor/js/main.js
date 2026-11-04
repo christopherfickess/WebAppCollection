@@ -11,6 +11,9 @@ import { DefinitionList, IncludedList, PlaceList, FactList } from "./components/
 import { SeasonChart } from "./components/season-chart.js";
 import { DestinationCard, DestinationGrid } from "./components/destination-card.js";
 import { GuidePage } from "./components/guide-page.js";
+import { PhotoHero } from "./components/photo-hero.js";
+import { DayTrips } from "./components/day-trips.js";
+import { PhotoGallery } from "./components/photo-gallery.js";
 import { ContactForm } from "./components/contact-form.js";
 
 setStore(content);
@@ -28,6 +31,9 @@ setStore(content);
   DestinationCard,
   DestinationGrid,
   GuidePage,
+  PhotoHero,
+  DayTrips,
+  PhotoGallery,
 ].forEach((C) => C.define());
 
 ContactForm.attach()?.prefillFromQuery();
