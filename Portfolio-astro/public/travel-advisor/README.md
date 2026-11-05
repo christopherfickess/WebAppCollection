@@ -2,8 +2,8 @@
 
 Modern rebuild of `../Website3` (Travelly), grown into a small travel
 platform: a home page, a destinations index, and a guide page for each of
-eight cities (London, Paris, Barcelona, Valencia, Curaçao, Antigua,
-San Diego, New York City). Static HTML/CSS plus JavaScript component
+ten cities (London, Paris, Barcelona, Valencia, Curaçao, Antigua,
+San Diego, New York City, Washington D.C., Seattle). Static HTML/CSS plus JavaScript component
 classes.
 
 ## Structure

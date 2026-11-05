@@ -484,6 +484,14 @@ export const destinations = {
       { term: "Weather", text: "Ocean water stays cool; bring a layer for evenings even in summer." },
       { term: "Mexico", text: "Tijuana is across the border by trolley. Bring a passport or passport card to return." },
     ],
+    scenes: [
+      { file: "img/san-diego/sd-sea-lions", width: 2576, height: 1095, alt: "Sea lions, cormorants and a pelican resting on pale rocks above dark blue water", label: "Sea lions on the rocks", position: "50% 55%" },
+      { file: "img/san-diego/sd-succulents", width: 1190, height: 2480, alt: "A tangle of curling aloe and a pale rosette succulent beside a garden pool", label: "A succulent garden", position: "50% 50%" },
+    ],
+    cardPhoto: { file: "img/san-diego/sd-sea-lions", width: 2576, height: 1095, alt: "Sea lions and seabirds on the rocks", position: "50% 55%" },
+    gallery: [
+      { file: "img/san-diego/sd-cocktails", width: 2576, height: 925, alt: "Four colourful cocktails around a glowing pink crystal on a dark table", caption: "Four cocktails around a glowing crystal" },
+    ],
   },
 
   "new-york": {
@@ -547,7 +555,118 @@ export const destinations = {
       { file: "img/new-york/nyc-central-park", width: 1600, height: 843, alt: "Autumn trees reflected in a leaf-covered pond in Central Park, with towers behind", caption: "The Pond in Central Park in autumn" },
     ],
   },
+  "washington-dc": {
+    name: "Washington, D.C.",
+    country: "United States",
+    region: "us",
+    accent: "#2f6b4f",
+    accentInk: "#ffffff",
+    coords: "38.91° N, 77.04° W",
+    currency: "US dollar",
+    summary: "Monuments, free museums, and a Metro that makes it all easy to reach.",
+    intro:
+      "Washington is compact and easy to plan. The big sights line the National Mall, the Metro reaches almost everything else, and most of the museums cost nothing. Reserve the few that need tickets, and leave room to wander.",
+    seasons: [0, 0, 1, 2, 2, 1, 0, 0, 2, 2, 1, 1],
+    seasonNote: "Spring and autumn are best. The cherry blossoms bloom in late March or early April, but the peak shifts each year. July and August are hot and humid.",
+    neighbourhoods: [
+      { name: "National Mall", note: "The Lincoln Memorial, the Reflecting Pool, the Monument, and the Smithsonian museums." },
+      { name: "Penn Quarter", note: "Ford's Theatre, restaurants, and Metro Center close by." },
+      { name: "Capitol Hill", note: "The Capitol, the Library of Congress, and Eastern Market." },
+      { name: "Georgetown", note: "Cobbled streets, canal-side walks, and shopping." },
+    ],
+    gettingAround: [
+      { term: "Metro", text: "Tap a SmarTrip card or a contactless card at both the entry and exit gates, using the same payment each time. Weekday fares run from $2.25 to $6.75; evenings and weekends are cheaper." },
+      { term: "From the airports", text: "Reagan National (DCA) has its own Metro station, and Dulles (IAD) is on the Silver Line." },
+      { term: "On foot", text: "The Capitol to the Lincoln Memorial is about 2 miles. Walk part of it and take the Metro for the rest." },
+    ],
+    itinerary: {
+      title: "Washington in 3 days",
+      label: "A sample plan",
+      footnote: "Most Smithsonian museums are free; Capitol tours are free but need booking ahead.",
+      stops: [
+        { days: "Day 1", place: "The Mall", note: "Lincoln Memorial at sunrise, the Reflecting Pool, the Monument" },
+        { days: "Day 2", place: "Museums", note: "Natural History and the Smithsonian Castle, then Ford's Theatre" },
+        { days: "Day 3", place: "Capitol Hill", note: "Capitol tour, then Georgetown in the evening" },
+      ],
+    },
+    basics: [
+      { term: "Getting there", text: "Reagan National (DCA), Dulles (IAD), or Baltimore (BWI). Domestic flights need a REAL ID or passport." },
+      { term: "Washington Monument", text: "Everyone aged 2 and up needs a timed ticket. Reserve on recreation.gov for a $1 fee (released daily at 10 am, up to 30 days ahead), or try for free same-day tickets at the lodge on 15th Street from 8:45 am. It closes one day early in most months for maintenance." },
+      { term: "Ford's Theatre", text: "A $5 timed ticket covers the museum, the theatre, and the Petersen House. Free same-day tickets are limited. The theatre can close for rehearsals or performances." },
+    ],
+    scenes: [
+      { file: "img/washington-dc/dc-lincoln-memorial", width: 1600, height: 720, alt: "The columned front of the Lincoln Memorial under a blue sky", label: "Lincoln Memorial", position: "50% 50%" },
+      { file: "img/washington-dc/dc-monument-from-steps", width: 1190, height: 2180, alt: "The Washington Monument and the Reflecting Pool seen from the Lincoln Memorial steps", label: "From the Lincoln steps", position: "50% 45%" },
+      { file: "img/washington-dc/dc-capitol", width: 1190, height: 2300, alt: "The Capitol dome at the end of Pennsylvania Avenue", label: "The Capitol", position: "50% 40%" },
+      { file: "img/washington-dc/dc-monument-base", width: 1190, height: 2250, alt: "The Washington Monument backlit by the sun, ringed by flags", label: "The Washington Monument", position: "50% 45%" },
+      { file: "img/washington-dc/dc-smithsonian-castle", width: 1190, height: 2250, alt: "The red sandstone towers of the Smithsonian Castle", label: "The Smithsonian Castle", position: "50% 40%" },
+    ],
+    cardPhoto: { file: "img/washington-dc/dc-monument-from-steps", width: 1190, height: 2180, alt: "The Washington Monument from the Lincoln Memorial steps", position: "50% 45%" },
+    gallery: [
+      { file: "img/washington-dc/dc-reflecting-pool", width: 1190, height: 2300, alt: "The Reflecting Pool stretching toward the Washington Monument", caption: "The Reflecting Pool, looking toward the Monument" },
+      { file: "img/washington-dc/dc-lincoln-from-pool", width: 1190, height: 2300, alt: "The Lincoln Memorial across the water from a low angle", caption: "The Lincoln Memorial across the Reflecting Pool" },
+      { file: "img/washington-dc/dc-lincoln-statue", width: 1190, height: 2100, alt: "The seated marble statue of Abraham Lincoln", caption: "The seated statue inside the memorial" },
+      { file: "img/washington-dc/dc-hotel-view", width: 1190, height: 2576, alt: "The Washington Monument seen from a high hotel window", caption: "The Monument from an upper floor" },
+      { file: "img/washington-dc/dc-natural-history", width: 1600, height: 898, alt: "The columned entrance of the National Museum of Natural History", caption: "The National Museum of Natural History" },
+      { file: "img/washington-dc/dc-fords-theatre", width: 1600, height: 739, alt: "The interior of Ford's Theatre with its balconies and flags", caption: "Inside Ford's Theatre" },
+      { file: "img/washington-dc/dc-petersen-plaque", width: 1190, height: 1400, alt: "A plaque on the Petersen House reading Abraham Lincoln died in this house", caption: "The house across the street where Lincoln died" },
+      { file: "img/washington-dc/dc-book-tower", width: 1020, height: 2576, alt: "A spiral staircase wrapped around a tall tower of books about Lincoln", caption: "A tower of books about Lincoln at Ford's Theatre Center" },
+      { file: "img/washington-dc/dc-metro-vault", width: 1600, height: 739, alt: "A Metro station's long concrete vault with coffered ceiling", caption: "A Metro station's concrete vault" },
+      { file: "img/washington-dc/dc-foggy-bottom", width: 1190, height: 1200, alt: "The Foggy Bottom-GWU Metro station sign with Orange, Silver and Blue line badges", caption: "Foggy Bottom-GWU, on the Orange, Silver and Blue lines" },
+      { file: "img/washington-dc/dc-diamond", width: 1190, height: 2576, alt: "A large marquise-cut diamond set in a ring", caption: "A very large diamond on display" },
+    ],
+  },
+
+  seattle: {
+    name: "Seattle",
+    country: "Washington, USA",
+    region: "us",
+    accent: "#1d6a72",
+    accentInk: "#ffffff",
+    coords: "47.61° N, 122.33° W",
+    currency: "US dollar",
+    summary: "Water on every side, a very good aquarium, and the Space Needle in the middle.",
+    intro:
+      "Seattle sits between Puget Sound and Lake Washington, and the best days use the water. Start at the waterfront and the market, ride the light rail between neighbourhoods, and save a clear evening for the view from the Needle.",
+    seasons: [0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 0, 0],
+    seasonNote: "Summer is dry and bright, and the best time to go. Winters are grey and wet; spring and early autumn are mild and quieter.",
+    neighbourhoods: [
+      { name: "Waterfront", note: "The Seattle Aquarium, the piers, and views over Elliott Bay." },
+      { name: "Pike Place", note: "The market, with food stalls, flowers, and a view of the harbour." },
+      { name: "Seattle Center", note: "The Space Needle, the lawns around it, and a short monorail ride from Westlake." },
+      { name: "Capitol Hill", note: "Cafes, bars, and bookshops, a stop or two from downtown by light rail." },
+    ],
+    gettingAround: [
+      { term: "Light rail", text: "The Link 1 Line runs from the airport to Westlake in about 40 minutes, with trains every 8 to 15 minutes and a flat adult fare of $3. Service runs Monday to Saturday 5 am to 1 am and Sunday 6 am to midnight." },
+      { term: "Paying", text: "Use an ORCA card, or tap a contactless card or phone wallet." },
+      { term: "Monorail", text: "Westlake to Seattle Center takes about 3 minutes and costs $4 one way; ORCA works." },
+    ],
+    itinerary: {
+      title: "Seattle in 3 days",
+      label: "A sample plan",
+      footnote: "Check ferry schedules before planning a day trip across the Sound.",
+      stops: [
+        { days: "Day 1", place: "Waterfront", note: "The aquarium, Pike Place Market, sunset on the piers" },
+        { days: "Day 2", place: "Seattle Center", note: "Space Needle, then the lawns and museums nearby" },
+        { days: "Day 3", place: "Neighbourhoods", note: "Capitol Hill by light rail, coffee and a bookshop" },
+      ],
+    },
+    basics: [
+      { term: "Getting there", text: "Seattle-Tacoma (SEA), connected to downtown by the Link light rail. Domestic flights need a REAL ID or passport." },
+      { term: "Weather", text: "It changes quickly. Bring a light waterproof layer in any season." },
+      { term: "Timing", text: "For the Space Needle and the waterfront, pick a clear day; the view is the point." },
+    ],
+    scenes: [
+      { file: "img/seattle/seattle-sunset", width: 1190, height: 2420, alt: "Sunset over Puget Sound, with the sky turning orange behind a pier and distant hills", label: "Sunset on the Sound", position: "50% 60%" },
+      { file: "img/seattle/seattle-space-needle", width: 1070, height: 2420, alt: "The Space Needle rising above trees and a lawn under a deep blue sky", label: "The Space Needle", position: "50% 25%" },
+      { file: "img/seattle/seattle-fur-seal", width: 1600, height: 2133, alt: "A seal on a rock inside the aquarium, with ferries on Elliott Bay seen through the windows behind it", label: "A seal at the aquarium", position: "50% 40%" },
+    ],
+    cardPhoto: { file: "img/seattle/seattle-space-needle", width: 1070, height: 2420, alt: "The Space Needle above trees", position: "50% 25%" },
+    gallery: [
+      { file: "img/seattle/seattle-jellyfish", width: 1659, height: 1882, alt: "A pale moon jellyfish glowing purple in a dark tank", caption: "A moon jelly in its tank" },
+    ],
+  },
 };
 
 // Display order on the index pages.
-export const destinationOrder = ["london", "paris", "barcelona", "valencia", "curacao", "antigua", "san-diego", "new-york"];
+export const destinationOrder = ["london", "paris", "barcelona", "valencia", "curacao", "antigua", "san-diego", "new-york", "washington-dc", "seattle"];

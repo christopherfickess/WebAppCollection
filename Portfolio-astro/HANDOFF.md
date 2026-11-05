@@ -364,6 +364,15 @@ internal links return 200, autoplay advances and pauses.
   person dancing by the tree (personal) and others with people up close;
   passersby blurred/cropped in the rest.
 
+## Washington D.C., Seattle, San Diego photos (travel-advisor)
+
+- Added `washington-dc` (16 photos in `img/washington-dc/`) and `seattle` (4 photos in `img/seattle/`) to `js/destinations.js` and `destinationOrder`; now 10 guides. San Diego now has 3 photos (`img/san-diego/`): sea lions, succulent garden, cocktails.
+- DC facts checked Nov 2026: Washington Monument timed tickets (recreation.gov, $1 fee; free same-day at 15th St lodge), Ford's Theatre $5 timed ticket, Metro tap fares. Re-check before relying on them; they change.
+- Seattle facts from visitseattle.org: Link light rail, ORCA/tap pay, monorail. Washington State Ferries details were NOT verified, so the itinerary only says to check schedules.
+- Left out on purpose: crowded Metro Center photo (strangers), Great Wheel portrait (personal photo). Strangers were cropped or blurred in the DC photos; the jellyfish top was cropped to remove silhouettes; the cocktail photo top was cropped for the same reason.
+- The diamond and cocktail photos have generic captions (venues unknown). The sea lion photo is captioned without naming a place.
+- Accents: DC #2f6b4f, Seattle #1d6a72, both about 6.3:1 against white.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —
