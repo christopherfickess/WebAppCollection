@@ -391,6 +391,12 @@ internal links return 200, autoplay advances and pauses.
 - Home page now: hero (two buttons plus a "Scroll to explore" cue), proof strip, how it works, destinations with pills, sample trips, what's included, questions, quote block, contact form. Menu gained "Sample trips" and "Questions".
 - Not done: section numbering (explicitly not wanted).
 
+## v2 follow-ups (travel-advisor)
+
+- Phone header: Menu/Close button now on the left, brand centred (grid in the 860px block of the v2 CSS).
+- Destination pills: on phones they are one swipeable row (was four wrapped rows); desktop still wraps.
+- Footer redesigned to be light, with the destinations as running serif links ("Where to next"), quick links and outside links as small inline rows, and a short saffron stroke above the brand. The earlier dark, italic-tagline, two-column-list footer was too close to the reference site. Restore point for the dark footer: commit 1ab34da.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

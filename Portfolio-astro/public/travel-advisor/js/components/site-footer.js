@@ -13,28 +13,25 @@ export class SiteFooter extends Component {
     const url = (href) => (/^(https?:|mailto:|tel:|sms:|\/)/.test(href) ? href : link(href));
     return html`
       <footer class="site-foot">
-        <div class="foot-grid">
-          <div class="foot-about">
-            <p class="foot-name">${site.name}</p>
-            <p class="foot-blurb">${site.blurb}</p>
-          </div>
-          <nav aria-label="Destinations">
-            <h2 class="foot-title">Destinations</h2>
-            <ul class="foot-list foot-cols">
-              ${order.map((slug) => html`<li><a href="${link(`destinations/${slug}/`)}">${places[slug].name}</a></li>`)}
-            </ul>
-          </nav>
+        <div class="foot-about">
+          <p class="foot-name">${site.name}</p>
+          <p class="foot-blurb">${site.blurb}</p>
+        </div>
+        <nav class="foot-places" aria-label="Destinations">
+          <h2 class="foot-title">Where to next</h2>
+          <ul class="foot-flow">
+            ${order.map((slug) => html`<li><a href="${link(`destinations/${slug}/`)}">${places[slug].name}</a></li>`)}
+          </ul>
+        </nav>
+        <div class="foot-meta">
           <nav aria-label="Quick links">
-            <h2 class="foot-title">Quick links</h2>
-            <ul class="foot-list">
+            <ul class="foot-inline">
               <li><a href="${link("")}">Home</a></li>
               ${site.nav.map((item) => html`<li><a href="${link(item.href)}">${item.label}</a></li>`)}
-              <li><a href="${link(site.cta.href)}">${site.cta.label}</a></li>
             </ul>
           </nav>
           <nav aria-label="Elsewhere">
-            <h2 class="foot-title">Elsewhere</h2>
-            <ul class="foot-list">
+            <ul class="foot-inline">
               ${site.links.map(
                 (item) => html`<li><a href="${url(item.href)}"${item.external ? html` target="_blank" rel="noopener"` : ""}>${item.label}</a></li>`
               )}
