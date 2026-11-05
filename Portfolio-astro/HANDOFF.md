@@ -373,6 +373,14 @@ internal links return 200, autoplay advances and pauses.
 - The diamond and cocktail photos have generic captions (venues unknown). The sea lion photo is captioned without naming a place.
 - Accents: DC #2f6b4f, Seattle #1d6a72, both about 6.3:1 against white.
 
+## Nassau, The Bahamas (travel-advisor)
+
+- Added `nassau` (region `caribbean`, 13 photos in `img/nassau/`); now 11 guides. Photos are of a Paradise Island resort; captions stay generic because the venue was not stated.
+- Facts from nassauparadiseisland.com: airport taxi fares (approximate, two passengers), jitney about $1.50, water taxi about $7 / 10 minutes (the site gives two different departure points, so the guide says to confirm), no ride-sharing, US passport needed. Currency line (Bahamian dollar, USD widely accepted) and the hurricane-season note are general knowledge, not checked against a page this session.
+- Left out: the corridor photo with three men walking (strangers are the subject). Bottom strip cropped on every photo to remove the phone watermark.
+- Fixed width/height for all photo entries in `destinations.js`: they must be the 1600px export size (the refine script caps at 1600 wide), not the source size. San Diego and the Seattle jellyfish had source sizes; now corrected.
+- Accent #0b7a86 gives about 5.1:1 against white.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

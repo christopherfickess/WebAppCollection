@@ -485,12 +485,12 @@ export const destinations = {
       { term: "Mexico", text: "Tijuana is across the border by trolley. Bring a passport or passport card to return." },
     ],
     scenes: [
-      { file: "img/san-diego/sd-sea-lions", width: 2576, height: 1095, alt: "Sea lions, cormorants and a pelican resting on pale rocks above dark blue water", label: "Sea lions on the rocks", position: "50% 55%" },
+      { file: "img/san-diego/sd-sea-lions", width: 1600, height: 680, alt: "Sea lions, cormorants and a pelican resting on pale rocks above dark blue water", label: "Sea lions on the rocks", position: "50% 55%" },
       { file: "img/san-diego/sd-succulents", width: 1190, height: 2480, alt: "A tangle of curling aloe and a pale rosette succulent beside a garden pool", label: "A succulent garden", position: "50% 50%" },
     ],
-    cardPhoto: { file: "img/san-diego/sd-sea-lions", width: 2576, height: 1095, alt: "Sea lions and seabirds on the rocks", position: "50% 55%" },
+    cardPhoto: { file: "img/san-diego/sd-sea-lions", width: 1600, height: 680, alt: "Sea lions and seabirds on the rocks", position: "50% 55%" },
     gallery: [
-      { file: "img/san-diego/sd-cocktails", width: 2576, height: 925, alt: "Four colourful cocktails around a glowing pink crystal on a dark table", caption: "Four cocktails around a glowing crystal" },
+      { file: "img/san-diego/sd-cocktails", width: 1600, height: 575, alt: "Four colourful cocktails around a glowing pink crystal on a dark table", caption: "Four cocktails around a glowing crystal" },
     ],
   },
 
@@ -540,7 +540,7 @@ export const destinations = {
       { file: "img/new-york/nyc-chrysler", width: 1600, height: 1200, alt: "The lit crown of the Chrysler Building above the East River at night", label: "The Chrysler Building", position: "50% 45%" },
       { file: "img/new-york/nyc-empire-deck", width: 1600, height: 2133, alt: "The Empire State Building lit in red and green above the Midtown grid at night", label: "Empire State, lit for the holidays", position: "50% 40%" },
       { file: "img/new-york/nyc-rockefeller-tree", width: 1600, height: 1958, alt: "The Rockefeller Center Christmas tree covered in multicoloured lights between two towers", label: "Rockefeller Center", position: "50% 55%" },
-      { file: "img/new-york/nyc-washington-arch", width: 1600, height: 1727, alt: "The floodlit Washington Square Arch framing a lit Christmas tree on a wet night", label: "Washington Square Arch", position: "50% 40%" },
+      { file: "img/new-york/nyc-washington-arch", width: 1600, height: 1726, alt: "The floodlit Washington Square Arch framing a lit Christmas tree on a wet night", label: "Washington Square Arch", position: "50% 40%" },
     ],
     cardPhoto: { file: "img/new-york/nyc-midtown-night", width: 1600, height: 2133, alt: "Midtown Manhattan lit up at night", position: "50% 40%" },
     gallery: [
@@ -551,8 +551,8 @@ export const destinations = {
       { file: "img/new-york/nyc-mirror-floor", width: 1600, height: 2133, alt: "Light beams in green and blue repeating endlessly in a mirrored ceiling and glass floor", caption: "The mirrored room at an observation deck" },
       { file: "img/new-york/nyc-butterbeer", width: 1190, height: 2455, alt: "A ceiling of hundreds of glowing amber bottles above a snack counter", caption: "Hundreds of lit bottles over a Harry Potter shop's snack bar" },
       { file: "img/new-york/nyc-owl-staircase", width: 1190, height: 2455, alt: "A bronze owl with spread wings on a stone column in the middle of a spiral staircase", caption: "The bronze owl at the heart of the Harry Potter store" },
-      { file: "img/new-york/nyc-met-urn", width: 1600, height: 662, alt: "A carved marble ram's head among vines and grapes on a large urn", caption: "A marble ram's head at the Met" },
-      { file: "img/new-york/nyc-central-park", width: 1600, height: 843, alt: "Autumn trees reflected in a leaf-covered pond in Central Park, with towers behind", caption: "The Pond in Central Park in autumn" },
+      { file: "img/new-york/nyc-met-urn", width: 1600, height: 661, alt: "A carved marble ram's head among vines and grapes on a large urn", caption: "A marble ram's head at the Met" },
+      { file: "img/new-york/nyc-central-park", width: 1600, height: 844, alt: "Autumn trees reflected in a leaf-covered pond in Central Park, with towers behind", caption: "The Pond in Central Park in autumn" },
     ],
   },
   "washington-dc": {
@@ -663,10 +663,71 @@ export const destinations = {
     ],
     cardPhoto: { file: "img/seattle/seattle-space-needle", width: 1070, height: 2420, alt: "The Space Needle above trees", position: "50% 25%" },
     gallery: [
-      { file: "img/seattle/seattle-jellyfish", width: 1659, height: 1882, alt: "A pale moon jellyfish glowing purple in a dark tank", caption: "A moon jelly in its tank" },
+      { file: "img/seattle/seattle-jellyfish", width: 1600, height: 1815, alt: "A pale moon jellyfish glowing purple in a dark tank", caption: "A moon jelly in its tank" },
+    ],
+  },
+  nassau: {
+    name: "Nassau",
+    country: "The Bahamas",
+    region: "caribbean",
+    accent: "#0b7a86",
+    accentInk: "#ffffff",
+    coords: "25.05° N, 77.35° W",
+    currency: "Bahamian dollar",
+    summary: "Turquoise water, pink-sand beaches, and resort life an hour or so by air from Florida.",
+    intro:
+      "Nassau is the Bahamian capital, on New Providence island, joined by a bridge to Paradise Island and its resorts. Spend one day downtown on foot, then give the rest to the beach, the pool, and the water.",
+    seasons: [2, 2, 2, 2, 1, 1, 1, 0, 0, 0, 1, 2],
+    seasonNote: "December to April is the dry, mild season and the busiest. The Atlantic hurricane season runs June to November, with September and October the riskiest; prices drop, so buy travel insurance.",
+    neighbourhoods: [
+      { name: "Paradise Island", note: "Beach resorts, pools, and an aquarium-lined atrium, over the bridge from downtown." },
+      { name: "Downtown Nassau", note: "Bay Street, the straw market, and the harbour front." },
+      { name: "Cable Beach", note: "A long beach with hotels, restaurants, and a quieter feel." },
+      { name: "Arawak Cay", note: "Known for the Fish Fry, a row of casual stands serving conch and fried fish." },
+    ],
+    gettingAround: [
+      { term: "Taxis", text: "Plentiful at Lynden Pindling International Airport. Approximate fares for two people are $36 to downtown, $30 to Cable Beach, and $45 to Paradise Island plus the bridge toll. Tip about 15 percent, and ask whether the driver takes cards." },
+      { term: "Jitneys", text: "Local buses cover downtown and Cable Beach for about $1.50 one way. Bring exact change." },
+      { term: "Water taxi", text: "A boat links downtown and Paradise Island in about 10 minutes for roughly $7. Confirm the departure point and price before you go." },
+      { term: "No ride-hailing", text: "There are no ride-sharing services, so book transfers or taxis ahead." },
+    ],
+    itinerary: {
+      title: "Nassau in 4 days",
+      label: "A sample plan",
+      footnote: "All costs are approximate. Check fares and times locally before you travel.",
+      stops: [
+        { days: "Day 1", place: "Downtown", note: "Bay Street, the straw market, harbour views" },
+        { days: "Day 2", place: "Paradise Island", note: "Beach morning, pool afternoon, a walk to the fountains at night" },
+        { days: "Day 3", place: "Arawak Cay", note: "Fish Fry lunch, then Cable Beach" },
+        { days: "Day 4", place: "Slow day", note: "Sunrise walk, a last swim, late checkout" },
+      ],
+    },
+    basics: [
+      { term: "Getting there", text: "Lynden Pindling International (NAS). US citizens need a valid US passport; you may be asked for proof of a return ticket and of funds." },
+      { term: "Money", text: "The Bahamian dollar is pegged one-to-one to the US dollar, and US dollars are widely accepted." },
+      { term: "On arrival", text: "Fill in an immigration form and keep the stub until you leave." },
+      { term: "Other passports", text: "Some nationalities need a Bahamas visa, so check the Bahamian government's list before booking." },
+    ],
+    scenes: [
+      { file: "img/nassau/nassau-lobby-fountain", width: 1600, height: 1146, alt: "A marble fountain on a wooden plinth in an open lobby, framed by palms and a strip of turquoise sea", label: "The view from the lobby", position: "50% 45%" },
+      { file: "img/nassau/nassau-beach", width: 1600, height: 1146, alt: "Shallow turquoise water over pale sand under a sky of small white clouds", label: "The beach", position: "50% 50%" },
+      { file: "img/nassau/nassau-pond-sunny", width: 1600, height: 1146, alt: "A clear green lagoon among rocks and palms, with a white egret on the rocks", label: "The lagoon garden", position: "50% 55%" },
+      { file: "img/nassau/nassau-pool", width: 1600, height: 1146, alt: "Striped loungers beside a pool lined with tall palms under a blue sky", label: "By the pool", position: "50% 45%" },
+      { file: "img/nassau/nassau-atrium", width: 1600, height: 1146, alt: "A grand arched atrium with potted palms above a wall of aquarium glass", label: "The atrium", position: "50% 40%" },
+    ],
+    cardPhoto: { file: "img/nassau/nassau-beach", width: 1600, height: 1146, alt: "Turquoise shallows on a pale beach", position: "50% 50%" },
+    gallery: [
+      { file: "img/nassau/nassau-sunset", width: 1600, height: 1146, alt: "Dusk over a curving beach, with the sky fading from blue to orange above the sea", caption: "Sunset from a high window" },
+      { file: "img/nassau/nassau-night-fountains", width: 1600, height: 2054, alt: "A long series of lit fountain pools between palms and terracotta walls at night", caption: "The fountain walk at night" },
+      { file: "img/nassau/nassau-pond-morning", width: 1600, height: 2054, alt: "A green lagoon edged with rock, seen between palm trunks in soft morning light", caption: "The lagoon in the morning" },
+      { file: "img/nassau/nassau-pond-window", width: 1600, height: 2054, alt: "A lagoon seen through a window frame, with palms and flowering plants", caption: "The lagoon through the glass" },
+      { file: "img/nassau/nassau-arcade-swings", width: 1600, height: 2054, alt: "A long stone arcade with wooden ceiling, lanterns and black swing seats", caption: "A shaded arcade with swing seats" },
+      { file: "img/nassau/nassau-lounge", width: 1600, height: 1146, alt: "Purple sofas and low tables in an open-sided lounge facing a garden", caption: "An open-air lounge" },
+      { file: "img/nassau/nassau-pond-chairs", width: 1600, height: 1146, alt: "Two carved dark chairs facing a lagoon with a waterfall behind rock and palms", caption: "Chairs facing the lagoon" },
+      { file: "img/nassau/nassau-garden", width: 1600, height: 1146, alt: "Lush tropical planting with tall palm trunks beside a wooden walkway", caption: "The garden from the walkway" },
     ],
   },
 };
 
 // Display order on the index pages.
-export const destinationOrder = ["london", "paris", "barcelona", "valencia", "curacao", "antigua", "san-diego", "new-york", "washington-dc", "seattle"];
+export const destinationOrder = ["london", "paris", "barcelona", "valencia", "curacao", "antigua", "san-diego", "new-york", "washington-dc", "seattle", "nassau"];
