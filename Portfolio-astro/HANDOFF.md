@@ -397,6 +397,11 @@ internal links return 200, autoplay advances and pauses.
 - Destination pills: on phones they are one swipeable row (was four wrapped rows); desktop still wraps.
 - Footer redesigned to be light, with the destinations as running serif links ("Where to next"), quick links and outside links as small inline rows, and a short saffron stroke above the brand. The earlier dark, italic-tagline, two-column-list footer was too close to the reference site. Restore point for the dark footer: commit 1ab34da.
 
+## v2 follow-up 2 (travel-advisor)
+
+- Phone menu: the arrow marks (too close to the reference site) were replaced by route-stop rings in saffron (same dots as the itinerary; filled on hover/current), with dashed dividers.
+- Footer redesigned again around the route idea: "Next stops" shows each destination as a stop on a line (name plus country), then brand and small link lists, then the note. Light (white) band. Previous footers: dark version 1ab34da, running-text version 20b208d.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

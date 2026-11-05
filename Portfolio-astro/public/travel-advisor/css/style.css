@@ -2078,85 +2078,113 @@ main > .quote {
   color: var(--saffron);
 }
 
-/* footer: light, with the destinations set as running text */
-.site-foot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  gap: 2rem clamp(2rem, 1rem + 4vw, 5rem);
-  padding-top: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+/* footer: the destinations as stops along a route (same dots as the itinerary) */
+gta-footer {
+  background: var(--paper);
   border-top: 1px solid var(--rule);
 }
 
-.foot-name {
+.site-foot {
+  display: block;
+  padding-top: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  border-top: 0;
+}
+
+.foot-title {
+  margin-bottom: 1.5rem;
+  font-family: var(--serif);
+  font-size: var(--t-xl);
+  font-weight: 500;
+}
+
+.foot-stops {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 1.75rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.foot-stops li {
   position: relative;
-  padding-top: 1rem;
+  padding-top: 1.1rem;
+  border-top: 2px solid var(--rule);
+}
+
+.foot-stops li::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--saffron);
+  border-radius: 50%;
+  background: var(--paper);
+  transition: background-color 0.15s ease;
+}
+
+.foot-stops a {
+  display: grid;
+  gap: 0.15rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.foot-stops li:has(a:hover)::before,
+.foot-stops li:has(a:focus-visible)::before {
+  background: var(--saffron);
+}
+
+.stop-name {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.foot-stops a:hover .stop-name {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+.stop-where {
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.foot-base {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem 3rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--rule);
+}
+
+.foot-about {
+  margin-right: auto;
+}
+
+.foot-name {
   font-family: var(--serif);
   font-size: var(--t-lg);
   font-weight: 600;
 }
 
-/* A short saffron stroke: where the route begins. */
-.foot-name::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3rem;
-  height: 3px;
-  border-radius: 3px;
-  background: var(--saffron);
-}
-
 .foot-blurb {
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   font-size: var(--t-sm);
   color: var(--ink-soft);
-  max-width: 28ch;
-}
-
-.foot-title {
-  margin-bottom: 0.75rem;
-  font-family: var(--display);
-  font-size: var(--t-sm);
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--ink-soft);
-}
-
-.foot-flow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 1.4rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--serif);
-  font-size: 1.35rem;
-  line-height: 1.5;
-}
-
-.foot-flow a {
-  color: var(--ink);
-  text-decoration-thickness: 1px;
-}
-
-.foot-flow a:hover {
-  color: var(--petrol);
-}
-
-.foot-meta {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 3rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--rule);
+  max-width: 30ch;
 }
 
 .foot-inline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.25rem;
+  display: grid;
+  gap: 0.4rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -2175,8 +2203,7 @@ main > .quote {
 }
 
 .site-foot .foot-note {
-  grid-column: 1 / -1;
-  margin: 0;
+  margin: 2rem 0 0;
   font-size: var(--t-sm);
   color: var(--ink-soft);
 }
@@ -2244,13 +2271,24 @@ gta-header.is-open .menu-icon i:last-child {
     font-stretch: 100%;
     letter-spacing: 0;
     text-decoration: none;
+    border-bottom: 1px dashed #aebcb7;
   }
 
   .site-nav ul a::after {
-    content: "\2197";
-    font-family: system-ui, sans-serif;
-    font-size: 1.1rem;
-    color: var(--ink-soft);
+    content: "";
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border: 3px solid var(--saffron);
+    border-radius: 50%;
+    background: var(--mist);
+    transition: background-color 0.15s ease;
+  }
+
+  .site-nav ul a:hover::after,
+  .site-nav ul a:active::after,
+  .site-nav ul a[aria-current="page"]::after {
+    background: var(--saffron);
   }
 
   .site-nav ul a[aria-current="page"] {
