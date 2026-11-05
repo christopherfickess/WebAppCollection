@@ -6,6 +6,9 @@
   <meta name="description" content="Gredin Travel Advisor plans your trip day by day, books it, and stays on call while you travel." />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#14262E" />
+  <!-- og:start -->
+  
+  <!-- og:end -->
   <link rel="icon" href="./img/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="./fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="./css/style.css" />
@@ -44,6 +47,14 @@
       <gta-steps data-from="steps"></gta-steps>
     </section>
 
+    <section class="when" id="when" aria-labelledby="when-title">
+      <div class="section-head">
+        <h2 id="when-title">Where to go in&hellip;</h2>
+        <p>Pick a month to see which guides are in season.</p>
+      </div>
+      <gta-months data-from="destinationOrder"></gta-months>
+    </section>
+
     <section class="trips" id="destinations" aria-labelledby="dest-title">
       <div class="section-head">
         <h2 id="dest-title">Destinations</h2>
@@ -59,6 +70,11 @@
         <p>Each one starts as a draft like this, taken from the guides.</p>
       </div>
       <gta-trips data-from="featuredTrips"></gta-trips>
+    </section>
+
+    <section class="testimonials" id="travellers" aria-labelledby="tm-title">
+      <h2 id="tm-title">What travellers say</h2>
+      <gta-testimonials data-from="testimonials"></gta-testimonials>
     </section>
 
     <section class="included" id="included" aria-labelledby="included-title">

@@ -1,4 +1,4 @@
-import { Component, html } from "../core.js";
+import { Component, html, link, resolve } from "../core.js";
 import { Photo } from "../lib/photo.js";
 import { guideIntro, planHref } from "./guide-intro.js";
 
@@ -32,6 +32,14 @@ export class GuidePage extends Component {
           <h2 id="when-title">When to go</h2>
           <gta-seasons data-from="${path}"></gta-seasons>
         </section>
+
+        ${place.budget
+          ? html`<section class="guide-section" aria-labelledby="cost-title">
+              <h2 id="cost-title">What it costs</h2>
+              <p class="cost-line"><strong>${place.budget.amount}</strong> a day per person</p>
+              <p class="guide-checked">The average past travellers report spending in ${place.name}, covering a hotel, food, local transport, and activities. It leaves out flights. The figure comes from Budget Your Trip, which does not date it, so use it as a starting point.</p>
+            </section>`
+          : ""}
 
         <section class="guide-section guide-split" aria-labelledby="plan-title">
           <div>
@@ -78,12 +86,30 @@ export class GuidePage extends Component {
           <a class="btn" href="${plan}">Plan a trip to ${place.name}</a>
         </section>
 
+        ${this.stopNav(slug)}
+
         <section class="guide-section" aria-labelledby="more-title">
           <h2 id="more-title">More destinations</h2>
           <gta-destination-grid data-from="destinationOrder" data-exclude="${slug}"></gta-destination-grid>
         </section>
       </div>
     `;
+  }
+
+  // Previous and next destination, wrapping around the list.
+  stopNav(slug) {
+    const order = resolve("destinationOrder");
+    const places = resolve("destinations");
+    const i = order.indexOf(slug);
+    const prev = order[(i - 1 + order.length) % order.length];
+    const next = order[(i + 1) % order.length];
+    const stop = (target, label, cls) => html`
+      <a class="stop-link ${cls}" href="${link(`destinations/${target}/`)}">
+        <span class="stop-label">${label}</span>
+        <span class="stop-city">${places[target].name}</span>
+        <span class="stop-country">${places[target].country}</span>
+      </a>`;
+    return html`<nav class="stop-nav" aria-label="Neighbouring guides">${stop(prev, "Previous stop", "is-prev")}${stop(next, "Next stop", "is-next")}</nav>`;
   }
 
   afterRender() {

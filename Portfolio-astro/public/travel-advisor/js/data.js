@@ -3,6 +3,8 @@
 // components in ./components render whatever is here.
 
 import { destinations, destinationOrder, regions } from "./destinations.js";
+import { notes } from "./notes.js";
+import { testimonials } from "./testimonials.js";
 
 // Figures for the strip under the hero are counted from the guides, so
 // they stay true as destinations and photos are added.
@@ -27,6 +29,7 @@ export const content = {
       { label: "Sample trips", href: "#trips" },
       { label: "What's included", href: "#included" },
       { label: "Questions", href: "#faq" },
+      { label: "Field notes", href: "field-notes/" },
     ],
     cta: { label: "Book a call", href: "#contact" },
     // The fixed bar at the bottom of phone screens. To offer calling or
@@ -89,6 +92,9 @@ export const content = {
     points: ["A day-by-day plan within a week", "Every booking confirmed in one document", "Someone to message while you travel"],
     cta: { label: "Book a free planning call", href: "#contact" },
   },
+
+  notes,
+  testimonials,
 
   regions,
   destinations,

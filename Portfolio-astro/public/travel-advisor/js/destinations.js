@@ -30,6 +30,7 @@ export const destinations = {
     accentInk: "#ffffff",
     coords: "51.51° N, 0.13° W",
     currency: "Pound sterling",
+    budget: { amount: "£189" },
     summary: "A city you can plan around a single neighbourhood a day, with world-class museums that cost nothing to enter.",
     intro:
       "London rewards picking a base and walking. Most of the big museums are free, the parks run into each other, and a day can go from a market breakfast to a West End show without a taxi.",
@@ -129,6 +130,7 @@ export const destinations = {
     accentInk: "#ffffff",
     coords: "48.86° N, 2.35° E",
     currency: "Euro",
+    budget: { amount: "£196" },
     summary: "Best taken slowly: one museum a day, long lunches, and evenings along the Seine.",
     intro:
       "Paris is compact enough to cross on foot in an afternoon, and most of what makes it good happens between the landmarks. Plan one big sight a day and leave the rest to wandering and long lunches.",
@@ -207,6 +209,7 @@ export const destinations = {
     accentInk: "#ffffff",
     coords: "41.39° N, 2.17° E",
     currency: "Euro",
+    budget: { amount: "$169" },
     summary: "Gaudí in the morning, the beach in the afternoon, and dinner that starts after 9.",
     intro:
       "Barcelona packs Gaudí, the Gothic Quarter, and a city beach into one walkable grid. Book the headline sights ahead, then match the local rhythm: late lunch, later dinner.",
@@ -268,6 +271,7 @@ export const destinations = {
     accentInk: "#14262e",
     coords: "39.47° N, 0.38° W",
     currency: "Euro",
+    budget: { amount: "€153" },
     summary: "Spain's third city, home of paella, with a 9 km park where a river used to run.",
     intro:
       "Valencia is easier-going than Barcelona and just as good on food. The old riverbed is now a long park that links the old town to the futuristic City of Arts and Sciences, and the beach is a tram ride away.",
@@ -328,6 +332,7 @@ export const destinations = {
     accentInk: "#14262e",
     coords: "12.17° N, 68.98° W",
     currency: "Caribbean guilder; US dollars accepted",
+    budget: { amount: "$332" },
     summary: "Pastel Dutch waterfronts, small coves, and some of the Caribbean's easiest shore diving.",
     intro:
       "Curaçao sits south of the hurricane belt, so it's dependable most of the year. Willemstad's colourful waterfront is the postcard, but the reason to stay a week is the string of small beaches and reefs along the west coast.",
@@ -386,6 +391,7 @@ export const destinations = {
     accentInk: "#ffffff",
     coords: "17.07° N, 61.80° W",
     currency: "EC dollar; US dollars accepted",
+    budget: { amount: "$406" },
     summary: "An island known for having a beach for every day of the year, and a Georgian dockyard where sailors still tie up.",
     intro:
       "Antigua is about the water: calm west-coast beaches, Atlantic-side bays, and English Harbour, where Nelson's Dockyard is still a working marina. Pick a beach base and plan a few days out on the water.",
@@ -452,6 +458,7 @@ export const destinations = {
     accentInk: "#ffffff",
     coords: "32.72° N, 117.16° W",
     currency: "US dollar",
+    budget: { amount: "$202" },
     summary: "Beach towns, Balboa Park, and tacos, with weather that rarely gets in the way.",
     intro:
       "San Diego is a string of distinct beach neighbourhoods tied to a compact downtown. The weather is mild all year; the trip is more about choosing between surf towns, the harbour, and day trips inland.",
@@ -502,6 +509,7 @@ export const destinations = {
     accentInk: "#14262e",
     coords: "40.71° N, 74.01° W",
     currency: "US dollar",
+    budget: { amount: "$326" },
     summary: "Five boroughs, a subway that runs all night, and neighbourhoods worth a whole day each.",
     intro:
       "New York is best planned by neighbourhood, not by landmark. Group each day around one part of the city and you'll spend it walking and eating instead of crossing town on the subway.",
@@ -563,6 +571,7 @@ export const destinations = {
     accentInk: "#ffffff",
     coords: "38.91° N, 77.04° W",
     currency: "US dollar",
+    budget: { amount: "$198" },
     summary: "Monuments, free museums, and a Metro that makes it all easy to reach.",
     intro:
       "Washington is compact and easy to plan. The big sights line the National Mall, the Metro reaches almost everything else, and most of the museums cost nothing. Reserve the few that need tickets, and leave room to wander.",
@@ -625,6 +634,7 @@ export const destinations = {
     accentInk: "#ffffff",
     coords: "47.61° N, 122.33° W",
     currency: "US dollar",
+    budget: { amount: "$205" },
     summary: "Water on every side, a very good aquarium, and the Space Needle in the middle.",
     intro:
       "Seattle sits between Puget Sound and Lake Washington, and the best days use the water. Start at the waterfront and the market, ride the light rail between neighbourhoods, and save a clear evening for the view from the Needle.",

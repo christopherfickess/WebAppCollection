@@ -7,6 +7,7 @@
   <meta name="description" content="Travel guides to London, Paris, Barcelona, Valencia, Curaçao, Antigua, San Diego, New York City, Washington, D.C., Seattle, Nassau." />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#14262E" />
+  
   <link rel="icon" href="../img/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="../fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="../css/style.css" />
@@ -23,6 +24,13 @@
     </section>
     <section class="pills-row">
       <gta-pills data-from="destinationOrder"></gta-pills>
+    </section>
+    <section class="when">
+      <div class="section-head">
+        <h2>Where to go in&hellip;</h2>
+        <p>Pick a month to see which guides are in season.</p>
+      </div>
+      <gta-months data-from="destinationOrder"></gta-months>
     </section>
     <section class="regions">
       <gta-destination-grid data-from="destinationOrder" grouped></gta-destination-grid>

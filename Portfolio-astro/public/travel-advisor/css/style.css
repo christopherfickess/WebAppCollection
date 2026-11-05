@@ -2410,3 +2410,302 @@ gta-header.is-open .menu-icon i:last-child {
     transition: none;
   }
 }
+
+/* ==========================================================
+   v2.1 - month picker, cost line, next/previous stop, field
+   notes, testimonials. One block; delete it (and the matching
+   components in js/components/explore.js) to remove them.
+   ========================================================== */
+.months {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.month {
+  padding: 0.6rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.month:hover {
+  border-color: var(--petrol);
+}
+
+.month[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--mist);
+}
+
+.month:focus-visible {
+  outline: 2px solid var(--petrol);
+  outline-offset: 2px;
+}
+
+.month-results {
+  margin-top: 1.5rem;
+  min-height: 7rem;
+}
+
+.month-title {
+  font-size: var(--t-lg);
+  margin: 0 0 0.75rem;
+}
+
+.month-label {
+  margin: 1rem 0 0.4rem;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.month-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.month-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--saffron);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.month-list.is-quiet a {
+  border-left-color: var(--rule);
+}
+
+.month-list a:hover {
+  border-color: var(--petrol);
+}
+
+.month-city {
+  font-size: var(--t-md);
+}
+
+.month-where,
+.month-none {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.when .months,
+.when .month-results {
+  max-width: 46rem;
+}
+
+@media (min-width: 700px) {
+  .months {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+/* what it costs */
+.cost-line {
+  margin: 0 0 0.5rem;
+  font-size: var(--t-md);
+}
+
+.cost-line strong {
+  font-size: var(--t-xl);
+  font-weight: 500;
+  margin-right: 0.25rem;
+}
+
+/* next / previous stop */
+.stop-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  border-top: 1px solid var(--rule);
+}
+
+.stop-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1.5rem 0 1.5rem 2rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.stop-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.95rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid var(--petrol);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.stop-link.is-next {
+  align-items: flex-end;
+  padding: 1.5rem 2rem 1.5rem 0;
+  text-align: right;
+}
+
+.stop-link.is-next::before {
+  left: auto;
+  right: 0;
+}
+
+.stop-link:hover::before {
+  background: var(--saffron);
+  border-color: var(--saffron);
+}
+
+.stop-label,
+.stop-country {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.stop-city {
+  font-size: var(--t-lg);
+}
+
+/* field notes */
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.25rem;
+}
+
+.note-card {
+  padding: 1.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.note-card h2 {
+  font-size: var(--t-lg);
+  margin: 0.25rem 0 0.5rem;
+}
+
+.note-card h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.note-card h2 a:hover {
+  color: var(--petrol);
+}
+
+.note-card p:last-child {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.note-date {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.note {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 1rem + 4vw, 4rem) var(--gutter);
+}
+
+.note h1 {
+  margin: 0.25rem 0 1.5rem;
+}
+
+.note-back {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  font-size: var(--t-sm);
+  color: var(--petrol);
+}
+
+.note-body p {
+  margin: 0 0 1.1rem;
+  line-height: 1.6;
+}
+
+.note-guide {
+  margin: 2rem 0 1rem;
+}
+
+.note .guide-checked {
+  margin: 1rem 0 0;
+}
+
+/* testimonials (the section stays hidden until there is a real quote) */
+.testimonials[hidden] {
+  display: none;
+}
+
+.quotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.25rem;
+}
+
+.quote-card {
+  margin: 0;
+  padding: 1.5rem;
+  border-left: 4px solid var(--saffron);
+  background: var(--paper);
+  border-radius: 8px;
+}
+
+.quote-card blockquote {
+  margin: 0 0 0.75rem;
+  font-size: var(--t-md);
+  line-height: 1.5;
+}
+
+.quote-card figcaption {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+@media (max-width: 560px) {
+  .stop-city {
+    font-size: var(--t-md);
+  }
+}
+
+/* Six nav items plus the button: keep the bar on one line. */
+.site-nav ul a,
+.site-nav .btn {
+  white-space: nowrap;
+}
+
+@media (min-width: 861px) and (max-width: 1120px) {
+  .site-nav {
+    gap: 1rem;
+  }
+
+  .site-nav ul {
+    gap: 1rem;
+  }
+
+  .wordmark-tag {
+    display: none;
+  }
+}

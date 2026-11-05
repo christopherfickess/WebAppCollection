@@ -131,3 +131,11 @@ home hero and contact form still work.
 See HANDOFF.md ("v2 look"). Content for the new sections is in `js/data.js`
 (`proof`, `featuredTrips`, `faq`, `quote`, `site.actionBar`); components are in
 `js/components/home-extras.js` and `site-footer.js`.
+
+## v2.1 additions
+
+Month picker, next/previous stops, cost line, link previews, field notes and
+testimonials: see HANDOFF.md ("v2.1 features"). Field notes live in
+`js/notes.js`, real testimonials go in `js/testimonials.js` (empty on purpose),
+and per-guide `budget` sits in `js/destinations.js`. Run `npm run guides` after
+changing notes or destinations.
