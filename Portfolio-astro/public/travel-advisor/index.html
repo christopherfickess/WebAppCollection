@@ -26,12 +26,17 @@
         <p class="lede">Tell Gredin where you want to go and how you like to travel. You get a day-by-day plan, every booking handled, and someone to message when a flight gets cancelled.</p>
         <div class="hero-actions">
           <a class="btn" href="#contact">Book a free planning call</a>
-          <a class="link" href="./destinations/">Browse destinations</a>
+          <a class="btn btn-ghost" href="./destinations/">Browse destinations</a>
         </div>
+        <a class="scroll-cue" href="#how">Scroll to explore <span aria-hidden="true">&darr;</span></a>
       </div>
 
       <!-- The signature element: a sample itinerary drawn as a route. -->
       <gta-itinerary data-from="itinerary"></gta-itinerary>
+    </section>
+
+    <section class="proof" aria-label="At a glance">
+      <gta-proof data-from="proof"></gta-proof>
     </section>
 
     <section class="how" id="how" aria-labelledby="how-title">
@@ -44,12 +49,30 @@
         <h2 id="dest-title">Destinations</h2>
         <p>Eleven places Gredin knows well, each with a full guide: when to go, where to stay, and a sample plan.</p>
       </div>
+      <gta-pills data-from="destinationOrder"></gta-pills>
       <gta-destination-grid data-from="destinationOrder"></gta-destination-grid>
+    </section>
+
+    <section class="trips-sample" id="trips" aria-labelledby="trips-title">
+      <div class="section-head">
+        <h2 id="trips-title">Sample trips</h2>
+        <p>Each one starts as a draft like this, taken from the guides.</p>
+      </div>
+      <gta-trips data-from="featuredTrips"></gta-trips>
     </section>
 
     <section class="included" id="included" aria-labelledby="included-title">
       <h2 id="included-title">What's included</h2>
       <gta-included data-from="included"></gta-included>
+    </section>
+
+    <section class="faq-section" id="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Questions</h2>
+      <gta-faq data-from="faq"></gta-faq>
+    </section>
+
+    <section class="quote" aria-label="Book a call">
+      <gta-quote data-from="quote"></gta-quote>
     </section>
 
     <section class="contact" id="contact" aria-labelledby="contact-title">

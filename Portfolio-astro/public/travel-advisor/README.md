@@ -125,3 +125,9 @@ font CDNs. City colours are therefore set from script via the CSSOM
 The header, destination cards, guides, and footer render from JS. With JS
 off, guide pages show a `<noscript>` fallback (name and intro), and the
 home hero and contact form still work.
+
+## v2 additions
+
+See HANDOFF.md ("v2 look"). Content for the new sections is in `js/data.js`
+(`proof`, `featuredTrips`, `faq`, `quote`, `site.actionBar`); components are in
+`js/components/home-extras.js` and `site-footer.js`.

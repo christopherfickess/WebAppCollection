@@ -381,6 +381,16 @@ internal links return 200, autoplay advances and pauses.
 - Fixed width/height for all photo entries in `destinations.js`: they must be the 1600px export size (the refine script caps at 1600 wide), not the source size. San Diego and the Seattle jellyfish had source sizes; now corrected.
 - Accent #0b7a86 gives about 5.1:1 against white.
 
+## v2 look for the travel advisor (single commit, easy to undo)
+
+- Restore point: commit 96faea9 (before v2). To undo everything: `git revert <v2 commit>` or ask Claude to revert it. All v2 CSS is one marked block at the end of `css/style.css`.
+- Typography: smaller scale (16px base, 15.5px on phones). Headings, wordmark, city names, menu links use EB Garamond (self-hosted, `fonts/eb-garamond*.woff2`, SIL OFL); buttons, nav, labels stay Bricolage Grotesque; body stays Newsreader.
+- New components in `js/components/home-extras.js`: `gta-proof` (figures counted from the guides), `gta-pills` (destination links, also on the destinations index), `gta-faq` (native `details`, no script), `gta-trips` (sample trips drawn from each guide's sample plan, no invented client data), `gta-quote` (closing call to action).
+- Footer is now a full dark footer (destinations, quick links, elsewhere) and also renders the fixed phone action bar (`site.actionBar` in `data.js`; add `tel:`/`sms:` entries when there is a real number).
+- Header: burger animates into an X; the phone menu is unnumbered, serif, with arrow marks; its top offset is measured from the header height.
+- Home page now: hero (two buttons plus a "Scroll to explore" cue), proof strip, how it works, destinations with pills, sample trips, what's included, questions, quote block, contact form. Menu gained "Sample trips" and "Questions".
+- Not done: section numbering (explicitly not wanted).
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

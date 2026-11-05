@@ -63,6 +63,9 @@ await writeFile(
       <h1>Destinations</h1>
       <p>Guides to the places Gredin plans trips to most: when to go, where to stay, how to get around, and a sample plan for each.</p>
     </section>
+    <section class="pills-row">
+      <gta-pills data-from="destinationOrder"></gta-pills>
+    </section>
     <section class="regions">
       <gta-destination-grid data-from="destinationOrder" grouped></gta-destination-grid>
     </section>`,

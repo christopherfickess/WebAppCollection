@@ -1734,3 +1734,577 @@ html.lightbox-open {
     animation: none;
   }
 }
+
+/* =====================================================================
+   v2 - smaller serif type, action bar, proof strip, pills, FAQ, sample
+   trips, quote block, full footer, burger-to-X menu, hero cue.
+   Everything for the v2 look is in this block (plus the new components);
+   deleting it, or `git revert` of the v2 commit, restores the previous look.
+   ===================================================================== */
+@font-face {
+  font-family: "EB Garamond";
+  src: url("../fonts/eb-garamond.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EB Garamond";
+  src: url("../fonts/eb-garamond-italic.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  --serif: "EB Garamond", "Newsreader", Georgia, serif;
+  /* A smaller scale: 16px base, tighter steps. */
+  --t-sm: 0.875rem;
+  --t-md: 1.125rem;
+  --t-lg: 1.4rem;
+  --t-xl: 1.8rem;
+  --t-hero: clamp(2.3rem, 1.2rem + 4vw, 4.1rem);
+}
+
+html {
+  font-size: 100%;
+}
+
+h1,
+h2,
+h3,
+.wordmark-name,
+.hero h1,
+.page-head h1,
+.destination-name,
+.guide-title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-stretch: 100%;
+  letter-spacing: -0.01em;
+}
+
+.hero h1 {
+  line-height: 1.02;
+  max-width: 14ch;
+}
+
+.wordmark-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.guide-title {
+  font-size: clamp(3rem, 1.4rem + 7vw, 7rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.destination-name {
+  font-size: clamp(1.7rem, 1.3rem + 1vw, 2.1rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.route-place,
+.steps h3,
+.included-list dt {
+  font-family: var(--serif);
+  font-weight: 600;
+}
+
+/* buttons */
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
+.btn-ghost:hover {
+  color: var(--paper);
+}
+
+.btn-light {
+  background: var(--mist);
+  color: var(--ink);
+}
+
+.btn-light:hover {
+  background: var(--saffron);
+  color: var(--ink);
+}
+
+.scroll-cue {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--ink-soft);
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  text-decoration: none;
+}
+
+.scroll-cue:hover {
+  color: var(--petrol);
+}
+
+/* proof strip */
+main > .proof {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.proof-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 0;
+  padding: 1.6rem 0;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.proof-strip li {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.proof-strip strong {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 1.4rem + 2vw, 2.9rem);
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+
+.proof-strip span {
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+/* destination pills */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.pills a {
+  display: inline-block;
+  padding: 0.35rem 0.95rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.pills a:hover {
+  border-color: var(--petrol);
+  color: var(--petrol);
+}
+
+main > .pills-row {
+  padding-top: 1.5rem;
+  padding-bottom: 0;
+}
+
+.pills-row .pills {
+  margin-bottom: 0;
+}
+
+/* sample trips */
+.trip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16.5rem, 1fr));
+  gap: 1.25rem;
+}
+
+.trip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+.trip-tag {
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--petrol);
+}
+
+.trip h3 {
+  font-size: var(--t-lg);
+}
+
+.trip h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.trip h3 a:hover {
+  text-decoration: underline;
+}
+
+.trip-summary {
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.trip-stops {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.9rem 0 0;
+  list-style: none;
+  border-top: 1px dashed var(--rule);
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+
+.trip-stops strong {
+  display: block;
+  font-family: var(--display);
+  font-weight: 600;
+}
+
+.trip-link {
+  margin-top: auto;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+/* FAQ */
+.faq-section {
+  border-top: 1px solid var(--rule);
+}
+
+.faq {
+  max-width: 46rem;
+  margin-top: 1.5rem;
+}
+
+.faq details {
+  border-bottom: 1px solid var(--rule);
+}
+
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  font-family: var(--serif);
+  font-size: var(--t-md);
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary::after {
+  content: "+";
+  flex: none;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--petrol);
+}
+
+.faq details[open] summary::after {
+  content: "\2212";
+}
+
+.faq details p {
+  padding: 0 2rem 1.1rem 0;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+/* quote block */
+main > .quote {
+  padding-top: 0;
+}
+
+.quote-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem 2.5rem;
+  padding: clamp(1.75rem, 1rem + 3vw, 3rem);
+  border-radius: 18px;
+  background: var(--ink);
+  color: var(--mist);
+}
+
+.quote-block h2 {
+  font-size: var(--t-xl);
+}
+
+.quote-points {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: #c3cfcb;
+}
+
+.quote-points li::before {
+  content: "\2713";
+  margin-right: 0.6rem;
+  font-family: system-ui, sans-serif;
+  color: var(--saffron);
+}
+
+/* footer */
+gta-footer {
+  background: var(--ink);
+  color: #c3cfcb;
+}
+
+.site-foot {
+  display: block;
+  padding-top: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  border-top: 0;
+}
+
+.foot-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1.6fr 1fr 1fr;
+  gap: 2.25rem 2rem;
+}
+
+.foot-name {
+  font-family: var(--serif);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  color: var(--mist);
+}
+
+.foot-blurb {
+  margin-top: 0.6rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: var(--t-md);
+  line-height: 1.4;
+  max-width: 24ch;
+}
+
+.foot-title {
+  margin-bottom: 0.9rem;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--mist);
+}
+
+.foot-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--display);
+  font-size: var(--t-sm);
+}
+
+.foot-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.site-foot a {
+  color: #c3cfcb;
+  text-decoration: none;
+}
+
+.site-foot a:hover {
+  color: var(--paper);
+  text-decoration: underline;
+}
+
+.site-foot .foot-note {
+  margin: 2.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: var(--t-sm);
+  color: #9fb0ab;
+}
+
+/* action bar (phones and tablets only) */
+.action-bar {
+  display: none;
+}
+
+/* burger that turns into an X */
+.menu-icon {
+  position: relative;
+  display: inline-block;
+  width: 22px;
+  height: 14px;
+  margin-left: 0.6rem;
+}
+
+.menu-icon i {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform 0.25s ease;
+}
+
+.menu-icon i:first-child {
+  top: 2px;
+}
+
+.menu-icon i:last-child {
+  top: 10px;
+}
+
+gta-header.is-open .menu-icon i:first-child {
+  transform: translateY(4px) rotate(45deg);
+}
+
+gta-header.is-open .menu-icon i:last-child {
+  transform: translateY(-4px) rotate(-45deg);
+}
+
+@media (max-width: 860px) {
+  .menu-toggle {
+    padding: 0.25rem 0;
+    border: 0;
+    background: transparent;
+    font-weight: 500;
+  }
+
+  .site-nav {
+    top: var(--head-h, 62px);
+  }
+
+  .site-nav ul a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 0;
+    font-family: var(--serif);
+    font-size: clamp(1.7rem, 1.2rem + 2.5vw, 2.2rem);
+    font-weight: 400;
+    font-stretch: 100%;
+    letter-spacing: 0;
+    text-decoration: none;
+  }
+
+  .site-nav ul a::after {
+    content: "\2197";
+    font-family: system-ui, sans-serif;
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+  }
+
+  .site-nav ul a[aria-current="page"] {
+    color: var(--petrol);
+  }
+
+  .site-nav .btn {
+    justify-content: flex-start;
+    min-height: 50px;
+    padding: 0 1.4rem;
+    border-radius: 6px;
+  }
+
+  .action-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9;
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    border-top: 1px solid var(--rule);
+    background: var(--mist);
+  }
+
+  .action-bar a {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.4rem;
+    padding: 0 0.5rem;
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: var(--t-sm);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .action-bar a.is-primary {
+    background: var(--petrol);
+    color: var(--paper);
+  }
+
+  body.menu-open .action-bar {
+    display: none;
+  }
+
+  gta-footer {
+    padding-bottom: calc(3.4rem + env(safe-area-inset-bottom, 0));
+  }
+
+  .foot-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .foot-about,
+  .foot-grid nav:nth-of-type(1) {
+    grid-column: 1 / -1;
+  }
+
+  .proof-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  html {
+    font-size: 96.875%; /* 15.5px */
+  }
+
+  .faq details p {
+    padding-right: 0;
+  }
+
+  .quote-block .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-icon i {
+    transition: none;
+  }
+}

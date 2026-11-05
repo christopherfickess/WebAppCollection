@@ -14,7 +14,7 @@ export class SiteHeader extends Component {
           <span class="wordmark-name">${site.brand}</span>
           <span class="wordmark-tag">${site.tagline}</span>
         </a>
-        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><span class="menu-label-open">Menu</span><span class="menu-label-close">Close</span></button>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><span class="menu-label-open">Menu</span><span class="menu-label-close">Close</span><span class="menu-icon" aria-hidden="true"><i></i><i></i></span></button>
         <nav class="site-nav" id="site-nav" aria-label="Main">
           <ul>
             ${site.nav.map((item) => html`<li><a href="${link(item.href)}"${this.isCurrent(item.href) ? html` aria-current="page"` : ""}>${item.label}</a></li>`)}
@@ -53,6 +53,8 @@ export class SiteHeader extends Component {
 
   // The phone menu covers the screen, so the page behind it shouldn't scroll.
   open() {
+    // The menu starts right under the header, whatever its height.
+    this.style.setProperty("--head-h", `${this.offsetHeight}px`);
     this.classList.add("is-open");
     document.body.classList.add("menu-open");
     this.toggleButton.setAttribute("aria-expanded", "true");
