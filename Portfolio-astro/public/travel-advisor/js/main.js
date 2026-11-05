@@ -15,7 +15,7 @@ import { PhotoHero } from "./components/photo-hero.js";
 import { DayTrips } from "./components/day-trips.js";
 import { PhotoGallery } from "./components/photo-gallery.js";
 import { ProofStrip, DestinationPills, Faq, FeaturedTrips, QuoteBlock } from "./components/home-extras.js";
-import { MonthPicker, Testimonials, NoteList, NotePage } from "./components/explore.js";
+import { MonthPicker, Testimonials, NoteList, NotePage, Essentials } from "./components/explore.js";
 import { ContactForm } from "./components/contact-form.js";
 import { Lightbox } from "./lib/lightbox.js";
 
@@ -46,6 +46,7 @@ setStore(content);
   Testimonials,
   NoteList,
   NotePage,
+  Essentials,
 ].forEach((C) => C.define());
 
 ContactForm.attach()?.prefillFromQuery();

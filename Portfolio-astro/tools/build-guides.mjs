@@ -168,6 +168,26 @@ for (const [i, n] of notes.entries()) {
   );
 }
 
+// Travel essentials (packing and choosing an airline).
+await mkdir(join(root, "packing"), { recursive: true });
+await writeFile(
+  join(root, "packing", "index.html"),
+  page({
+    depth: 1,
+    title: `Travel essentials | ${site.name}`,
+    description: "What to pack, how to handle money and data, and how to choose an airline.",
+    themeColor: "#14262E",
+    path: "packing/",
+    main: `    <section class="page-head">
+      <h1>Travel essentials</h1>
+      <p>What to pack and how to choose a flight, for every guide on this site.</p>
+    </section>
+    <section class="essentials">
+      <gta-essentials data-from="essentials"></gta-essentials>
+    </section>`,
+  })
+);
+
 // Keep the hand-written home page's link-preview tags in step.
 const homePath = join(root, "index.html");
 const home = await readFile(homePath, "utf8");

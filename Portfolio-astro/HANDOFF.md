@@ -413,6 +413,15 @@ internal links return 200, autoplay advances and pauses.
 - Nav fix: links no longer wrap at 861-1120px (tag hidden there). All v2.1 CSS is one marked block near the end of `css/style.css`.
 - Print/PDF itinerary was deliberately not built.
 
+## v2.2 travel details (travel-advisor)
+
+- `js/travel-info.js` holds, per destination, `caution` (hurricane season), `advisory` (US State Department level), `airlines` and `shopping`; data.js merges them into the guides. Each field is optional and its section only renders when present. US cities have no advisory or airline list on purpose.
+- Hurricane facts are from NOAA (season June 1 to Nov 30, busiest mid-August to mid-October, peak day Sept 10). Shown for Curacao, Antigua and Nassau only.
+- Advisory levels, as of November 2026: France 2, Spain 2 (Barcelona, Valencia), Bahamas 2, Curacao 1, Antigua 1, UK 2. UK and Spain levels came from secondary sources because travel.state.gov pages would not load; some official pages returned old cached copies. Re-check all six on travel.state.gov and update `level`/`asOf`.
+- Airlines are lists of who flies each route, not rankings. Paris and Barcelona have no per-airline city pairs because sources disagreed. Valencia: United Newark to Valencia planned from June 2, 2027.
+- Shopping: UK has no VAT refund for visitors (since 2021); France refund over EUR 100 same shop same day; Spain kept generic (minimum not verified); Curacao areas from the tourism board. No shopping for Nassau, Antigua or US cities (nothing verified).
+- New page `packing/` (travel essentials, from `essentials` in travel-info.js), linked from the footer and each guide. All v2.2 CSS is one block near the end of `css/style.css`.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

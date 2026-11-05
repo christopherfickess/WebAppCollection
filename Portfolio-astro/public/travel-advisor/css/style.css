@@ -2709,3 +2709,59 @@ gta-header.is-open .menu-icon i:last-child {
     display: none;
   }
 }
+
+/* ==========================================================
+   v2.2 - hurricane caution, travel advisory, essentials page.
+   ========================================================== */
+.caution {
+  border-left: 4px solid var(--saffron);
+  padding-left: 1.25rem;
+}
+
+.advisory-level {
+  display: inline-flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  margin: 0 0 0.75rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+}
+
+.advisory-level.level-1 {
+  border-left: 6px solid var(--petrol);
+}
+
+.advisory-level.level-2 {
+  border-left: 6px solid var(--saffron);
+}
+
+.advisory-reasons {
+  max-width: 46rem;
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.advisory-reasons li {
+  margin-bottom: 0.4rem;
+}
+
+.essentials {
+  max-width: 46rem;
+}
+
+.essentials-group h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: var(--t-lg);
+}
+
+.guide-section > p {
+  margin: 0 0 0.9rem;
+  max-width: 46rem;
+}
+
+.guide-section > p + .guide-checked,
+.guide-section > ul + .guide-checked {
+  margin-top: 0.75rem;
+}

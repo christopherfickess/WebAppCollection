@@ -102,3 +102,21 @@ export class NotePage extends Component {
     `;
   }
 }
+
+// <gta-essentials data-from="essentials">  The packing and airline-choice page.
+export class Essentials extends Component {
+  static tag = "gta-essentials";
+
+  render(groups) {
+    return html`
+      ${groups.map(
+        (g) => html`
+          <section class="essentials-group">
+            <h2>${g.title}</h2>
+            <dl class="definition-list">${g.items.map((i) => html`<div><dt>${i.term}</dt><dd>${i.text}</dd></div>`)}</dl>
+          </section>
+        `
+      )}
+    `;
+  }
+}

@@ -5,6 +5,11 @@
 import { destinations, destinationOrder, regions } from "./destinations.js";
 import { notes } from "./notes.js";
 import { testimonials } from "./testimonials.js";
+import { travelInfo, essentials } from "./travel-info.js";
+
+// Merge the extra guide sections (hurricane cautions, advisories, airlines,
+// shopping) into each destination.
+for (const [slug, info] of Object.entries(travelInfo)) Object.assign(destinations[slug], info);
 
 // Figures for the strip under the hero are counted from the guides, so
 // they stay true as destinations and photos are added.
@@ -45,6 +50,7 @@ export const content = {
     links: [
       { label: "LinkedIn", href: "https://www.linkedin.com/in/christopher-fickess-223a17182/", external: true },
       { label: "GitHub", href: "https://github.com/christopherfickess", external: true },
+      { label: "Travel essentials", href: "packing/" },
       { label: "More projects", href: "/projects/" },
     ],
   },
@@ -95,6 +101,7 @@ export const content = {
 
   notes,
   testimonials,
+  essentials,
 
   regions,
   destinations,

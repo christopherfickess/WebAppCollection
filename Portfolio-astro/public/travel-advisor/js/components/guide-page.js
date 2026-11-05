@@ -33,6 +33,14 @@ export class GuidePage extends Component {
           <gta-seasons data-from="${path}"></gta-seasons>
         </section>
 
+        ${place.caution
+          ? html`<section class="guide-section caution" aria-labelledby="caution-title">
+              <h2 id="caution-title">Hurricane season: be careful when you pick dates</h2>
+              ${place.caution.text.map((p) => html`<p>${p}</p>`)}
+              <p class="guide-checked">Source: NOAA and the National Hurricane Center. <a href="https://www.nhc.noaa.gov/" rel="noopener">Check the live forecast</a>.</p>
+            </section>`
+          : ""}
+
         ${place.budget
           ? html`<section class="guide-section" aria-labelledby="cost-title">
               <h2 id="cost-title">What it costs</h2>
@@ -74,11 +82,35 @@ export class GuidePage extends Component {
           <gta-definitions data-from="${path}.gettingAround"></gta-definitions>
         </section>
 
+        ${place.airlines
+          ? html`<section class="guide-section" aria-labelledby="fly-title">
+              <h2 id="fly-title">Getting there from the US</h2>
+              <p>${place.airlines.intro}</p>
+              <p class="guide-checked">${place.airlines.source} See <a href="${link("packing/")}">travel essentials</a> for choosing an airline.</p>
+            </section>`
+          : ""}
+
+        ${place.shopping
+          ? html`<section class="guide-section" aria-labelledby="shop-title">
+              <h2 id="shop-title">Shopping</h2>
+              <gta-definitions data-from="${path}.shopping"></gta-definitions>
+            </section>`
+          : ""}
+
         <section class="guide-section" aria-labelledby="before-title">
           <h2 id="before-title">Before you go</h2>
           <p class="guide-checked">For US passport holders. Checked November 2026; confirm entry rules on official sites before you book.</p>
           <gta-facts data-from="${path}.basics"></gta-facts>
         </section>
+
+        ${place.advisory
+          ? html`<section class="guide-section advisory" aria-labelledby="adv-title">
+              <h2 id="adv-title">Travel advisory</h2>
+              <p class="advisory-level level-${place.advisory.level}"><strong>Level ${place.advisory.level}</strong> ${place.advisory.label}</p>
+              <ul class="advisory-reasons">${place.advisory.reasons.map((r) => html`<li>${r}</li>`)}</ul>
+              <p class="guide-checked">US State Department. ${place.advisory.asOf} Levels change, so <a href="${place.advisory.url}" rel="noopener">read the current advisory</a> before you book. Packing list: <a href="${link("packing/")}">travel essentials</a>.</p>
+            </section>`
+          : ""}
 
         <section class="guide-cta" aria-labelledby="cta-title">
           <h2 id="cta-title">Want this trip planned for you?</h2>
