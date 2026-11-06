@@ -48,12 +48,22 @@ export class Gallery extends Component {
   static tag = "fx-gallery";
 
   render(photos) {
-    const cats = [...new Set(photos.map((p) => p.category))];
+    const sets = [...new Set(photos.map((p) => p.set))];
+    const order = ["Dawn", "Day", "Dusk", "Night"];
+    const cats = [...new Set(photos.map((p) => p.category))].sort((a, b) => order.indexOf(a) - order.indexOf(b));
     return html`
       <div class="gallery-bar">
-        <div class="filters" role="group" aria-label="Filter photos">
-          <button class="chip" type="button" aria-pressed="true" data-filter="">All</button>
-          ${cats.map((c) => html`<button class="chip" type="button" aria-pressed="false" data-filter="${c}">${c}</button>`)}
+        <div class="filter-rows">
+          ${sets.length > 1
+            ? html`<div class="filters" role="group" aria-label="Collection">
+                <button class="chip" type="button" aria-pressed="true" data-key="set" data-filter="">All</button>
+                ${sets.map((c) => html`<button class="chip" type="button" aria-pressed="false" data-key="set" data-filter="${c}">${c}</button>`)}
+              </div>`
+            : ""}
+          <div class="filters" role="group" aria-label="Time of day">
+            <button class="chip" type="button" aria-pressed="true" data-key="category" data-filter="">Any light</button>
+            ${cats.map((c) => html`<button class="chip" type="button" aria-pressed="false" data-key="category" data-filter="${c}">${c}</button>`)}
+          </div>
         </div>
         <div class="strip-nav">
           <button class="strip-btn" type="button" data-dir="-1" aria-label="Scroll photos left">&#8249;</button>
@@ -62,30 +72,49 @@ export class Gallery extends Component {
       </div>
       <div class="strip" tabindex="0" role="region" aria-label="Photos, scroll sideways">
         ${photos.map(
-          (p) => html`<figure class="shot" data-category="${p.category}">
+          (p) => html`<figure class="shot" data-set="${p.set}" data-category="${p.category}">
             ${new Photo(p).tag({ className: "gallery-img", sizes: "(max-width: 700px) 80vw, 45vw", zoom: true })}
             <figcaption>${p.title}</figcaption>
           </figure>`
         )}
       </div>
+      <p class="gallery-empty" hidden>No photos in that combination yet. Try another collection or time of day.</p>
     `;
   }
 
   afterRender() {
-    const chips = [...this.querySelectorAll(".chip")];
     const strip = this.querySelector(".strip");
+    const empty = this.querySelector(".gallery-empty");
+    const chosen = { set: "", category: "" };
+    const apply = () => {
+      let shown = 0;
+      this.querySelectorAll(".shot").forEach((s) => {
+        s.hidden = (chosen.set && s.dataset.set !== chosen.set) || (chosen.category && s.dataset.category !== chosen.category);
+        if (!s.hidden) shown++;
+      });
+      empty.hidden = shown > 0;
+      strip.scrollTo({ left: 0 });
+    };
+    const choose = (chip) => {
+      chip.parentElement.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+      chosen[chip.dataset.key] = chip.dataset.filter;
+    };
     this.addEventListener("click", (e) => {
       const chip = e.target.closest(".chip");
       if (chip) {
-        chips.forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
-        this.querySelectorAll(".shot").forEach((s) => {
-          s.hidden = !!chip.dataset.filter && s.dataset.category !== chip.dataset.filter;
-        });
-        strip.scrollTo({ left: 0 });
+        choose(chip);
+        apply();
       }
       const btn = e.target.closest(".strip-btn");
       if (btn) strip.scrollBy({ left: Number(btn.dataset.dir) * strip.clientWidth * 0.8, behavior: "smooth" });
     });
+    // ?set=Spain opens the gallery on one collection.
+    const wanted = new URLSearchParams(location.search).get("set")?.toLowerCase();
+    const first = [...this.querySelectorAll('.chip[data-key="set"]')].find((c) => c.dataset.filter.toLowerCase() === wanted);
+    if (first) {
+      choose(first);
+      apply();
+    }
   }
 }
 

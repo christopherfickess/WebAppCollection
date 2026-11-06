@@ -1,7 +1,21 @@
 // All of the site's content lives here. To rebrand it, change this file;
 // the components in ./components render whatever is in it.
 
-const photo = (name, h, alt) => ({ file: `img/photos/${name}`, width: 1600, height: h, alt });
+import { sets, photos } from "./photos.js";
+
+// A photo from js/photos.js by file name, for the hero and About picture.
+const pick = (name, position) => {
+  const p = photos.find((x) => x.file.endsWith(name));
+  return { file: p.file, width: p.width, height: p.height, alt: p.alt, ...(position ? { position } : {}) };
+};
+
+// The gallery, ordered by collection, then by the light the page moves
+// through: Dawn, Day, Dusk, Night.
+const LIGHTS = ["dawn", "day", "dusk", "night"];
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const gallery = photos
+  .map((p, i) => ({ ...p, i, set: sets.find((s) => s.id === p.set)?.name ?? cap(p.set), category: cap(p.light) }))
+  .sort((a, b) => sets.findIndex((s) => s.name === a.set) - sets.findIndex((s) => s.name === b.set) || LIGHTS.indexOf(a.light) - LIGHTS.indexOf(b.light) || a.i - b.i);
 
 export const content = {
   site: {
@@ -31,7 +45,7 @@ export const content = {
   },
 
   hero: {
-    image: photo("mountain-dawn", 1067, "Placeholder landscape: layered mountains at dawn"),
+    image: pick("nature-park-path-and-steel-pole", "50% 60%"),
     title: "Landscape and wildlife photography, made to hang on your wall",
     text: "Sessions in the places you love, edited with care and delivered in a private gallery you can share.",
     primary: { label: "See the gallery", href: "#gallery" },
@@ -41,26 +55,15 @@ export const content = {
   about: {
     title: "About Fox & Fern",
     lead: "I photograph quiet places at the edge of the day, then print them large enough to live with.",
-    image: photo("forest-mist", 1067, "Placeholder landscape: forest under mist"),
+    image: pick("nature-ficus-roots", "50% 70%"),
     blocks: [
       { title: "My story", text: "Replace this with two or three sentences about who you are and how you started. Clients hire a photographer they feel they know." },
       { title: "How I work", text: "Say what a session is like: how long it runs, how you direct, and how soon people see their photos." },
     ],
   },
 
-  // Photos are grouped by the light they were made in, in the order the
-  // page moves through it: Dawn, Day, Dusk, Night.
-  gallery: [
-    { category: "Dawn", title: "Dawn ridge", ...photo("mountain-dawn", 1067, "Placeholder landscape: layered mountains at dawn") },
-    { category: "Dawn", title: "Morning mist", ...photo("forest-mist", 1067, "Placeholder landscape: forest under mist") },
-    { category: "Day", title: "Haze", ...photo("mountain-haze", 1067, "Placeholder landscape: misty blue mountains") },
-    { category: "Day", title: "Pines", ...photo("forest-pines", 2400, "Placeholder landscape: pines under a bright sky") },
-    { category: "Day", title: "Blue lake", ...photo("lake-blue", 1067, "Placeholder landscape: a blue lake ringed by trees") },
-    { category: "Dusk", title: "Sunset lake", ...photo("lake-sunset", 1067, "Placeholder landscape: a still lake at sunset") },
-    { category: "Dusk", title: "High peaks", ...photo("mountain-peaks", 2400, "Placeholder landscape: purple peaks at sunset") },
-    { category: "Night", title: "Stars over the treeline", ...photo("night-stars", 1067, "Placeholder landscape: a starry sky over trees") },
-    { category: "Night", title: "Last light", ...photo("night-ridge", 2400, "Placeholder landscape: a ridge under a purple night sky") },
-  ],
+  // Built from js/photos.js (add photos there with tools/photos/build-photos.py).
+  gallery,
 
   // Sizes for the "See it on your wall" preview, in inches (width x height
   // for a portrait print; the preview turns them for landscape photos).

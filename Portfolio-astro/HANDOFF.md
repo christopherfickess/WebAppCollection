@@ -442,6 +442,13 @@ internal links return 200, autoplay advances and pauses.
 - Sun times were checked against Python `astral` (within 1-2 min at Jackson, WY on three dates). They ignore weather and terrain.
 - Still needed from the owner: real photos (see the template README), and confirmation of the fox/leaf art source.
 
+## Photography-Studio: collections and the photo pipeline
+
+- Photos now live in `public/Photography-Studio/js/photos.js`, grouped into collections: Engagement, Spain, London, Nature. The gallery has a Collection row and a Time-of-day row that combine; empty collections are hidden.
+- Loaded so far (the owner's own photos): 9 Spain (Valencia and one Barcelona) and 10 Nature (Valencia gardens). The placeholder illustrations were removed. Engagement and London are waiting for uploads.
+- Add more with `tools/photos/build-photos.py` and the `photo-inbox/` folders (see `photo-inbox/README.md`). The tool strips GPS metadata.
+- Removing people was tried with automatic inpainting and rejected (visible smudging). Crowd shots (Torres de Serranos, Arc de Triomf) are as shot. The blurry Plaza de la Reina shot was left out. The camera watermark was cropped from the Arc de Triomf photo.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

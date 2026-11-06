@@ -223,6 +223,8 @@ fx-about { display: contents; }
 .band-gallery .band-head, .gallery-bar { padding-inline: var(--gutter); }
 .band-gallery .band-head { margin-bottom: 2rem; }
 .gallery-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.filter-rows { display: grid; gap: 0.25rem; }
+.gallery-empty { padding: 2rem var(--gutter); color: var(--muted); }
 .filters { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; }
 .chip { padding: 0.4rem 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font: 500 var(--t-md)/1.4 var(--sans); cursor: pointer; }
 .chip:hover { color: var(--bone); }

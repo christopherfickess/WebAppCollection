@@ -21,3 +21,10 @@ No inline styles or scripts (the site's CSP blocks them); set positions in CSS. 
 - **Print preview** (`#wall`, `fx-wall`): edit `printSizes` in `js/data.js`. It uses the gallery photos.
 - **Best light on your date**: set `site.location` (place, lat, lon, timeZone) in `js/data.js`. To remove, delete `LightNote.attach` in `js/main.js` and the `#light-note` paragraph.
 - **Day timeline**: edit `day` in `js/data.js`; `light` is dawn, day, dusk, or night and sets the dot colour.
+
+## Adding photos and collections
+
+All photos are listed in `js/photos.js` and grouped into collections (Engagement, Spain, London, Nature). Put new
+photos in `photo-inbox/<collection>/` and run `python3 tools/photos/build-photos.py <collection> photo-inbox/<collection>`
+from `Portfolio-astro/`. See `photo-inbox/README.md`. A link such as `/Photography-Studio/?set=Spain#gallery` opens the
+gallery on one collection. The hero and About pictures are chosen by file name in `js/data.js` (`pick(...)`).
