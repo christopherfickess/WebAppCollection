@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Website templates you can see live, with what each one includes and the add-ons you can choose." />
+  <meta name="theme-color" content="#f6f3ec" />
+  <title>Website templates | Showcase</title>
+  <link rel="icon" href="/Photography-Studio/img/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./showcase.css" />
+  <script type="module" src="./showcase.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <h1>Website templates</h1>
+    <p>Pick a design, try it on a phone, tablet, and desktop, and choose the extras you want.</p>
+  </header>
+  <main id="main">
+    <div class="picker" role="tablist" aria-label="Templates"></div>
+    <section class="stage" aria-label="Live preview">
+      <div class="devices" role="group" aria-label="Preview size">
+        <button type="button" data-w="390" aria-pressed="false">Phone</button>
+        <button type="button" data-w="820" aria-pressed="false">Tablet</button>
+        <button type="button" data-w="1280" aria-pressed="true">Desktop</button>
+        <a class="open" target="_blank" rel="noopener">Open full site</a>
+      </div>
+      <div class="frame-wrap"><iframe class="frame" title="Template preview" loading="lazy"></iframe></div>
+    </section>
+    <section class="detail" aria-live="polite"></section>
+  </main>
+  <footer class="foot"><p>Example prices. Set your own before you share this page.</p></footer>
+</body>
+</html>

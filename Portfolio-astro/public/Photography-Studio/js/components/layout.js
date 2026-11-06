@@ -22,7 +22,7 @@ export class SiteHeader extends Component {
         <nav class="site-nav" id="site-nav" aria-label="Main">
           <ul>${s.nav.map((n) => html`<li><a href="${link(n.href)}">${n.label}</a></li>`)}</ul>
           <a class="btn" href="${link(s.cta.href)}">${s.cta.label}</a>
-          <img class="menu-fox" src="${link("img/fox.png")}" alt="" aria-hidden="true" width="400" height="400" />
+          <img class="menu-fox" src="${link("img/fox.webp")}" alt="" aria-hidden="true" width="400" height="400" />
         </nav>
       </header>
     `;
@@ -75,6 +75,7 @@ export class SiteFooter extends Component {
           <p class="foot-name">${s.name}</p>
           <ul class="foot-links">${s.links.map((l) => html`<li><a href="${url(l.href)}"${/^https?:/.test(l.href) ? html` rel="noopener" target="_blank"` : ""}>${l.label}</a></li>`)}</ul>
         </div>
+        <p class="foot-note"><button class="calm-btn" type="button" aria-pressed="false">Calm mode: off</button></p>
         <p class="foot-note">&copy; ${new Date().getFullYear()} ${s.name}. ${s.footnote}</p>
       </footer>
     `;

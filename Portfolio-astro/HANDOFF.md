@@ -449,6 +449,19 @@ internal links return 200, autoplay advances and pauses.
 - Add more with `tools/photos/build-photos.py` and the `photo-inbox/` folders (see `photo-inbox/README.md`). The tool strips GPS metadata.
 - Removing people was tried with automatic inpainting and rejected (visible smudging). Crowd shots (Torres de Serranos, Arc de Triomf) are as shot. The blurry Plaza de la Reina shot was left out. The camera watermark was cropped from the Arc de Triomf photo.
 
+## Professional-grade pass (Photography-Studio and tooling)
+
+- **Quality tool:** `npm run quality` (`tools/quality/check.mjs`) opens each page in a real browser behind the real `_headers` at 390/820/1440 px and checks console/CSP errors, broken images, sideways scroll, axe accessibility (WCAG 2 A/AA), title, description, and one h1. Writes `quality-report.md`. `npm run serve:h2` serves the site over HTTP/2 for Lighthouse. CI: `.github/workflows/quality.yml` (written but not yet run on GitHub).
+- **Lighthouse (local, mobile, HTTP/2):** performance 93, accessibility 100, best practices 100, SEO 100. Desktop performance 99. Mobile LCP about 3.2 s (target 2.5 s): the page still renders its content with JavaScript, so a build-time prerender of the above-the-fold HTML is the next gain. Over plain HTTP/1.1 the same page scores lower; measure over HTTP/2.
+- **SEO:** `tools/build-seo.mjs` (runs before every build) writes sitemap.xml, robots.txt, canonical, Open Graph, Twitter, and LocalBusiness structured data for Photography-Studio, plus a prerendered hero image. The committed files use example.com; Netlify's URL replaces it at build. Business details are placeholders (`site.business`, `site.location`).
+- **Performance work:** hero photo preloaded and prerendered, all modules preloaded, Great Vibes font trimmed, fox/leaf art converted PNG to WebP (540 KB to 158 KB), photo exports at quality 76, gallery `sizes` computed from each photo's shape, grain texture shrunk to 23 KB.
+- **Rebrand in one place:** `site.theme` in `js/data.js` (colours and the four sky colours). Fonts stay as self-hosted files.
+- **Calm mode:** footer button plus the system reduce-motion setting. Remembered in localStorage.
+- **Legal:** `privacy/` and `terms/` template pages (marked as template text; need a lawyer's review).
+- **Docs:** `LICENSES.md` (asset sources; fox and leaf art source still unknown), `HANDOVER.md` (how a client edits the site).
+- **Showcase:** `/showcase/` lists the templates with a live phone/tablet/desktop preview, what is included, and example prices (placeholders).
+- **Not done (needs outside services):** content editor/CMS (content lives in `data.js`, so it needs a JSON content layer first), booking calendar with deposits, Stripe print shop, email confirmations, real analytics. The showcase prices these as add-ons.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

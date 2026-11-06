@@ -10,9 +10,9 @@ export class Hero extends Component {
     return html`
       <div class="hero-bg">${new Photo(h.image).tag({ className: "hero-photo", sizes: "100vw", eager: true })}</div>
       <div class="hero-art" aria-hidden="true">
-        <img class="leaf leaf-a" src="${link("img/leaf-1.png")}" alt="" width="360" height="360" />
-        <img class="leaf leaf-b" src="${link("img/leaf-2.png")}" alt="" width="360" height="541" />
-        <img class="fox" src="${link("img/fox.png")}" alt="" width="488" height="511" fetchpriority="high" />
+        <img class="leaf leaf-a" src="${link("img/leaf-1.webp")}" alt="" width="360" height="360" />
+        <img class="leaf leaf-b" src="${link("img/leaf-2.webp")}" alt="" width="360" height="541" />
+        <img class="fox" src="${link("img/fox.webp")}" alt="" width="488" height="511" fetchpriority="high" />
       </div>
       <div class="hero-copy">
         <h1>${h.title}</h1>
@@ -73,7 +73,7 @@ export class Gallery extends Component {
       <div class="strip" tabindex="0" role="region" aria-label="Photos, scroll sideways">
         ${photos.map(
           (p) => html`<figure class="shot" data-set="${p.set}" data-category="${p.category}">
-            ${new Photo(p).tag({ className: "gallery-img", sizes: "(max-width: 700px) 80vw, 45vw", zoom: true })}
+            ${new Photo(p).tag({ className: "gallery-img", sizes: `calc(clamp(17rem, 62vh, 34rem) * ${(p.width / p.height).toFixed(3)})`, zoom: true })}
             <figcaption>${p.title}</figcaption>
           </figure>`
         )}

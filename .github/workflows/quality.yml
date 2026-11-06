@@ -1,0 +1,47 @@
+name: Quality checks
+
+# Runs the browser checks (errors, broken images, sideways scroll, accessibility)
+# and a Lighthouse run on every push and pull request. Not yet run on GitHub:
+# the same commands pass locally.
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Portfolio-astro
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Portfolio-astro/package-lock.json
+      - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
+      - run: node tools/build-seo.mjs
+      - name: Browser checks
+        run: node tools/quality/check.mjs
+      - name: Lighthouse (mobile, over HTTP/2)
+        run: |
+          H2=1 PORT=4490 node tools/quality/serve.mjs &
+          sleep 3
+          CHROME_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npx lighthouse https://localhost:4490/Photography-Studio/ \
+            --chrome-flags="--headless=new --no-sandbox --ignore-certificate-errors" \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=json --output-path=lighthouse.json --quiet
+          node -e "
+            const r=require('./lighthouse.json').categories, min={performance:.85,accessibility:.95,'best-practices':.95,seo:.95};
+            let bad=0; for(const k in min){const s=r[k].score; console.log(k,Math.round(s*100)); if(s<min[k]) bad=1;}
+            process.exit(bad)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-report
+          path: |
+            Portfolio-astro/quality-report.md
+            Portfolio-astro/lighthouse.json

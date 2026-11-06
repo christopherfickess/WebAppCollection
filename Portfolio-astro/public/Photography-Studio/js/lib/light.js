@@ -6,7 +6,7 @@
 // site's CSP blocks inline style attributes. The stylesheet does the rest.
 import { link } from "../core.js";
 
-const SKY = [
+const DEFAULT_SKY = [
   { name: "Dawn", a: [26, 40, 38], b: [58, 62, 56] },
   { name: "Day", a: [17, 40, 31], b: [29, 66, 49] },
   { name: "Dusk", a: [38, 34, 38], b: [72, 46, 44] },
@@ -17,7 +17,8 @@ const mix = (p, q, t) => p.map((v, i) => Math.round(v + (q[i] - v) * t));
 const rgb = (c) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 
 export class Light {
-  static attach() {
+  static attach(skyOverride) {
+    const SKY = skyOverride?.length === 4 ? skyOverride : DEFAULT_SKY;
     const root = document.documentElement;
     const bar = document.createElement("div");
     bar.className = "walker";

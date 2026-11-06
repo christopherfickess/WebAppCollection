@@ -8,6 +8,8 @@ import { Lightbox } from "./lib/lightbox.js";
 import { Reveal } from "./lib/reveal.js";
 import { Light } from "./lib/light.js";
 import { LightNote } from "./lib/sun.js";
+import { Theme } from "./lib/theme.js";
+import { Calm } from "./lib/calm.js";
 
 setStore(content);
 [SiteHeader, SiteFooter, Hero, About, Gallery, Packages, Day, Trail, Wall, Faq].forEach((C) => C.define());
@@ -15,7 +17,9 @@ setStore(content);
 Photo.applyPositions(document);
 Lightbox.attach();
 Reveal.attach();
-Light.attach();
+Theme.apply(content.site.theme);
+Light.attach(content.site.theme?.sky);
+Calm.attach(document.querySelector(".calm-btn"));
 LightNote.attach(content.site.location);
 
 // ?package=Half%20day#contact fills the form's "Session" field.

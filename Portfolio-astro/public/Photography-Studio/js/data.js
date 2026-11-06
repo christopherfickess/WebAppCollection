@@ -36,8 +36,26 @@ export const content = {
     // Where sessions happen. The booking form uses this to work out sunrise,
     // sunset, and golden hour for the date a client picks. Set your own.
     location: { place: "Jackson, Wyoming", lat: 43.4799, lon: -110.7624, timeZone: "America/Denver" },
+    // Rebrand the colours here. Fonts are self-hosted files in /fonts (see HANDOVER.md).
+    // sky: the page background at dawn, day, dusk, and night (top colour a, bottom colour b, as [r, g, b]).
+    theme: {
+      accent: "#d9622b",
+      text: "#efe6d6",
+      muted: "#aebcae",
+      soft: "#a9c4a0",
+      sky: [
+        { name: "Dawn", a: [26, 40, 38], b: [58, 62, 56] },
+        { name: "Day", a: [17, 40, 31], b: [29, 66, 49] },
+        { name: "Dusk", a: [38, 34, 38], b: [72, 46, 44] },
+        { name: "Night", a: [9, 18, 22], b: [16, 31, 35] },
+      ],
+    },
+    // Used for search results and link previews. Placeholder details: replace them.
+    business: { type: "ProfessionalService", phone: "", priceRange: "$$", region: "WY", country: "US" },
     footnote: "A website template by Chris Fickess. The business, prices, and photos are placeholders.",
     links: [
+      { label: "Privacy", href: "privacy/" },
+      { label: "Terms", href: "terms/" },
       { label: "LinkedIn", href: "https://www.linkedin.com/in/christopher-fickess-223a17182/" },
       { label: "GitHub", href: "https://github.com/christopherfickess" },
       { label: "More projects", href: "/projects/" },

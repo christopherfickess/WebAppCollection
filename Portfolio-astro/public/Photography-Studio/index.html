@@ -8,17 +8,46 @@
   <meta name="theme-color" content="#112019" />
   <link rel="icon" href="./img/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="./fonts/montserrat-regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" as="image" type="image/webp" imagesrcset="./img/photos/nature-park-path-and-steel-pole-640.webp 640w, ./img/photos/nature-park-path-and-steel-pole-960.webp 960w, ./img/photos/nature-park-path-and-steel-pole-1600.webp 1600w" imagesizes="100vw" fetchpriority="high" />
+  <link rel="preload" href="./fonts/frank-ruhl-libre-regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="./fonts/great-vibes.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="modulepreload" href="./js/components/layout.js" />
+  <link rel="modulepreload" href="./js/components/sections.js" />
+  <link rel="modulepreload" href="./js/core.js" />
+  <link rel="modulepreload" href="./js/data.js" />
+  <link rel="modulepreload" href="./js/lib/calm.js" />
+  <link rel="modulepreload" href="./js/lib/light.js" />
+  <link rel="modulepreload" href="./js/lib/lightbox.js" />
+  <link rel="modulepreload" href="./js/lib/photo.js" />
+  <link rel="modulepreload" href="./js/lib/reveal.js" />
+  <link rel="modulepreload" href="./js/lib/sun.js" />
+  <link rel="modulepreload" href="./js/lib/theme.js" />
+  <link rel="modulepreload" href="./js/main.js" />
+  <link rel="modulepreload" href="./js/photos.js" />
   <script src="./js/boot.js"></script>
   <link rel="stylesheet" href="./css/style.css" />
   <script type="module" src="./js/main.js"></script>
   <title>Fox & Fern Photography | Landscape and wildlife photographer</title>
+  <!-- seo:start (written by tools/build-seo.mjs) -->
+  <link rel="canonical" href="https://example.com/Photography-Studio/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Fox &amp; Fern Photography" />
+  <meta property="og:title" content="Fox &amp; Fern Photography | Landscape and wildlife photographer" />
+  <meta property="og:description" content="Landscape and wildlife photography sessions, with packages and online booking." />
+  <meta property="og:url" content="https://example.com/Photography-Studio/" />
+  <meta property="og:image" content="https://example.com/Photography-Studio/img/og.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"ProfessionalService","name":"Fox & Fern Photography","url":"https://example.com/Photography-Studio/","image":"https://example.com/Photography-Studio/img/og.jpg","description":"Landscape and wildlife photography sessions, with packages and online booking.","priceRange":"$","address":{"@type":"PostalAddress","addressLocality":"Jackson","addressRegion":"WY","addressCountry":"US"},"geo":{"@type":"GeoCoordinates","latitude":43.4799,"longitude":-110.7624}}</script>
+  <!-- seo:end -->
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <fx-header data-from="site"></fx-header>
   <main id="main">
     <section class="hero" aria-label="Introduction">
-      <fx-hero data-from="hero"></fx-hero>
+      <fx-hero data-from="hero"><!-- hero:start --><div class="hero-bg"><img class="hero-photo" src="./img/photos/nature-park-path-and-steel-pole-1600.webp" srcset="./img/photos/nature-park-path-and-steel-pole-640.webp 640w, ./img/photos/nature-park-path-and-steel-pole-960.webp 960w, ./img/photos/nature-park-path-and-steel-pole-1600.webp 1600w" sizes="100vw" width="1600" height="739" alt="A sunny park path lined with trees and cypresses" fetchpriority="high" decoding="async" /></div><!-- hero:end --></fx-hero>
     </section>
 
     <section class="about" id="about" aria-labelledby="about-title">

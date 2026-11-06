@@ -556,3 +556,20 @@ html.lightbox-open {
   }
 }
 
+
+/* calm mode: a visitor's choice to turn the motion off */
+.calm-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--line); background: none; color: var(--muted); font: inherit; cursor: pointer; }
+.calm-btn:hover { color: var(--bone); border-color: var(--muted); }
+.calm *, .calm *::before, .calm *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+.calm .reveal { opacity: 1 !important; transform: none !important; }
+.calm .walker, .calm .trail .paw { display: none; }
+.calm body::before { background: var(--sky-a) !important; }
+.calm .hero-art, .calm .leaf { animation: none !important; }
+
+/* legal pages */
+.legal { max-width: 46rem; padding: 8rem var(--gutter) 5rem; }
+.legal h1 { margin-bottom: 1rem; }
+.legal h2 { margin: 2rem 0 0.5rem; font-size: 1.35rem; }
+.legal p, .legal li { color: var(--muted); max-width: 42rem; }
+.legal ul { padding-left: 1.2rem; list-style: disc; }
+.legal-note { padding: 0.9rem 1rem; border: 1px solid var(--fox); color: var(--bone); background: rgba(217, 98, 43, 0.12); }
