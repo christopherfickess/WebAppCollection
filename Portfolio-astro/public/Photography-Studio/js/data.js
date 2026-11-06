@@ -27,6 +27,7 @@ export const content = {
   },
 
   hero: {
+    image: photo("lake-sunset", 1067, "Placeholder landscape: a still lake at sunset"),
     title: "Landscape and wildlife photography, made to hang on your wall",
     text: "Sessions in the places you love, edited with care and delivered in a private gallery you can share.",
     primary: { label: "See the gallery", href: "#gallery" },
@@ -35,6 +36,7 @@ export const content = {
 
   about: {
     title: "About Fox & Fern",
+    lead: "I photograph quiet places at the edge of the day, then print them large enough to live with.",
     image: photo("mountain-dawn", 1067, "Placeholder landscape: layered mountains at dawn"),
     blocks: [
       { title: "My story", text: "Replace this with two or three sentences about who you are and how you started. Clients hire a photographer they feel they know." },

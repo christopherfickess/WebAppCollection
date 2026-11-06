@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Landscape and wildlife photography sessions, with packages and online booking. A website template by Chris Fickess." />
   <meta name="robots" content="index, follow" />
-  <meta name="theme-color" content="#2f2d30" />
+  <meta name="theme-color" content="#141114" />
   <link rel="icon" href="./img/favicon.svg" type="image/svg+xml" />
-  <link rel="preload" href="./fonts/frank-ruhl-libre-regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="./fonts/montserrat-regular.woff2" as="font" type="font/woff2" crossorigin />
   <script src="./js/boot.js"></script>
   <link rel="stylesheet" href="./css/style.css" />
   <script type="module" src="./js/main.js"></script>
@@ -25,7 +25,7 @@
       <fx-about data-from="about"></fx-about>
     </section>
 
-    <section class="band" id="gallery" aria-labelledby="gallery-title">
+    <section class="band band-gallery" id="gallery" aria-labelledby="gallery-title">
       <div class="band-head">
         <h2 id="gallery-title">Gallery</h2>
         <p>Select a photo to see it larger.</p>
@@ -33,7 +33,7 @@
       <fx-gallery class="gallery" data-from="gallery"></fx-gallery>
     </section>
 
-    <section class="band band-tint" id="packages" aria-labelledby="packages-title">
+    <section class="band band-split" id="packages" aria-labelledby="packages-title">
       <div class="band-head">
         <h2 id="packages-title">Packages</h2>
         <p>Pick a starting point. Every session can be adjusted to fit.</p>
@@ -41,14 +41,14 @@
       <fx-packages class="packages" data-from="packages"></fx-packages>
     </section>
 
-    <section class="band" id="how" aria-labelledby="how-title">
+    <section class="band band-split band-alt" id="how" aria-labelledby="how-title">
       <div class="band-head">
         <h2 id="how-title">How it works</h2>
       </div>
       <fx-steps data-from="steps"></fx-steps>
     </section>
 
-    <section class="band band-tint" id="faq" aria-labelledby="faq-title">
+    <section class="band band-split" id="faq" aria-labelledby="faq-title">
       <div class="band-head">
         <h2 id="faq-title">Questions</h2>
       </div>

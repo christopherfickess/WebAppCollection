@@ -4,9 +4,9 @@
 // people who haven't asked for reduced motion.
 const TARGETS = [
   [".band-head", ""],
-  [".about-photo", "reveal-left"],
-  [".about-text", "reveal-right"],
-  [".filters", ""],
+  [".about-text", "reveal-left"],
+  [".about-photo", "reveal-right"],
+  [".gallery-bar", ""],
   [".shot", ""],
   [".package", ""],
   [".steps li", ""],
