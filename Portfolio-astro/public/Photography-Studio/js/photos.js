@@ -36,5 +36,10 @@ export const photos = [
   {"set": "nature", "light": "day", "title": "Palms under the Umbracle", "file": "img/photos/nature-palms-under-the-umbracle", "width": 1190, "height": 2576, "alt": "Palm trees beneath the white arches of the Umbracle walkway"},
   {"set": "nature", "light": "day", "title": "Park path", "file": "img/photos/nature-park-path-and-steel-pole", "width": 1600, "height": 739, "alt": "A sunny park path lined with trees and cypresses"},
   {"set": "nature", "light": "day", "title": "Plane tree avenue", "file": "img/photos/nature-plane-tree-avenue", "width": 1600, "height": 739, "alt": "A gravel avenue under a canopy of plane trees"},
+  {"set": "nature", "light": "day", "title": "Hedge walk", "file": "img/photos/nature-hedge-walk", "width": 1600, "height": 2133, "alt": "A woman with a walking stick on a stone path between tall, square-clipped hedges, with a red brick house behind"},
+  {"set": "london", "light": "day", "title": "Big Ben from the wheel", "file": "img/photos/london-big-ben-from-the-river", "width": 1600, "height": 1593, "alt": "Big Ben and the Houses of Parliament seen across the Thames from the London Eye"},
+  {"set": "london", "light": "day", "title": "Regent Street", "file": "img/photos/london-regent-street-bunting", "width": 1600, "height": 2133, "alt": "Union flags strung across Regent Street above black taxis under a blue sky"},
+  {"set": "london", "light": "day", "title": "The Mall", "file": "img/photos/london-the-mall-and-its-flags", "width": 1600, "height": 2133, "alt": "A long line of Union flags down The Mall under a clear blue sky"},
+  {"set": "london", "light": "day", "title": "Parliament from above", "file": "img/photos/london-parliament-from-above", "width": 1600, "height": 958, "alt": "The Houses of Parliament, Big Ben and Westminster Bridge seen from above"},
   // ADD NEW PHOTOS ABOVE THIS LINE
 ];
