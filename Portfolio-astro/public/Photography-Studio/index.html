@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Landscape and wildlife photography sessions, with packages and online booking. A website template by Chris Fickess." />
   <meta name="robots" content="index, follow" />
-  <meta name="theme-color" content="#141114" />
+  <meta name="theme-color" content="#112019" />
   <link rel="icon" href="./img/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="./fonts/montserrat-regular.woff2" as="font" type="font/woff2" crossorigin />
   <script src="./js/boot.js"></script>
@@ -33,6 +33,16 @@
       <fx-gallery class="gallery" data-from="gallery"></fx-gallery>
     </section>
 
+    <section class="band band-split" id="wall" aria-labelledby="wall-title">
+      <div class="band-head">
+        <h2 id="wall-title">See it on your wall</h2>
+        <p>Choose a photo, a size, and a wall colour. The print is shown to scale next to a 7 ft sofa.</p>
+      </div>
+      <fx-wall data-from="gallery"></fx-wall>
+    </section>
+
+    <fx-trail class="trail-row"></fx-trail>
+
     <section class="band band-split" id="packages" aria-labelledby="packages-title">
       <div class="band-head">
         <h2 id="packages-title">Packages</h2>
@@ -43,10 +53,13 @@
 
     <section class="band band-split band-alt" id="how" aria-labelledby="how-title">
       <div class="band-head">
-        <h2 id="how-title">How it works</h2>
+        <h2 id="how-title">A day on a session</h2>
+        <p>The light sets the schedule, so we follow it.</p>
       </div>
-      <fx-steps data-from="steps"></fx-steps>
+      <fx-day data-from="day"></fx-day>
     </section>
+
+    <fx-trail class="trail-row"></fx-trail>
 
     <section class="band band-split" id="faq" aria-labelledby="faq-title">
       <div class="band-head">
@@ -54,6 +67,8 @@
       </div>
       <fx-faq class="faq" data-from="faq"></fx-faq>
     </section>
+
+    <fx-trail class="trail-row"></fx-trail>
 
     <section class="contact" id="contact" aria-labelledby="contact-title">
       <div class="contact-copy">
@@ -76,7 +91,8 @@
           <option>Not sure yet</option>
         </select>
         <label for="date">Preferred date <span class="optional">(optional)</span></label>
-        <input id="date" name="date" type="date" />
+        <input id="date" name="date" type="date" aria-describedby="light-note" />
+        <p class="light-note" id="light-note" aria-live="polite"></p>
         <label for="message">Tell me about it</label>
         <textarea id="message" name="message" rows="5" required></textarea>
         <button class="btn" type="submit">Send request</button>

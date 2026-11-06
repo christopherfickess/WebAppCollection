@@ -22,6 +22,7 @@ export class SiteHeader extends Component {
         <nav class="site-nav" id="site-nav" aria-label="Main">
           <ul>${s.nav.map((n) => html`<li><a href="${link(n.href)}">${n.label}</a></li>`)}</ul>
           <a class="btn" href="${link(s.cta.href)}">${s.cta.label}</a>
+          <img class="menu-fox" src="${link("img/fox.png")}" alt="" aria-hidden="true" width="400" height="400" />
         </nav>
       </header>
     `;

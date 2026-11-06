@@ -15,3 +15,9 @@ The gallery currently shows illustrated placeholders drawn by `tools/photos/make
 
 ## Rules this site follows
 No inline styles or scripts (the site's CSP blocks them); set positions in CSS. Hero fox and leaves come from the original Website2 artwork.
+
+## Add-on modules
+
+- **Print preview** (`#wall`, `fx-wall`): edit `printSizes` in `js/data.js`. It uses the gallery photos.
+- **Best light on your date**: set `site.location` (place, lat, lon, timeZone) in `js/data.js`. To remove, delete `LightNote.attach` in `js/main.js` and the `#light-note` paragraph.
+- **Day timeline**: edit `day` in `js/data.js`; `light` is dawn, day, dusk, or night and sets the dot colour.

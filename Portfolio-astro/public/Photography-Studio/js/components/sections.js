@@ -1,4 +1,4 @@
-import { Component, html, link } from "../core.js";
+import { Component, html, link, resolve } from "../core.js";
 import { Photo } from "../lib/photo.js";
 
 // <fx-hero data-from="hero">  A full-screen photo with the fox in front
@@ -110,12 +110,94 @@ export class Packages extends Component {
   }
 }
 
-// <fx-steps data-from="steps">  A real sequence, so these are numbered.
-export class Steps extends Component {
-  static tag = "fx-steps";
+// <fx-day data-from="day">  A timeline of a session, from before sunrise
+// to the delivered photos. Each dot takes the colour of that light.
+export class Day extends Component {
+  static tag = "fx-day";
 
-  render(steps) {
-    return html`<ol class="steps">${steps.map((s) => html`<li><div><h3>${s.title}</h3><p>${s.text}</p></div></li>`)}</ol>`;
+  render(items) {
+    return html`<ol class="day">${items.map((d) => html`<li data-light="${d.light}"><h3>${d.title}</h3><p>${d.text}</p></li>`)}</ol>`;
+  }
+}
+
+// <fx-trail>  Paw prints walking across the page between sections.
+export class Trail extends Component {
+  static tag = "fx-trail";
+
+  render() {
+    const paw = html`<svg class="paw" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.5" ry="4.6"/><circle cx="5.5" cy="10.5" r="2.2"/><circle cx="9.5" cy="6" r="2.2"/><circle cx="14.5" cy="6" r="2.2"/><circle cx="18.5" cy="10.5" r="2.2"/></svg>`;
+    return html`<div class="trail" aria-hidden="true">${[0, 1, 2, 3, 4, 5, 6, 7].map(() => paw)}</div>`;
+  }
+}
+
+// <fx-wall data-from="gallery">  "See it on your wall": pick a photo, a
+// print size, and a wall colour, and see the print at true scale next to a
+// 7 ft sofa. Wall is 120 in wide by 96 in tall. Sizes: printSizes in data.js.
+const WALL = { w: 120, h: 96 };
+const WALLS = [
+  { name: "Warm white", color: "#e9e2d4" },
+  { name: "Sage", color: "#9db09a" },
+  { name: "Clay", color: "#b98568" },
+  { name: "Slate", color: "#4d5a63" },
+];
+
+export class Wall extends Component {
+  static tag = "fx-wall";
+
+  render(photos) {
+    const sizes = resolve("printSizes");
+    return html`
+      <div class="wall-ui">
+        <div class="wall-room" role="img" aria-label="A print shown on a wall above a sofa, to scale">
+          <div class="wall-print"></div>
+          <div class="wall-sofa"></div>
+        </div>
+        <div class="wall-controls">
+          <fieldset><legend>Photo</legend>
+            <div class="wall-thumbs">${photos.map((p, i) => html`<button type="button" class="wall-thumb" data-photo="${i}" aria-pressed="${i === 0}" aria-label="${p.title}">${new Photo(p).tag({ className: "wall-thumb-img", sizes: "5rem" })}</button>`)}</div>
+          </fieldset>
+          <fieldset><legend>Print size</legend>
+            <div class="wall-opts">${sizes.map((s, i) => html`<button type="button" class="wall-opt" data-size="${i}" aria-pressed="${i === 1}">${s.label}</button>`)}</div>
+          </fieldset>
+          <fieldset><legend>Wall colour</legend>
+            <div class="wall-opts">${WALLS.map((w, i) => html`<button type="button" class="wall-swatch" data-wall="${i}" aria-pressed="${i === 0}" aria-label="${w.name}" title="${w.name}"></button>`)}</div>
+          </fieldset>
+          <p class="wall-note" aria-live="polite"></p>
+        </div>
+      </div>
+    `;
+  }
+
+  afterRender() {
+    this.state = { photo: 0, size: 1, wall: 0 };
+    this.room = this.querySelector(".wall-room");
+    this.print = this.querySelector(".wall-print");
+    this.note = this.querySelector(".wall-note");
+    this.querySelectorAll(".wall-swatch").forEach((b, i) => b.style.setProperty("--swatch", WALLS[i].color));
+    Photo.applyPositions(this);
+    this.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-photo], button[data-size], button[data-wall]");
+      if (!b) return;
+      const key = b.hasAttribute("data-photo") ? "photo" : b.hasAttribute("data-size") ? "size" : "wall";
+      this.state[key] = Number(b.dataset[key]);
+      b.parentElement.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      this.draw();
+    });
+    this.draw();
+  }
+
+  draw() {
+    const photo = this.data[this.state.photo];
+    const size = resolve("printSizes")[this.state.size];
+    const landscape = photo.height < photo.width;
+    const w = landscape ? Math.max(size.w, size.h) : Math.min(size.w, size.h);
+    const h = landscape ? Math.min(size.w, size.h) : Math.max(size.w, size.h);
+    this.room.style.setProperty("--wall", WALLS[this.state.wall].color);
+    this.print.style.setProperty("--pw", `${(w / WALL.w) * 100}%`);
+    this.print.style.setProperty("--ph", `${(h / WALL.h) * 100}%`);
+    this.print.innerHTML = String(new Photo(photo).tag({ className: "wall-img", sizes: "(max-width: 860px) 90vw, 45vw" }));
+    Photo.applyPositions(this.print);
+    this.note.textContent = `${w} x ${h} in print on a 10 ft wall, beside a 7 ft sofa.`;
   }
 }
 

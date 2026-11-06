@@ -433,6 +433,15 @@ internal links return 200, autoplay advances and pauses.
 - Design variants: Photography-Studio was restyled as a distinct "darkroom" design so each template offers a different look. Travel Advisor = light mist, teal and saffron, EB Garamond, route markers, inline nav. Photography-Studio = dark aubergine-black, bone text and fox orange, Frank Ruhl Libre display with Montserrat text, full-screen photo hero, Menu-button overlay at all sizes, sideways-scrolling gallery strip, price-list packages, split sticky headings, oversized footer wordmark. Content, fox, fern sway and slow reveals are unchanged. Placeholder photos are still illustrated.
 - Projects page has a new card ("Fox & Fern Photography") with a screenshot at `src/assets/img/PhotographyStudio.png`.
 
+## Photography-Studio: fern palette, light, and add-on modules
+
+- Palette is deep fern green with rust and bone, plus film grain (`img/grain.png`) and a soft duotone on gallery hover.
+- The page follows the light: `js/lib/light.js` moves a fixed sky gradient through dawn, day, dusk, night as you scroll, and a small fox (`img/fox-walk.svg`) walks along the bottom as a progress bar. Gallery filters are Dawn/Day/Dusk/Night.
+- Paw-print trails (`fx-trail`) divide sections; a fox peeks up in the menu; "A day on a session" (`fx-day`, data key `day`) replaces the old steps.
+- Add-on modules (separable, sellable): "See it on your wall" (`fx-wall`, sizes in `printSizes`) and best light on the booking date (`js/lib/sun.js`, location in `site.location`, a placeholder). Remove a module by deleting its section/element and the nav link.
+- Sun times were checked against Python `astral` (within 1-2 min at Jackson, WY on three dates). They ignore weather and terrain.
+- Still needed from the owner: real photos (see the template README), and confirmation of the fox/leaf art source.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —
