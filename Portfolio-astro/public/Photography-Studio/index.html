@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Landscape and wildlife photography sessions, with packages and online booking. A website template by Chris Fickess." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#2f2d30" />
+  <link rel="icon" href="./img/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="./fonts/frank-ruhl-libre-regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="./css/style.css" />
+  <script type="module" src="./js/main.js"></script>
+  <title>Fox & Fern Photography | Landscape and wildlife photographer</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <fx-header data-from="site"></fx-header>
+  <main id="main">
+    <section class="hero" aria-label="Introduction">
+      <fx-hero data-from="hero"></fx-hero>
+    </section>
+
+    <section class="about" id="about" aria-labelledby="about-title">
+      <fx-about data-from="about"></fx-about>
+    </section>
+
+    <section class="band" id="gallery" aria-labelledby="gallery-title">
+      <div class="band-head">
+        <h2 id="gallery-title">Gallery</h2>
+        <p>Select a photo to see it larger.</p>
+      </div>
+      <fx-gallery class="gallery" data-from="gallery"></fx-gallery>
+    </section>
+
+    <section class="band band-tint" id="packages" aria-labelledby="packages-title">
+      <div class="band-head">
+        <h2 id="packages-title">Packages</h2>
+        <p>Pick a starting point. Every session can be adjusted to fit.</p>
+      </div>
+      <fx-packages class="packages" data-from="packages"></fx-packages>
+    </section>
+
+    <section class="band" id="how" aria-labelledby="how-title">
+      <div class="band-head">
+        <h2 id="how-title">How it works</h2>
+      </div>
+      <fx-steps data-from="steps"></fx-steps>
+    </section>
+
+    <section class="band band-tint" id="faq" aria-labelledby="faq-title">
+      <div class="band-head">
+        <h2 id="faq-title">Questions</h2>
+      </div>
+      <fx-faq class="faq" data-from="faq"></fx-faq>
+    </section>
+
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <div class="contact-copy">
+        <h2 id="contact-title">Book a session</h2>
+        <p>Tell me where, when, and what the photos are for. I reply within two business days.</p>
+      </div>
+      <!-- Static HTML so Netlify can find the form at deploy time. -->
+      <form class="contact-form" name="photo-session" method="POST" action="/Photography-Studio/thanks/" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="photo-session" />
+        <p class="hp" aria-hidden="true"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+        <label for="name">Your name</label>
+        <input id="name" name="name" type="text" autocomplete="name" required />
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+        <label for="session">Session</label>
+        <select id="session" name="session">
+          <option>Mini session</option>
+          <option>Half day</option>
+          <option>Full day</option>
+          <option>Not sure yet</option>
+        </select>
+        <label for="date">Preferred date <span class="optional">(optional)</span></label>
+        <input id="date" name="date" type="date" />
+        <label for="message">Tell me about it</label>
+        <textarea id="message" name="message" rows="5" required></textarea>
+        <button class="btn" type="submit">Send request</button>
+      </form>
+    </section>
+  </main>
+  <fx-footer data-from="site"></fx-footer>
+</body>
+</html>

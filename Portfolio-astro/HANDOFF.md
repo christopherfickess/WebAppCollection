@@ -422,6 +422,15 @@ internal links return 200, autoplay advances and pauses.
 - Shopping: UK has no VAT refund for visitors (since 2021); France refund over EUR 100 same shop same day; Spain kept generic (minimum not verified); Curacao areas from the tourism board. No shopping for Nassau, Antigua or US cities (nothing verified).
 - New page `packing/` (travel essentials, from `essentials` in travel-info.js), linked from the footer and each guide. All v2.2 CSS is one block near the end of `css/style.css`.
 
+## Photography-Studio template (new)
+
+- `public/Photography-Studio/` is the improved rebuild of Website2 (Fox Photography), kept as a separate copy; Website2 is untouched. Purpose: a photographer's portfolio and booking site template, sold as a manageable site for small businesses.
+- Same pattern as the Travel Advisor: content in `js/data.js`, components in `js/components/`, strict CSP (no inline styles/scripts), base path in `site.base`. See its README.md.
+- Kept from Website2: fox and palm-leaf hero, Great Vibes wordmark, charcoal and mauve, dark About panel. Fixed: lorem ipsum, 13 MB images (now responsive WebP), non-working form (now a named Netlify form with honeypot and a thanks page), gallery overlay box (now filter chips + lightbox), burger menu, footer.
+- Placeholder gallery images are original illustrations from `tools/photos/make-placeholders.py` (no stock or scraped photos). Packages, prices and copy are placeholders. Fox and leaf artwork was copied from Website2 and its source is unknown; confirm you have rights before using it for a client.
+- Test results: no console errors or sideways scroll at 1440, 960 and 390 wide; filter and lightbox checked. The Netlify form itself can only be confirmed after a deploy.
+- Projects page has a new card ("Fox & Fern Photography") with a screenshot at `src/assets/img/PhotographyStudio.png`.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —
