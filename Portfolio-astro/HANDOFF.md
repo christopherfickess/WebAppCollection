@@ -429,6 +429,7 @@ internal links return 200, autoplay advances and pauses.
 - Kept from Website2: fox and palm-leaf hero, Great Vibes wordmark, charcoal and mauve, dark About panel. Fixed: lorem ipsum, 13 MB images (now responsive WebP), non-working form (now a named Netlify form with honeypot and a thanks page), gallery overlay box (now filter chips + lightbox), burger menu, footer.
 - Placeholder gallery images are original illustrations from `tools/photos/make-placeholders.py` (no stock or scraped photos). Packages, prices and copy are placeholders. Fox and leaf artwork was copied from Website2 and its source is unknown; confirm you have rights before using it for a client.
 - Test results: no console errors or sideways scroll at 1440, 960 and 390 wide; filter and lightbox checked. The Netlify form itself can only be confirmed after a deploy.
+- Motion (Photography-Studio): ferns sway about +/-4 degrees (`sway-a`, `sway-b` in css/style.css); hero text rises on load; every section below the hero fades up slowly on scroll via `js/lib/reveal.js` (targets listed there, 1.2s, siblings staggered 140ms). `js/boot.js` adds the `js` class so content is only hidden when the script will run. All of it is gated by `prefers-reduced-motion: no-preference`. To speed up or turn off reveals, edit the `.js .reveal` block in the CSS.
 - Projects page has a new card ("Fox & Fern Photography") with a screenshot at `src/assets/img/PhotographyStudio.png`.
 
 ## Known gaps / things to watch
