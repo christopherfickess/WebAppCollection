@@ -1,0 +1,47 @@
+name: Sync secrets to Netlify
+
+# Copies the repository secrets below into the Netlify site's environment
+# variables, so the booking, payment and email functions can read them.
+# Run it by hand (Actions tab > Sync secrets to Netlify > Run workflow).
+# Netlify only applies new values to deploys built afterwards, so trigger a
+# deploy once it finishes.
+#
+# Needed repository secrets (Settings > Secrets and variables > Actions):
+#   NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID   (to reach the site)
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY,
+#   EMAIL_FROM, OWNER_EMAIL, STATS_TOKEN  (what the functions read)
+# Any that are empty are skipped. Nothing is ever printed.
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # Add "environment: production" here later to require an approval first.
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Set variables on Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NETLIFY_AUTH_TOKEN}" ] || [ -z "${NETLIFY_SITE_ID}" ]; then
+            echo "NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID are required."; exit 1
+          fi
+          # EMAIL_FROM and OWNER_EMAIL are addresses, not secrets, but are set
+          # the same way so there is one place to manage them.
+          for name in STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET RESEND_API_KEY EMAIL_FROM OWNER_EMAIL STATS_TOKEN; do
+            value="${!name}"
+            if [ -z "$value" ]; then echo "skip $name (empty)"; continue; fi
+            npx --yes netlify-cli@27.16.2 env:set "$name" "$value" --secret --force > /dev/null
+            echo "set $name"
+          done

@@ -32,6 +32,8 @@ In `site.json`, set `location`. The booking form then shows sunrise, golden hour
 1. Create a Stripe account. Add `STRIPE_SECRET_KEY` in Netlify (Site configuration > Environment variables).
 2. In Stripe, add a webhook to `https://your-site/api/stripe-webhook` for the event `checkout.session.completed`. Put its signing secret in `STRIPE_WEBHOOK_SECRET`.
 3. Create a Resend account, verify your sending address, and set `RESEND_API_KEY`, `EMAIL_FROM` and `OWNER_EMAIL`.
+Prefer to keep every key in GitHub? Add them as repository secrets (names above, plus `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID`), then run the "Sync secrets to Netlify" workflow from the Actions tab and redeploy.
+
 Until step 1 is done, visitors see only the request form. Until step 3 is done, no emails are sent. Paid dates disappear from the calendar by themselves. To free a date after a refund, remove it from the booked list (ask your developer, or block/unblock dates in `booking.json`).
 
 ## Visitor counts
