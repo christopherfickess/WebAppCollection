@@ -1,0 +1,184 @@
+# Content editor (Decap CMS). Signing in uses GitHub, so only people with
+# write access to the repository can edit. Each save becomes a commit.
+# Photos are added with the photo tool (see HANDOVER.md), not here.
+backend:
+  name: github
+  repo: christopherfickess/webappcollection
+  branch: redesign/rails-nav-theme   # change to main when the site goes live
+  base_url: https://api.netlify.com
+  auth_endpoint: auth
+publish_mode: simple
+site_url: /Photography-Studio/
+display_url: /Photography-Studio/
+locale: en
+media_folder: Portfolio-astro/public/Photography-Studio/img/uploads
+public_folder: /Photography-Studio/img/uploads
+
+collections:
+  - name: pages
+    label: Site content
+    files:
+      - name: site
+        label: Business, menu, colours
+        file: Portfolio-astro/public/Photography-Studio/content/site.json
+        format: json
+        fields:
+          - { name: name, label: Business name, widget: string }
+          - { name: brand, label: Short name, widget: string }
+          - { name: tagline, label: Tagline, widget: string }
+          - name: nav
+            label: Menu
+            widget: list
+            fields: [{ name: label, label: Label, widget: string }, { name: href, label: Link, widget: string }]
+          - name: cta
+            label: Header button
+            widget: object
+            fields: [{ name: label, label: Label, widget: string }, { name: href, label: Link, widget: string }]
+          - name: location
+            label: Location (used for light and sun times)
+            widget: object
+            fields:
+              - { name: place, label: Place name, widget: string }
+              - { name: lat, label: Latitude, widget: number, value_type: float }
+              - { name: lon, label: Longitude, widget: number, value_type: float }
+              - { name: timeZone, label: Time zone, widget: string, hint: "For example America/Denver" }
+          - name: theme
+            label: Colours
+            widget: object
+            fields:
+              - { name: accent, label: Accent, widget: color }
+              - { name: text, label: Text, widget: color }
+              - { name: muted, label: Muted text, widget: color }
+              - { name: soft, label: Soft, widget: color }
+              - { name: sky, label: Sky colours (exactly 4), widget: list, min: 4, max: 4, field: { name: colour, label: Colour, widget: color } }
+          - name: business
+            label: Search-engine details
+            widget: object
+            fields:
+              - { name: type, label: Business type, widget: string }
+              - { name: phone, label: Phone, widget: string, required: false }
+              - { name: priceRange, label: Price range, widget: string }
+              - { name: region, label: Region, widget: string }
+              - { name: country, label: Country, widget: string }
+          - { name: footnote, label: Footer note, widget: string }
+          - name: links
+            label: Footer links
+            widget: list
+            fields: [{ name: label, label: Label, widget: string }, { name: href, label: Link, widget: string }]
+      - name: hero
+        label: Top of the page
+        file: Portfolio-astro/public/Photography-Studio/content/hero.json
+        format: json
+        fields:
+          - name: image
+            label: Picture
+            widget: object
+            fields:
+              - { name: photo, label: Photo name, widget: string, hint: "The file name from the Photos list, without .webp" }
+              - { name: position, label: Crop focus, widget: string, hint: "For example 50% 60%" }
+          - { name: title, label: Headline, widget: string }
+          - { name: text, label: Intro, widget: text }
+          - name: primary
+            label: Main button
+            widget: object
+            fields: [{ name: label, label: Label, widget: string }, { name: href, label: Link, widget: string }]
+          - name: secondary
+            label: Second button
+            widget: object
+            fields: [{ name: label, label: Label, widget: string }, { name: href, label: Link, widget: string }]
+      - name: about
+        label: About
+        file: Portfolio-astro/public/Photography-Studio/content/about.json
+        format: json
+        fields:
+          - { name: title, label: Title, widget: string }
+          - { name: lead, label: Lead sentence, widget: text }
+          - name: image
+            label: Picture
+            widget: object
+            fields:
+              - { name: photo, label: Photo name, widget: string }
+              - { name: position, label: Crop focus, widget: string }
+          - name: blocks
+            label: Paragraphs
+            widget: list
+            fields: [{ name: title, label: Heading, widget: string }, { name: text, label: Text, widget: text }]
+      - name: packages
+        label: Packages and deposits
+        file: Portfolio-astro/public/Photography-Studio/content/packages.json
+        format: json
+        fields:
+          - name: items
+            label: Packages
+            widget: list
+            fields:
+              - { name: name, label: Name, widget: string, hint: "Visitors choose by this name. Renaming one also changes what the form sends." }
+              - { name: price, label: Price shown, widget: string }
+              - { name: detail, label: One-line detail, widget: string }
+              - { name: points, label: What is included, widget: list, field: { name: point, label: Item, widget: string } }
+              - { name: amount, label: Price in dollars (number), widget: number, value_type: int, min: 1 }
+              - { name: deposit, label: Deposit in dollars (number), widget: number, value_type: int, min: 1, hint: "Must be no more than the price." }
+              - { name: featured, label: Highlight this package, widget: boolean, default: false }
+      - name: print-sizes
+        label: Print sizes and prices
+        file: Portfolio-astro/public/Photography-Studio/content/print-sizes.json
+        format: json
+        fields:
+          - name: items
+            label: Sizes
+            widget: list
+            fields:
+              - { name: label, label: Label, widget: string, hint: "For example 16 x 20 in" }
+              - { name: w, label: Width (in), widget: number, value_type: int }
+              - { name: h, label: Height (in), widget: number, value_type: int }
+              - { name: price, label: Price (dollars), widget: number, value_type: int, min: 1 }
+      - name: booking
+        label: Booking rules
+        file: Portfolio-astro/public/Photography-Studio/content/booking.json
+        format: json
+        fields:
+          - { name: minLeadDays, label: Minimum days notice, widget: number, value_type: int, min: 0 }
+          - { name: closedWeekdays, label: Closed weekdays (0 = Sunday ... 6 = Saturday), widget: list, required: false, field: { name: day, label: Day, widget: number, value_type: int, min: 0, max: 6 } }
+          - { name: blockedDates, label: Dates you are away (YYYY-MM-DD), widget: list, required: false, field: { name: date, label: Date, widget: string, pattern: ['^\d{4}-\d{2}-\d{2}$', "Use YYYY-MM-DD"] } }
+          - { name: depositNote, label: Deposit explanation, widget: text }
+      - name: faq
+        label: Questions
+        file: Portfolio-astro/public/Photography-Studio/content/faq.json
+        format: json
+        fields:
+          - name: items
+            label: Questions
+            widget: list
+            fields: [{ name: q, label: Question, widget: string }, { name: a, label: Answer, widget: text }]
+      - name: day
+        label: A day on a session
+        file: Portfolio-astro/public/Photography-Studio/content/day.json
+        format: json
+        fields:
+          - name: items
+            label: Steps
+            widget: list
+            fields:
+              - { name: light, label: Light, widget: select, options: [dawn, day, dusk, night] }
+              - { name: title, label: Title, widget: string }
+              - { name: text, label: Text, widget: text }
+      - name: photos
+        label: Photo titles and descriptions
+        file: Portfolio-astro/public/Photography-Studio/content/photos.json
+        format: json
+        fields:
+          - name: sets
+            label: Collections
+            widget: list
+            fields: [{ name: id, label: Id (do not change), widget: string }, { name: name, label: Name shown, widget: string }]
+          - name: photos
+            label: Photos
+            widget: list
+            fields:
+              - { name: set, label: Collection id, widget: string }
+              - { name: light, label: Light, widget: select, options: [dawn, day, dusk, night] }
+              - { name: title, label: Title, widget: string }
+              - { name: file, label: File (do not change), widget: string }
+              - { name: width, label: Width, widget: number, value_type: int }
+              - { name: height, label: Height, widget: number, value_type: int }
+              - { name: alt, label: Description for screen readers, widget: text }

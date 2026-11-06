@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "q": "How far will you travel?",
+      "a": "Replace with your travel area and any fees."
+    },
+    {
+      "q": "What if the weather is bad?",
+      "a": "We pick a new date at no charge."
+    },
+    {
+      "q": "How soon do I get my photos?",
+      "a": "Within two weeks of the session."
+    },
+    {
+      "q": "Can I print the photos?",
+      "a": "Yes. Every package includes a print release."
+    },
+    {
+      "q": "How do I book?",
+      "a": "Send the form below. I reply within two business days."
+    }
+  ]
+}

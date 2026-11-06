@@ -16,7 +16,18 @@ for (const line of readFileSync(join(ROOT, "_headers"), "utf8").split("\n")) {
 }
 // H2=1 serves over HTTP/2 with a throwaway certificate, like Netlify does, so
 // Lighthouse timings are not skewed by HTTP/1.1's six-connection limit.
+// /api/* is answered with mock data so the page can be exercised without
+// Netlify functions. MOCK_PAY=1 pretends Stripe is configured.
+const mockApi = (req, res) => {
+  const url = req.url.split("?")[0];
+  const send = (code, body) => res.writeHead(code, { ...headers, "Content-Type": "application/json" }).end(body === undefined ? "" : JSON.stringify(body));
+  if (url === "/api/availability") return send(200, { configured: true, payments: Boolean(process.env.MOCK_PAY), minLeadDays: 7, closedWeekdays: [0], unavailable: [process.env.MOCK_TAKEN || "2099-01-05"], depositNote: "Deposit is credited to your final balance." });
+  if (url === "/api/collect") return send(204);
+  if (url === "/api/checkout") return send(200, { url: "/Photography-Studio/thanks/?paid=1" });
+  return send(404, { error: "not-found" });
+};
 const handler = (req, res) => {
+  if (req.url.startsWith("/api/")) return mockApi(req, res);
   let f = join(ROOT, decodeURIComponent(req.url.split("?")[0]));
   if (existsSync(f) && statSync(f).isDirectory()) f = join(f, "index.html");
   if (!f.startsWith(ROOT) || !existsSync(f)) return res.writeHead(404, headers).end("not found");

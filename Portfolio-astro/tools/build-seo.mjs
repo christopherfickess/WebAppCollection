@@ -39,20 +39,26 @@ const block = `<!-- seo:start (written by tools/build-seo.mjs) -->
   <script type="application/ld+json">${JSON.stringify(ld)}</script>
   <!-- seo:end -->`;
 
-// The hero photo is also written straight into the HTML, so the browser can
-// paint it before any script runs (the components replace it once they load).
-const h = content.hero.image;
-const hero = `<!-- hero:start --><div class="hero-bg"><img class="hero-photo" src="./${h.file}-1600.webp" srcset="./${h.file}-640.webp 640w, ./${h.file}-960.webp 960w, ./${h.file}-1600.webp 1600w" sizes="100vw" width="${h.width}" height="${h.height}" alt="${esc(h.alt)}" fetchpriority="high" decoding="async" /></div><!-- hero:end -->`;
+// The header and hero are also written straight into the HTML, so the browser
+// can paint them before any script runs. The components keep the markup as is
+// (data-prerendered) and only attach their behaviour.
+globalThis.HTMLElement ??= class {};
+const { setStore } = await import("../public/Photography-Studio/js/core.js");
+const { SiteHeader } = await import("../public/Photography-Studio/js/components/layout.js");
+const { Hero } = await import("../public/Photography-Studio/js/components/sections.js");
+setStore(content);
+const prerender = (html, tag, C, data) =>
+  html.replace(new RegExp(`(<${tag}[^>]*data-prerendered[^>]*>)[\\s\\S]*?(</${tag}>)`), (_, open, close) => `${open}<!-- pre:start -->${String(C.prototype.render.call({}, data))}<!-- pre:end -->${close}`);
 
 const file = new URL("../public/Photography-Studio/index.html", import.meta.url);
 let html = readFileSync(file, "utf8");
 html = /<!-- seo:start[\s\S]*?seo:end -->/.test(html)
   ? html.replace(/<!-- seo:start[\s\S]*?seo:end -->/, block)
   : html.replace("</head>", `  ${block}\n</head>`);
-html = html.replace(/<!-- hero:start -->[\s\S]*?<!-- hero:end -->/, hero);
+html = prerender(prerender(html, "fx-header", SiteHeader, content.site), "fx-hero", Hero, content.hero);
 writeFileSync(file, html);
 
 const pages = ["", "privacy/", "terms/"].map((p) => `  <url><loc>${base}${p}</loc></url>`).join("\n");
 writeFileSync(new URL("../public/sitemap.xml", import.meta.url), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages}\n</urlset>\n`);
-writeFileSync(new URL("../public/robots.txt", import.meta.url), `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`);
+writeFileSync(new URL("../public/robots.txt", import.meta.url), `User-agent: *\nAllow: /\nDisallow: /Photography-Studio/admin/\n\nSitemap: ${origin}/sitemap.xml\n`);
 console.log("SEO files written for", base);

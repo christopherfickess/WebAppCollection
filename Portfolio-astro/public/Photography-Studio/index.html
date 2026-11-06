@@ -44,7 +44,23 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <fx-header data-from="site"></fx-header>
+  <fx-header data-from="site" data-prerendered><!-- pre:start -->
+      <header class="site-head">
+        <a class="wordmark" href="/Photography-Studio/" aria-label="Fox &amp; Fern Photography, home">
+          <span class="wordmark-name">Fox &amp; Fern</span>
+          <span class="wordmark-tag">Photography</span>
+        </a>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+          <span class="menu-text">Menu</span>
+          <span class="menu-icon" aria-hidden="true"><i></i><i></i></span>
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Main">
+          <ul><li><a href="/Photography-Studio/#about">About</a></li><li><a href="/Photography-Studio/#gallery">Gallery</a></li><li><a href="/Photography-Studio/#wall">Prints</a></li><li><a href="/Photography-Studio/#packages">Packages</a></li><li><a href="/Photography-Studio/#faq">Questions</a></li></ul>
+          <a class="btn" href="/Photography-Studio/#contact">Book a session</a>
+          <img class="menu-fox" src="/Photography-Studio/img/fox.webp" alt="" aria-hidden="true" width="400" height="400" />
+        </nav>
+      </header>
+    <!-- pre:end --></fx-header>
   <main id="main">
     <section class="hero" aria-label="Introduction">
       <fx-hero data-from="hero"><!-- hero:start --><div class="hero-bg"><img class="hero-photo" src="./img/photos/nature-park-path-and-steel-pole-1600.webp" srcset="./img/photos/nature-park-path-and-steel-pole-640.webp 640w, ./img/photos/nature-park-path-and-steel-pole-960.webp 960w, ./img/photos/nature-park-path-and-steel-pole-1600.webp 1600w" sizes="100vw" width="1600" height="739" alt="A sunny park path lined with trees and cypresses" fetchpriority="high" decoding="async" /></div><!-- hero:end --></fx-hero>

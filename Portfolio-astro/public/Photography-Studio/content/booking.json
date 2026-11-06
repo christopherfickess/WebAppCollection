@@ -1,0 +1,6 @@
+{
+  "minLeadDays": 7,
+  "closedWeekdays": [],
+  "blockedDates": [],
+  "depositNote": "A deposit holds your date. The balance is due on the day of the session."
+}

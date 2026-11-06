@@ -1,0 +1,45 @@
+{
+  "items": [
+    {
+      "name": "Mini session",
+      "price": "$250",
+      "detail": "One hour, one location",
+      "points": [
+        "15 edited photos",
+        "Private online gallery",
+        "Print release"
+      ],
+      "amount": 250,
+      "deposit": 75,
+      "featured": false
+    },
+    {
+      "name": "Half day",
+      "price": "$600",
+      "detail": "Three hours, up to two locations",
+      "points": [
+        "40 edited photos",
+        "Private online gallery",
+        "Print release",
+        "One 16 x 20 print"
+      ],
+      "featured": true,
+      "amount": 600,
+      "deposit": 150
+    },
+    {
+      "name": "Full day",
+      "price": "$1,100",
+      "detail": "Eight hours, travel included",
+      "points": [
+        "100 edited photos",
+        "Private online gallery",
+        "Print release",
+        "Two 16 x 20 prints"
+      ],
+      "amount": 1100,
+      "deposit": 275,
+      "featured": false
+    }
+  ]
+}

@@ -215,9 +215,11 @@ export class Wall extends Component {
     this.draw();
   }
 
+  sizes() { return resolve("printSizes"); }
+
   draw() {
     const photo = this.data[this.state.photo];
-    const size = resolve("printSizes")[this.state.size];
+    const size = this.sizes()[this.state.size];
     const landscape = photo.height < photo.width;
     const w = landscape ? Math.max(size.w, size.h) : Math.min(size.w, size.h);
     const h = landscape ? Math.min(size.w, size.h) : Math.max(size.w, size.h);

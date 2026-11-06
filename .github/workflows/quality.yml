@@ -22,7 +22,10 @@ jobs:
           cache-dependency-path: Portfolio-astro/package-lock.json
       - run: npm ci
       - run: npx playwright-core install --with-deps chromium
+      - run: node tools/build-content.mjs
       - run: node tools/build-seo.mjs
+      - name: Booking and payment logic
+        run: npm test
       - name: Browser checks
         run: node tools/quality/check.mjs
       - name: Lighthouse (mobile, over HTTP/2)

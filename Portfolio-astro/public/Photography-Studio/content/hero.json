@@ -1,0 +1,16 @@
+{
+  "image": {
+    "photo": "nature-park-path-and-steel-pole",
+    "position": "50% 60%"
+  },
+  "title": "Landscape and wildlife photography, made to hang on your wall",
+  "text": "Sessions in the places you love, edited with care and delivered in a private gallery you can share.",
+  "primary": {
+    "label": "See the gallery",
+    "href": "#gallery"
+  },
+  "secondary": {
+    "label": "Book a session",
+    "href": "#contact"
+  }
+}

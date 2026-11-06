@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <script src="stats.js" defer></script>
+  <title>Visitor counts</title>
+</head>
+<body>
+  <main class="thanks">
+    <h1>Visitor counts</h1>
+    <form id="f" class="contact-form">
+      <label for="t">Stats token</label>
+      <input id="t" type="password" autocomplete="off" required />
+      <label for="d">Days</label>
+      <select id="d"><option>7</option><option selected>30</option><option>90</option></select>
+      <button class="btn" type="submit">Show</button>
+    </form>
+    <p id="out" role="status"></p>
+    <table id="tbl" hidden><caption>Most viewed pages</caption><thead><tr><th scope="col">Page</th><th scope="col">Views</th></tr></thead><tbody></tbody></table>
+    <table id="ref" hidden><caption>Where visitors came from</caption><thead><tr><th scope="col">Site</th><th scope="col">Views</th></tr></thead><tbody></tbody></table>
+  </main>
+</body>
+</html>

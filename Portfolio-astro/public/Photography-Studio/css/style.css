@@ -573,3 +573,6 @@ html.lightbox-open {
 .legal p, .legal li { color: var(--muted); max-width: 42rem; }
 .legal ul { padding-left: 1.2rem; list-style: disc; }
 .legal-note { padding: 0.9rem 1rem; border: 1px solid var(--fox); color: var(--bone); background: rgba(217, 98, 43, 0.12); }
+.book-msg { min-height: 1.4em; margin-top: 0.6rem; color: var(--mauve); font-size: var(--t-sm); }
+.contact-form .btn-ghost { justify-self: start; margin-top: 0.75rem; }
+.wall-controls .btn { justify-self: start; margin-top: 1rem; }

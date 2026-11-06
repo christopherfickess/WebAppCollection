@@ -1,0 +1,56 @@
+import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
+import { availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+
+const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
+const NOW = Date.parse("2026-11-06T12:00:00Z");
+const sent = [];
+const fetchMock = async (url, opt) => {
+  if (url.includes("stripe")) return { ok: true, json: async () => ({ id: "cs_1", url: "https://pay.test/cs_1" }), _body: opt.body };
+  sent.push(JSON.parse(opt.body)); return { ok: true };
+};
+const env = { STRIPE_SECRET_KEY: "sk_test", RESEND_API_KEY: "re", EMAIL_FROM: "a@b.co", OWNER_EMAIL: "o@b.co", STATS_TOKEN: "x".repeat(20) };
+const deps = (store) => ({ store, env, fetch: fetchMock, now: NOW, origin: "https://s.test" });
+let n = 0; const ok = (name) => console.log("ok", ++n, name);
+
+const store = memStore();
+assert.equal((await availability({ store, env, now: NOW })).payments, true); ok("availability");
+
+const good = { kind: "session", name: "Ana", email: "ana@x.co", package: "Half day", date: "2026-12-01", message: "hi" };
+let r = await createCheckout(good, deps(store)); assert.equal(r.status, 200); ok("checkout creates session");
+r = await createCheckout(good, deps(store)); assert.equal(r.status, 409); assert.equal((await r.json()).error, "held"); ok("same date is held");
+r = await createCheckout({ ...good, date: "2026-11-08" }, deps(store)); assert.equal(r.status, 409); ok("too soon rejected");
+r = await createCheckout({ ...good, date: "2026-02-30" }, deps(store)); assert.equal(r.status, 409); ok("impossible date rejected");
+r = await createCheckout({ ...good, package: "Free" }, deps(store)); assert.equal(r.status, 400); ok("unknown package");
+r = await createCheckout({ ...good, email: "nope" }, deps(store)); assert.equal(r.status, 400); ok("bad email");
+r = await createCheckout({ kind: "print", photo: "nope", size: "12x18" }, deps(store)); assert.equal(r.status, 400); ok("unknown print");
+r = await createCheckout(good, { ...deps(store), env: {} }); assert.equal(r.status, 503); ok("no stripe key");
+
+// a hold expires
+assert.equal(dayProblem("2026-12-01", NOW + 40 * 60 * 1000, { booked: [], blocked: [], held: [] }), null); ok("expired hold frees date");
+
+// webhook
+const ev = { id: "evt_1", type: "checkout.session.completed", data: { object: { customer_details: { email: "ana@x.co" }, metadata: { kind: "session", package: "Half day", date: "2026-12-01", name: "Ana", message: "" } } } };
+await handleStripeEvent(ev, deps(store));
+assert.deepEqual(await store.get("booked"), ["2026-12-01"]); assert.equal(sent.length, 2); ok("webhook books date, emails both");
+assert.equal((await handleStripeEvent(ev, deps(store))).duplicate, true); assert.equal(sent.length, 2); ok("duplicate event ignored");
+assert.ok((await availability({ store, env, now: NOW })).unavailable.includes("2026-12-01")); ok("booked date unavailable");
+
+// signature
+const raw = JSON.stringify(ev), t = Math.floor(NOW / 1000), sec = "whsec_x";
+const v1 = createHmac("sha256", sec).update(`${t}.${raw}`).digest("hex");
+assert.equal(verifySignature(raw, `t=${t},v1=${v1}`, sec, t), true); ok("valid signature");
+assert.equal(verifySignature(raw + " ", `t=${t},v1=${v1}`, sec, t), false); ok("tampered body");
+assert.equal(verifySignature(raw, `t=${t},v1=${v1}`, sec, t + 1000), false); ok("stale timestamp");
+assert.equal(verifySignature(raw, `t=${t},v1=${v1}`, "", t), false); ok("no secret");
+
+// counts
+const req = (h = {}) => new Request("https://s.test/api/collect", { headers: { "user-agent": "Mozilla/5.0", ...h } });
+await collect(req(), { path: "/Photography-Studio/?x=1", ref: "https://google.com/q" }, { store, now: NOW });
+await collect(req({ dnt: "1" }), { path: "/a" }, { store, now: NOW });
+await collect(req({ "user-agent": "Googlebot" }), { path: "/a" }, { store, now: NOW });
+const s = await stats(2, { store, now: NOW });
+assert.equal(s.totalViews, 1); assert.deepEqual(s.topPages, { "/Photography-Studio/": 1 }); assert.deepEqual(s.topReferrers, { "google.com": 1 }); ok("counts respect DNT and bots, strip queries");
+assert.equal(tokenOk(new Request("https://s.test", { headers: { authorization: "Bearer " + "x".repeat(20) } }), env), true);
+assert.equal(tokenOk(new Request("https://s.test", { headers: { authorization: "Bearer wrong" } }), env), false);
+assert.equal(tokenOk(new Request("https://s.test"), { STATS_TOKEN: "" }), false); ok("stats token");

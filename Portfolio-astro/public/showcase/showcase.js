@@ -12,7 +12,9 @@ const TEMPLATES = [
       { name: "See it on your wall (print preview)", price: "$150" },
       { name: "Best light on the booking date", price: "$100" },
       { name: "Content editor for non-technical clients", price: "$400" },
-      { name: "Booking calendar with deposits", price: "$900" },
+      { name: "Booking calendar with deposits and email confirmations", price: "$900" },
+      { name: "Print shop with checkout", price: "$600" },
+      { name: "Private visitor counts (no cookies)", price: "$150" },
     ],
   },
   {

@@ -29,6 +29,12 @@ for (const line of readFileSync(join(ROOT, "_headers"), "utf8").split("\n")) {
 }
 
 const server = createServer((req, res) => {
+  // The page's optional /api calls get quiet mock answers (no server functions here).
+  if (req.url.startsWith("/api/")) {
+    const body = req.url.startsWith("/api/availability") ? JSON.stringify({ configured: true, payments: false, minLeadDays: 7, closedWeekdays: [], unavailable: [], depositNote: "" }) : "";
+    res.writeHead(body ? 200 : 204, { ...headers, "Content-Type": "application/json" }).end(body);
+    return;
+  }
   let p = decodeURIComponent(req.url.split("?")[0]);
   let f = join(ROOT, p);
   if (existsSync(f) && statSync(f).isDirectory()) f = join(f, "index.html");

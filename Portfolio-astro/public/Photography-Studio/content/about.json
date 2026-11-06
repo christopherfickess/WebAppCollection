@@ -1,0 +1,18 @@
+{
+  "title": "About Fox & Fern",
+  "lead": "I photograph quiet places at the edge of the day, then print them large enough to live with.",
+  "image": {
+    "photo": "nature-ficus-roots",
+    "position": "50% 70%"
+  },
+  "blocks": [
+    {
+      "title": "My story",
+      "text": "Replace this with two or three sentences about who you are and how you started. Clients hire a photographer they feel they know."
+    },
+    {
+      "title": "How I work",
+      "text": "Say what a session is like: how long it runs, how you direct, and how soon people see their photos."
+    }
+  ]
+}

@@ -91,7 +91,10 @@ export class Component extends HTMLElement {
       console.warn(`<${this.localName}>: nothing at data-from="${this.dataset.from}"`);
       return;
     }
-    this.innerHTML = String(this.render(data));
+    // data-prerendered: the build already wrote this markup into the HTML
+    // (tools/build-seo.mjs), so show it as is and only attach behaviour.
+    if (this.hasAttribute("data-prerendered")) this.removeAttribute("data-prerendered");
+    else this.innerHTML = String(this.render(data));
     this.rendered = true;
     this.afterRender();
   }

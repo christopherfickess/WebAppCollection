@@ -4,14 +4,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node tools/build-guides.mjs && node tools/build-seo.mjs && astro dev",
-    "prebuild": "node tools/build-guides.mjs && node tools/build-seo.mjs",
+    "dev": "node tools/build-guides.mjs && node tools/build-admin.mjs && node tools/build-content.mjs && node tools/build-seo.mjs && astro dev",
+    "prebuild": "node tools/build-guides.mjs && node tools/build-admin.mjs && node tools/build-content.mjs && node tools/build-seo.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "guides": "node tools/build-guides.mjs",
-    "seo": "node tools/build-seo.mjs",
+    "seo": "node tools/build-content.mjs && node tools/build-seo.mjs",
     "quality": "node tools/quality/check.mjs",
-    "serve:h2": "H2=1 node tools/quality/serve.mjs"
+    "serve:h2": "H2=1 node tools/quality/serve.mjs",
+    "content": "node tools/build-content.mjs",
+    "test": "node tools/tests/studio.test.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.7",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "axe-core": "^4.14.0",
+    "decap-cms": "^3.8.4",
     "lighthouse": "^13.6.0",
     "playwright-core": "^1.65.0"
   }
