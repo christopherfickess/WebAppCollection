@@ -169,11 +169,16 @@ fx-hero { display: contents; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 0.9rem; }
 
 @media (max-width: 860px) {
-  .fox { top: 7%; height: auto; right: -4%; width: 68%; max-width: none; object-position: top right; }
-  .leaf-a { right: 58%; width: 30%; }
-  .leaf-b { right: -5%; width: 28%; }
+  /* On phones the fox and ferns get their own block above the headline,
+     so they can never collide with the text, whatever the screen height. */
+  .hero { flex-direction: column; justify-content: flex-end; }
+  .hero-art { position: relative; inset: auto; flex: none; width: 100%; height: clamp(15rem, 38svh, 22rem); margin-top: 4.5rem; }
+  .fox { top: auto; bottom: 0; right: 3%; height: 100%; width: auto; max-width: none; object-position: bottom right; }
+  .leaf-a { right: 52%; bottom: 0; width: 30%; }
+  .leaf-b { right: -4%; bottom: 0; width: 26%; }
+  .hero-copy { padding-top: 1.25rem; }
+  .hero-bg::after { background: linear-gradient(to top, var(--bg) 6%, rgba(20, 17, 20, 0.6) 58%, rgba(20, 17, 20, 0.3)); }
   .wordmark-tag { display: none; }
-  .hero-bg::after { background: linear-gradient(to top, var(--bg) 8%, rgba(20, 17, 20, 0.7) 60%, rgba(20, 17, 20, 0.4)); }
 }
 
 /* sections */
