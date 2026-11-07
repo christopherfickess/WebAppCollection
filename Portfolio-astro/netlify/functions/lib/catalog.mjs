@@ -124,6 +124,42 @@ export const catalog = {
     {
       "id": "london-parliament-from-above",
       "title": "Parliament from above"
+    },
+    {
+      "id": "nonesuch-brioche-with-brown-butter",
+      "title": "Brioche with brown butter"
+    },
+    {
+      "id": "nonesuch-chilled-cream-soup",
+      "title": "Cream soup"
+    },
+    {
+      "id": "nonesuch-charred-bok-choy",
+      "title": "Charred bok choy"
+    },
+    {
+      "id": "nonesuch-dumpling-in-broth",
+      "title": "Dumpling in broth"
+    },
+    {
+      "id": "nonesuch-filled-pasta-with-ground-cherry",
+      "title": "Filled pasta"
+    },
+    {
+      "id": "nonesuch-pork-belly-with-romaine",
+      "title": "Pork belly with romaine"
+    },
+    {
+      "id": "nonesuch-beef-with-nasturtium",
+      "title": "Beef with nasturtium"
+    },
+    {
+      "id": "nonesuch-sorbet-on-cream",
+      "title": "Sorbet on cream"
+    },
+    {
+      "id": "nonesuch-cake-with-poached-fruit",
+      "title": "Cake with poached fruit"
     }
   ],
   "booking": {

@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /Photography-Studio/admin/
 
 Sitemap: https://example.com/sitemap.xml

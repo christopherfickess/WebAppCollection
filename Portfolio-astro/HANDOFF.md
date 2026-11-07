@@ -479,6 +479,10 @@ internal links return 200, autoplay advances and pauses.
 - **Not verified from the build sandbox (needs your accounts):** real Stripe Checkout and webhook delivery, real Resend email, Netlify Blobs storage, and the editor's GitHub sign-in (Netlify: Site configuration > Access & security > OAuth > GitHub). The admin has its own relaxed Content-Security-Policy rule in `_headers`; if Netlify sends both policies the editor will not load, so test it on the first deploy. Booking holds and the booked list are stored in a Blobs store named `studio`.
 - **Known limits:** two people can request the same date through the plain form (no payment, so no hold); the owner confirms by hand. Refunds and cancellations are done in Stripe, and a refunded date must be removed by hand from the `booked` list. Shipping is US only. Stats are per day and not unique visitors.
 
+### Nonesuch collection (Photography-Studio)
+
+- New collection "Dinner at Nonesuch" (`nonesuch`): nine tasting-menu photos in course order (brioche to cake), all light `night` (indoor, dim). Cropped to each plate to remove the phone shadow and empty table; the pork belly photo had the diner's hand and lap cropped out. Titles and alt text describe what is visible and do not name ingredients beyond that; the restaurant's own menu wording was not available. Check with the restaurant or the photographer before publishing for a client: photos of a restaurant's dishes are fine as a portfolio sample, but a client site should use the client's own photos.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —
