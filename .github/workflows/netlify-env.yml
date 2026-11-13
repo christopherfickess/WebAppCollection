@@ -40,3 +40,4 @@ jobs:
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
         run: node tools/sync-netlify-env.mjs
+# Last re-synced after OWNER_EMAIL was corrected.
