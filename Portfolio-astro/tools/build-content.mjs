@@ -30,6 +30,7 @@ for (const p of packages.items) {
 for (const d of day.items) need(LIGHTS.includes(d.light), `day "${d.title}": light must be one of ${LIGHTS.join(", ")}`);
 for (const s of printSizes.items) need(s.label && s.w > 0 && s.h > 0 && s.price > 0, `print size "${s.label}": needs label, width, height, and price`);
 need(Array.isArray(booking.blockedDates) && booking.blockedDates.every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)), "booking: blockedDates must be YYYY-MM-DD dates");
+need(booking.slots === undefined || (Array.isArray(booking.slots) && booking.slots.every((x) => typeof x === "string" && x.length < 40)), "booking: slots must be a list of short names");
 need((site.theme?.sky || []).length === 4, "site: theme.sky needs exactly four colour pairs");
 for (const t of testimonials.items) need(t.quote && t.name, `testimonial from "${t.name}": needs a quote and a name`);
 if (errors.length) {
@@ -54,7 +55,7 @@ const catalog = {
   printSizes: Object.fromEntries(printSizes.items.map((s) => [s.label, { price: s.price }])),
   photos: photoData.photos.map((p) => ({ id: p.file.replace("img/photos/", ""), title: p.title })),
   booking,
-  business: { name: site.name },
+  business: { name: site.name, accent: site.theme?.accent || "#d9622b" },
 };
 writeFileSync(new URL("../../netlify/functions/lib/catalog.mjs", root), `// Written by tools/build-content.mjs from content/*.json. Do not edit by hand.\nexport const catalog = ${JSON.stringify(catalog, null, 2)};\n`);
 console.log("content ok:", photoData.photos.length, "photos,", packages.items.length, "packages");

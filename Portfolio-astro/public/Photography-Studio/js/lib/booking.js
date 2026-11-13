@@ -27,9 +27,36 @@ export class Booking {
       this.date.min = min;
       this.date.addEventListener("input", () => this.check());
     }
+    if (this.date && (info.slots?.length || info.travelNote)) this.addExtras();
     if (info.payments) this.addPayButton();
     else this.form.querySelector('button[type="submit"]').after(this.msg);
     form.addEventListener("submit", (e) => this.send(e));
+  }
+
+  // Optional time window and a travel note, both set in the content editor.
+  addExtras() {
+    const anchor = this.note || this.date;
+    if (this.info.slots?.length) {
+      const label = document.createElement("label");
+      label.htmlFor = "slot";
+      label.textContent = "Preferred time ";
+      const opt = document.createElement("span");
+      opt.className = "optional";
+      opt.textContent = "(optional)";
+      label.append(opt);
+      const sel = document.createElement("select");
+      sel.id = "slot";
+      sel.name = "slot";
+      for (const v of ["", ...this.info.slots]) { const o = document.createElement("option"); o.value = v; o.textContent = v || "No preference"; sel.append(o); }
+      anchor.after(label, sel);
+      this.slot = sel;
+    }
+    if (this.info.travelNote) {
+      const n = document.createElement("p");
+      n.className = "light-note";
+      n.textContent = this.info.travelNote;
+      (this.slot || anchor).after(n);
+    }
   }
 
   // Sends the plain request through the site's own email function. If that
@@ -45,7 +72,7 @@ export class Booking {
       const res = await fetch("/api/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: f.name.value, email: f.email.value, session: f.session.value, date: f.date.value, message: f.message.value, "bot-field": f["bot-field"]?.value || "" }),
+        body: JSON.stringify({ name: f.name.value, email: f.email.value, session: f.session.value, date: f.date.value, slot: f.slot?.value || "", message: f.message.value, "bot-field": f["bot-field"]?.value || "" }),
       });
       if (res.ok) { location.assign(this.form.getAttribute("action")); return; }
       // Function missing (404/405): use the normal form post. Any other failure: say so, do not lose the visitor on a 404 page.
@@ -105,7 +132,7 @@ export class Booking {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "session", name: f.name.value, email: f.email.value, package: f.session.value, date: f.date.value, message: f.message.value }),
+        body: JSON.stringify({ kind: "session", name: f.name.value, email: f.email.value, package: f.session.value, date: f.date.value, slot: f.slot?.value || "", message: f.message.value }),
       });
       const data = await res.json();
       if (!res.ok) {

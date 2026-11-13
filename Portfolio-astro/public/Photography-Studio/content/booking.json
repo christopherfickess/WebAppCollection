@@ -3,5 +3,11 @@
   "closedWeekdays": [],
   "blockedDates": [],
   "depositNote": "A deposit holds your date. The balance is due on the day of the session.",
-  "refundFullDays": 14
+  "refundFullDays": 14,
+  "slots": [
+    "Morning",
+    "Afternoon",
+    "Golden hour"
+  ],
+  "travelNote": "Sessions more than 60 miles from the studio include a travel fee, quoted before you pay."
 }

@@ -1,4 +1,4 @@
-import { createCheckout, json, sameOrigin, limited } from "./lib/studio.mjs";
+import { createCheckout, alertOwner, json, sameOrigin, limited } from "./lib/studio.mjs";
 import { live, originOf } from "./lib/runtime.mjs";
 export default async (req) => {
   if (req.method !== "POST") return json(405, { error: "post-only" });
@@ -9,6 +9,6 @@ export default async (req) => {
   let body;
   try { body = await req.json(); } catch { return json(400, { error: "bad-json" }); }
   try { return await createCheckout(body, { ...deps, origin: originOf(req) }); }
-  catch (e) { return json(e.status || 500, { error: "checkout-failed" }); }
+  catch (e) { await alertOwner(deps, "A visitor could not start checkout", e); return json(e.status || 500, { error: "checkout-failed" }); }
 };
 export const config = { path: "/api/checkout" };

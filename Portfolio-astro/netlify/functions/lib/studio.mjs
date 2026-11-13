@@ -44,6 +44,8 @@ export async function availability({ store, env, now }) {
     closedWeekdays: catalog.booking.closedWeekdays || [],
     unavailable: [...new Set([...taken.booked, ...taken.held, ...taken.blocked])].sort(),
     depositNote: catalog.booking.depositNote || "",
+    slots: catalog.booking.slots || [],
+    travelNote: catalog.booking.travelNote || "",
   };
 }
 
@@ -59,6 +61,8 @@ async function stripe(env, fetchFn, params) {
   if (!res.ok) throw Object.assign(new Error(data?.error?.message || "stripe error"), { status: 502 });
   return data;
 }
+
+const slotOf = (v) => { const x = clip(v, 40); return (catalog.booking.slots || []).includes(x) ? x : ""; };
 
 export const MAX_OPEN_HOLDS = 10; // total unpaid date holds at once, so checkouts cannot be used to lock the calendar
 
@@ -128,6 +132,8 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   p.set("metadata[date]", date);
   p.set("metadata[name]", name);
   p.set("metadata[message]", message);
+  const slot = slotOf(body?.slot);
+  if (slot) p.set("metadata[slot]", slot);
   const s = await stripe(env, fetchFn, p);
   holds[date] = { expires: now + HOLD_MS, session: s.id, email: mine };
   await store.setJSON("holds", holds);
@@ -136,7 +142,25 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
 
 // ---- email --------------------------------------------------------------
 
-export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, replyTo }) {
+const esc = (v) => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// Turns a plain-text message into a branded HTML email. The plain text still goes along for clients that want it.
+export function emailHtml(text, brand = catalog.business) {
+  const accent = /^#[0-9a-f]{6}$/i.test(brand?.accent || "") ? brand.accent : "#d9622b";
+  const body = esc(text).split(/\n{2,}/).map((para) => `<p style="margin:0 0 16px;line-height:1.55">${para.replace(/(https?:\/\/[^\s<]+)/g, `<a href="$1" style="color:${accent}">$1</a>`).replace(/\n/g, "<br>")}</p>`).join("");
+  return `<!doctype html><html><body style="margin:0;background:#f4f1ea;font-family:Helvetica,Arial,sans-serif;color:#1d2a24"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:6px;overflow:hidden"><tr><td style="background:#112019;border-bottom:4px solid ${accent};padding:18px 28px;color:#efe6d6;font-size:18px;letter-spacing:.04em">${esc(brand?.name || "")}</td></tr><tr><td style="padding:28px;font-size:15px">${body}</td></tr></table></td></tr></table></body></html>`;
+}
+
+// A one-day calendar entry the client can add with one tap.
+export function calendarInvite({ date, title, description, slot, uid }) {
+  const d = date.replace(/-/g, "");
+  const next = new Date(`${date}T12:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
+  const end = next.toISOString().slice(0, 10).replace(/-/g, "");
+  const fold = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${catalog.business.name}//Booking//EN`, "BEGIN:VEVENT", `UID:${uid || `${date}-${catalog.business.name.replace(/\W+/g, "")}`}@booking`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${end}`, `SUMMARY:${fold(title)}`, `DESCRIPTION:${fold(description + (slot ? `\nPreferred time: ${slot}` : ""))}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+}
+
+export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, replyTo, attachments }) {
   if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !to) return { skipped: true };
   // Phone keyboards capitalise the first letter and add spaces; providers can treat that as a different address.
   to = String(to).trim().toLowerCase();
@@ -144,24 +168,26 @@ export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, re
   const res = await fetchFn("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, text, ...(replyTo ? { reply_to: replyTo } : {}) }),
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, text, html: emailHtml(text), ...(replyTo ? { reply_to: replyTo } : {}), ...(attachments ? { attachments } : {}) }),
   });
   return { ok: res.ok, status: res.status, detail: res.ok ? "" : String(await res.text().catch(() => "")).slice(0, 200) };
 }
+
+const ics = (d, text, form) => [{ filename: "session.ics", content: Buffer.from(calendarInvite({ date: d, title: `${catalog.business.name}: ${form.package || form.session || "session"}`, description: text, slot: form.slot })).toString("base64") }];
 
 const sign = (n) => `${catalog.business.name}`;
 
 export async function notifyBooking(deps, form, { paid } = {}) {
   const { env } = deps;
   const owner = env.OWNER_EMAIL;
-  const lines = [`Name: ${form.name}`, `Email: ${form.email}`, `Session: ${form.session || form.package || "not chosen"}`, `Date: ${form.date || "not chosen"}`, `Message: ${form.message || ""}`];
+  const lines = [`Name: ${form.name}`, `Email: ${form.email}`, `Session: ${form.session || form.package || "not chosen"}`, `Date: ${form.date || "not chosen"}`, ...(form.slot ? [`Time: ${form.slot}`] : []), `Message: ${form.message || ""}`];
   const out = [];
   out.push(await sendEmail(deps, { to: owner, subject: `${paid ? "Deposit paid" : "New request"}: ${form.name}`, text: lines.join("\n"), replyTo: form.email }));
   const pkg = catalog.packages[form.package || form.session];
   const text = paid
     ? `Hi ${form.name},\n\nThank you. Your ${money(pkg?.deposit ?? 0)} deposit for ${form.package} on ${form.date} is received and the date is yours.\n${catalog.booking.depositNote || ""}\n${manageLink(deps, form.date, form.email) ? `\nChange the date, cancel, or pay the balance here:\n${manageLink(deps, form.date, form.email)}\n` : ""}\nReply to this email with any questions.\n\n${sign()}`
     : `Hi ${form.name},\n\nThanks for your request. I reply within two business days.\n\nWhat you sent:\n${lines.join("\n")}\n\n${sign()}`;
-  out.push(await sendEmail(deps, { to: form.email, subject: paid ? `Your date is booked, ${form.date}` : "We received your request", text }));
+  out.push(await sendEmail(deps, { to: form.email, subject: paid ? `Your date is booked, ${form.date}` : "We received your request", text, ...(paid ? { attachments: ics(form.date, `Your ${form.package} session.`, form) } : {}) }));
   return out;
 }
 
@@ -188,12 +214,12 @@ export async function handleStripeEvent(event, deps) {
       if (!booked.includes(m.date)) booked.push(m.date);
       await store.setJSON("booked", booked.sort());
       const bookings = (await store.get("bookings", { type: "json" })) || {};
-      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, paidAt: now, reminded: false, pi: s.payment_intent || null };
+      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, slot: m.slot || "", paidAt: now, reminded: false, pi: s.payment_intent || null };
       await store.setJSON("bookings", bookings);
       const holds = (await store.get("holds", { type: "json" })) || {};
       delete holds[m.date];
       await store.setJSON("holds", holds);
-      await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, message: m.message }, { paid: true });
+      await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, slot: m.slot, message: m.message }, { paid: true });
     } else if (m.kind === "balance") {
       const bookings = (await store.get("bookings", { type: "json" })) || {};
       if (bookings[m.date]) { bookings[m.date].balancePaidAt = now; await store.setJSON("bookings", bookings); }
@@ -292,7 +318,7 @@ export async function manageAct(body, deps) {
     await store.setJSON("bookings", bookings);
     const link = manageLink({ env, origin }, to, b.email);
     await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Rescheduled: ${b.name}`, text: `${b.name} moved ${date} to ${to}.`, replyTo: b.email });
-    await sendEmail(deps, { to: b.email, subject: `Your session is moved to ${to}`, text: `Hi ${b.name},\n\nYour ${b.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}` });
+    await sendEmail(deps, { to: b.email, subject: `Your session is moved to ${to}`, text: `Hi ${b.name},\n\nYour ${b.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}`, attachments: ics(to, `Your ${b.package} session.`, b) });
     return json(200, { ok: true, date: to });
   }
 
@@ -402,11 +428,10 @@ export async function handleRequest(body, deps) {
   const { store, now } = deps;
   if (body?.["bot-field"]) return json(200, { ok: true }); // honeypot: look successful, do nothing
   const name = clip(body?.name, 100), email = clip(body?.email, 200).toLowerCase(), message = clip(body?.message, 2000);
-  const session = clip(body?.session, 60), date = clip(body?.date, 10);
+  const session = clip(body?.session, 60), date = clip(body?.date, 10), slot = slotOf(body?.slot);
   if (!name || !EMAIL.test(email) || !message) return json(400, { error: "invalid-contact" });
   if (date && !DATE.test(date)) return json(400, { error: "invalid-date" });
-  const form = { name, email, session, date, message };
-  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, `Message: ${message}`];
+  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, ...(slot ? [`Time: ${slot}`] : []), `Message: ${message}`];
   const owner = await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `New request: ${name}`, text: lines.join("\n"), replyTo: email });
   if (owner.skipped) return json(503, { error: "email-not-configured" }); // never tell a visitor "sent" when nothing was
   if (!owner.ok) {

@@ -166,9 +166,17 @@ export const catalog = {
     "minLeadDays": 7,
     "closedWeekdays": [],
     "blockedDates": [],
-    "depositNote": "A deposit holds your date. The balance is due on the day of the session."
+    "depositNote": "A deposit holds your date. The balance is due on the day of the session.",
+    "refundFullDays": 14,
+    "slots": [
+      "Morning",
+      "Afternoon",
+      "Golden hour"
+    ],
+    "travelNote": "Sessions more than 60 miles from the studio include a travel fee, quoted before you pay."
   },
   "business": {
-    "name": "Fox & Fern Photography"
+    "name": "Fox & Fern Photography",
+    "accent": "#d9622b"
   }
 };

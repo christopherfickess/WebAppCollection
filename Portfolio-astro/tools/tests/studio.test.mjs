@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+import { emailHtml, calendarInvite, manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
 const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
 const NOW = Date.parse("2026-11-06T12:00:00Z");
@@ -149,4 +149,20 @@ assert.equal(sent[0].to[0], "owner@example.com"); assert.equal(sent[0].reply_to,
   await handleStripeEvent({ id: "evt_e", type: "checkout.session.completed", data: { object: { amount_total: 45000, customer_details: { email: "cy@x.co" }, metadata: { kind: "balance", date: "2026-12-26" } } } }, mdeps);
   assert.ok((await st.get("bookings"))["2026-12-26"].balancePaidAt);
   res = await manageAct({ date: "2026-12-26", t: t5, action: "balance" }, mdeps); assert.equal(res.status, 409); ok("balance paid once");
+}
+
+// ---- email design, calendar invite, time window ----
+{
+  const h = emailHtml("Hi <b>Al</b>,\n\nSee https://s.test/a?x=1&y=2 now");
+  assert.ok(h.includes("&lt;b&gt;") && !h.includes("<b>Al")); assert.ok(h.includes('<a href="https://s.test/a?x=1&amp;y=2"')); ok("html email escapes text and links urls");
+  const c = calendarInvite({ date: "2026-12-31", title: "Fox, Fern", description: "a;b\nc", slot: "Morning" });
+  assert.ok(c.includes("DTSTART;VALUE=DATE:20261231") && c.includes("DTEND;VALUE=DATE:20270101")); assert.ok(c.includes("SUMMARY:Fox\\, Fern")); assert.ok(c.includes("Preferred time: Morning")); ok("calendar invite handles month end and escapes");
+  const st = memStore(); sent.length = 0;
+  const g = { ...good, date: "2026-12-05", email: "slot@x.co", slot: "Golden hour" };
+  const r1 = await createCheckout(g, deps(st)); assert.equal(r1.status, 200);
+  const calls = []; const f3 = async (u, o) => { calls.push(o?.body); return fetchMock(u, o); };
+  await createCheckout({ ...g, date: "2026-12-06", email: "slot2@x.co", slot: "Midnight" }, { ...deps(st), fetch: f3 });
+  assert.equal(String(calls[0]).includes("metadata%5Bslot%5D"), false); ok("unknown time window ignored");
+  await handleStripeEvent({ id: "evt_s", type: "checkout.session.completed", data: { object: { payment_intent: "pi_s", customer_details: { email: "slot@x.co" }, metadata: { kind: "session", package: "Half day", date: "2026-12-05", name: "Sl", message: "", slot: "Golden hour" } } } }, { ...deps(st) });
+  assert.ok(sent.some((m) => m.attachments?.[0]?.filename === "session.ics" && m.to[0] === "slot@x.co")); assert.ok(sent.some((m) => /Time: Golden hour/.test(m.text))); ok("paid booking emails invite and time window");
 }

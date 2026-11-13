@@ -21,7 +21,7 @@ for (const line of readFileSync(join(ROOT, "_headers"), "utf8").split("\n")) {
 const mockApi = (req, res) => {
   const url = req.url.split("?")[0];
   const send = (code, body) => res.writeHead(code, { ...headers, "Content-Type": "application/json" }).end(body === undefined ? "" : JSON.stringify(body));
-  if (url === "/api/availability") return send(200, { configured: true, payments: Boolean(process.env.MOCK_PAY), minLeadDays: 7, closedWeekdays: [0], unavailable: [process.env.MOCK_TAKEN || "2099-01-05"], depositNote: "Deposit is credited to your final balance." });
+  if (url === "/api/availability") return send(200, { configured: true, payments: Boolean(process.env.MOCK_PAY), minLeadDays: 7, closedWeekdays: [0], unavailable: [process.env.MOCK_TAKEN || "2099-01-05"], depositNote: "Deposit is credited to your final balance.", slots: ["Morning", "Afternoon"], travelNote: "Travel over 60 miles is quoted first." });
   if (url === "/api/collect") return send(204);
   if (url === "/api/request") return process.env.MOCK_REQUEST_FAIL ? send(502, { error: "email-failed", reason: "test reason" }) : send(200, { ok: true });
   if (url === "/api/checkout") return send(200, { url: "/Photography-Studio/thanks/?paid=1" });
