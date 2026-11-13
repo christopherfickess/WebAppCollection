@@ -10,6 +10,13 @@ export default async (req) => {
     body.setup = Object.fromEntries(names.map((n) => [n, Boolean(deps.env[n])]));
     body.setup.stripeKeyLooksRight = /^sk_(test|live)_/.test(deps.env.STRIPE_SECRET_KEY || "");
     body.setup.context = deps.env.CONTEXT || "unknown";
+    // On *.netlify.app test deploys only: a masked view of the two addresses, to catch typos and mismatches.
+    if (new URL(req.url).hostname.endsWith(".netlify.app")) {
+      const mask = (v) => { if (!v) return null; const [u, d = ""] = String(v).trim().replace(/^.*</, "").replace(/>$/, "").split("@"); return `${u.slice(0, 2)}***@${d}`; };
+      body.setup.ownerEmailLooksLike = mask(deps.env.OWNER_EMAIL);
+      body.setup.emailFromLooksLike = mask(deps.env.EMAIL_FROM);
+      body.setup.ownerEmailHasSpaces = /\s/.test((deps.env.OWNER_EMAIL || "").trim());
+    }
   }
   return json(200, body);
 };
