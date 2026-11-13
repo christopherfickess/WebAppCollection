@@ -33,7 +33,11 @@ export async function sync(env, fetchFn = fetch, log = console.log) {
     // Replace any existing value: delete (a missing one is fine), then create.
     const del = await call("DELETE", `/accounts/${account}/env/${name}${q}`);
     if (!del.ok && del.status !== 404) { log(`FAILED ${name}: delete returned HTTP ${del.status} ${del.text}`); failed++; continue; }
-    const add = await call("POST", `/accounts/${account}/env${q}`, [{ key: name, scopes: SCOPES, is_secret: !PLAIN.has(name), values: CONTEXTS.map((context) => ({ context, value })) }]);
+    // Plain variables use Netlify's defaults (all scopes, all contexts): choosing specific scopes needs a paid plan.
+    const payload = PLAIN.has(name)
+      ? { key: name, is_secret: false, values: [{ context: "all", value }] }
+      : { key: name, scopes: SCOPES, is_secret: true, values: CONTEXTS.map((context) => ({ context, value })) };
+    const add = await call("POST", `/accounts/${account}/env${q}`, [payload]);
     if (add.ok) log(`set ${name} (${CONTEXTS.join(", ")})`);
     else { log(`FAILED ${name}: HTTP ${add.status} ${add.text}`); failed++; }
   }

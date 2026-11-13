@@ -40,4 +40,4 @@ jobs:
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
         run: node tools/sync-netlify-env.mjs
-# Last re-synced: OWNER_EMAIL and EMAIL_FROM now stored as plain variables.
+# Last re-synced: address variables stored as plain, all-context variables (free plan).
