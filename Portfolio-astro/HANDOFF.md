@@ -500,6 +500,19 @@ internal links return 200, autoplay advances and pauses.
 - `/api/availability?setup=1` reports which settings the deploy can see (yes or no only).
 - Verified live on the branch deploy: Stripe Checkout creates a session and redirects to the thank-you page.
 
+## Hardening, refunds, manage links, release tooling
+
+- **Abuse limits** (`lib/studio.mjs`): one open date hold per email, at most `MAX_OPEN_HOLDS` (10) open holds, POST endpoints refuse a foreign `Origin`, hourly rate limits per client IP on checkout (20), request form (10) and manage (60). HSTS is in `public/_headers`. `public/.well-known/security.txt` has a placeholder contact that `new-client` replaces; `launch-check` fails while it is a placeholder.
+- **Refunds**: the Stripe webhook must also receive `charge.refunded`. A full refund frees the date and emails the owner; a partial refund only emails. `bookings[date]` now stores `pi` (payment intent) and `slot`.
+- **Manage page** `/Photography-Studio/manage/` + `/api/manage`: link in the confirmation and reminder emails, signed with an HMAC of date + email using `MANAGE_SECRET` or, if unset, `STATS_TOKEN` (changing that secret invalidates old links). Cancel: full refund when at least `refundFullDays` (booking.json, default 14) before the session, otherwise the deposit is kept; the date is freed either way. Reschedule: once, under the normal notice rules. Balance: Stripe Checkout, metadata kind `balance`.
+- **Emails**: every email is sent as branded HTML plus plain text (`emailHtml`). Paid bookings and reschedules attach an `.ics` calendar entry. Optional `slots` (time windows) and `travelNote` in booking.json add a "Preferred time" field and a note to the form; the date stays the exclusive unit (one booking per day).
+- **Alerts**: failed checkout, failed request email, failed webhook and failed reminders email the owner (`alertOwner`, best effort: if the email provider itself is down the alert cannot be sent, so also use an uptime monitor).
+- **Backups**: `.github/workflows/backup.yml` downloads `/api/export` weekly into a private workflow artifact (needs the `SITE_URL` and `STATS_TOKEN` repository secrets; schedules only run from the default branch).
+- **Tests**: `npm test` (logic, now ~65 checks), `npm run test:e2e` (real handlers behind a local server with a fake Stripe and Resend, driven in a browser; set `globalThis.__studioDeps` in `lib/runtime.mjs`; runs in CI), `npm run launch-check -- <url> [--live]` (checks a deployed site and fails loudly), `npm audit --omit=dev` in CI.
+- **Environments**: `sync-netlify-env.mjs` has `SYNC_MODE=test|live`. Live mode puts `LIVE_STRIPE_*` values on the production context only, previews keep test keys, and test mode refuses a live key. The live job uses the GitHub `production` environment (approval). The repository variable `GO_LIVE=true` disables the test job. Each sync deletes and recreates a variable for all contexts, so always run the mode that matches the current state.
+- **New client**: `npm run new-client -- client.json` (see header of `tools/new-client.mjs`), then follow `CLIENT-LAUNCH.md`. `OWNER-STEPS.md` covers what needs the owner's accounts.
+- **Not verified from the sandbox**: refund and manage flows against real Stripe, scheduled reminders on Netlify, HSTS/CSP headers on the deployed site (run `launch-check`), editor login. The dev-only editor tooling (decap-cms) has known advisories in `npm audit`; it does not ship to visitors.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —
