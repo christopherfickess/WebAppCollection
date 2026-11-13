@@ -1,5 +1,18 @@
 # Steps only the account owner can do
 
+## Most settings are applied by the pipeline
+
+The **Configure services** workflow (`.github/workflows/configure-services.yml`) reads `services.config.json` and the GitHub secrets, then sets up:
+
+- Stripe: the webhook endpoint with `checkout.session.completed` and `charge.refunded`, and Klarna/Affirm/Afterpay off (test, and live once `GO_LIVE` is true)
+- Resend: adds your sending domain and starts verification; with `netlify.manageDnsRecords` true and Netlify hosting your DNS it also adds the DNS records
+- Netlify: custom domain, force HTTPS, and every environment variable
+- GitHub: stores the signing secrets Stripe creates, if you add a `GH_ADMIN_TOKEN` secret (a fine-grained token limited to this repository with Secrets: read and write)
+
+Run it from the Actions tab with **dry run** on first: it only reads and prints what it would change. Turn dry run off to apply. It is safe to run again.
+
+What no API can do for you: Stripe's business verification and bank details for live mode, DNS records at a registrar that is not Netlify (the workflow prints the exact records to paste), and approving the production environment. The sections below are the manual fallbacks.
+
 These need a login to Resend, Stripe, DNS, GitHub or Netlify. Menu names change, so each step gives the page address first and describes what to look for. Where a step has not been checked against the current screens, it says so.
 
 ## Verify your own domain in Resend (so clients get email)

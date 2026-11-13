@@ -21,8 +21,8 @@ jobs:
           cache: npm
           cache-dependency-path: Portfolio-astro/package-lock.json
       - run: npm ci
-      - name: Dependency audit (fails on high or critical)
-        run: npm audit --omit=dev --audit-level=high
+      - name: Dependency audit (fails on high or critical, including build tools)
+        run: npm audit --audit-level=high
       - run: npx playwright-core install --with-deps chromium
       - run: node tools/build-content.mjs
       - run: node tools/build-seo.mjs

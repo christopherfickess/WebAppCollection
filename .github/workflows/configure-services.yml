@@ -1,0 +1,74 @@
+name: Configure services
+
+# Brings Stripe, Resend, Netlify and GitHub into the state described by
+# Portfolio-astro/services.config.json. Idempotent: it reads first and changes only what differs.
+#   - Stripe: webhook endpoint with the right events, Klarna/Affirm off (test, and live once GO_LIVE=true)
+#   - Resend: the sending domain, its verification, and (if Netlify hosts your DNS) the DNS records
+#   - Netlify: custom domain, force HTTPS, and every environment variable (via the sync script)
+#   - GitHub: stores the signing secrets Stripe creates (only if GH_ADMIN_TOKEN is set)
+# "Run workflow" with dry_run on (the default) only reads and prints what it would change.
+# Pushes to this file also do a dry run on the dev branch.
+#
+# Repository secrets: those in netlify-env.yml, plus optional GH_ADMIN_TOKEN (a fine-grained token for this
+# repository with Secrets: read and write). Live keys: LIVE_STRIPE_* in the "production" environment.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only read and report, change nothing"
+        type: boolean
+        default: true
+  push:
+    branches: [redesign/rails-nav-theme]
+    paths: [".github/workflows/configure-services.yml", "Portfolio-astro/services.config.json"]
+
+jobs:
+  configure-test:
+    if: ${{ vars.GO_LIVE != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Configure (test keys)
+        working-directory: Portfolio-astro
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DRY: ${{ github.event_name == 'push' || inputs.dry_run }}
+        run: node tools/configure-services.mjs $([ "$DRY" = "true" ] && echo --dry)
+
+  configure-live:
+    if: ${{ vars.GO_LIVE == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production   # waits for your approval
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Configure (test and live keys)
+        working-directory: Portfolio-astro
+        env:
+          GO_LIVE: "true"
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          LIVE_STRIPE_SECRET_KEY: ${{ secrets.LIVE_STRIPE_SECRET_KEY }}
+          LIVE_STRIPE_WEBHOOK_SECRET: ${{ secrets.LIVE_STRIPE_WEBHOOK_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DRY: ${{ github.event_name == 'push' || inputs.dry_run }}
+        run: node tools/configure-services.mjs $([ "$DRY" = "true" ] && echo --dry)

@@ -1,0 +1,12 @@
+{
+  "siteUrl": "https://redesign-rails-nav-theme--starlight-dogfood-test-1.netlify.app",
+  "customDomain": "",
+  "stripe": {
+    "webhookEvents": ["checkout.session.completed", "charge.refunded"],
+    "webhookDescription": "Studio bookings (managed by the configure-services workflow)",
+    "disablePaymentMethods": ["klarna", "affirm", "afterpay_clearpay"]
+  },
+  "resend": { "domain": "", "region": "us-east-1" },
+  "netlify": { "forceHttps": true, "manageDnsRecords": false },
+  "_notes": "siteUrl is where Stripe sends payment notices. Use the live address once a custom domain is set. customDomain and resend.domain stay empty until the client has a domain. manageDnsRecords only works if Netlify hosts the domain's DNS."
+}

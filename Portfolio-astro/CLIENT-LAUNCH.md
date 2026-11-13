@@ -21,6 +21,8 @@ Step-by-step guides are in `OWNER-STEPS.md`.
 - [ ] GitHub secrets and the `production` environment (see below)
 - [ ] Uptime monitor on the home page and `/api/availability`
 
+**Shortcut:** fill in `services.config.json` (or give `new-client` an `emailDomain`), add the secrets, and run the **Configure services** workflow (dry run first). It does the webhook, Stripe payment methods, Resend domain, Netlify domain and variables for you. The manual steps below are the fallback and the checks.
+
 ## 3. Test keys first
 
 1. Add the repository secrets listed at the top of `.github/workflows/netlify-env.yml` (test Stripe key and test webhook secret).

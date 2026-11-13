@@ -513,6 +513,13 @@ internal links return 200, autoplay advances and pauses.
 - **New client**: `npm run new-client -- client.json` (see header of `tools/new-client.mjs`), then follow `CLIENT-LAUNCH.md`. `OWNER-STEPS.md` covers what needs the owner's accounts.
 - **Not verified from the sandbox**: refund and manage flows against real Stripe, scheduled reminders on Netlify, HSTS/CSP headers on the deployed site (run `launch-check`), editor login. The dev-only editor tooling (decap-cms) has known advisories in `npm audit`; it does not ship to visitors.
 
+## Service configuration pipeline
+
+- `services.config.json` (non-secret settings) + `tools/configure-services.mjs` + `.github/workflows/configure-services.yml`. Idempotent: reads Stripe webhook endpoints, payment method configuration, Resend domains, Netlify site and DNS, changes only differences, then runs the env sync. `--dry` reads only. Tested with a fake world in `tools/tests/configure.test.mjs`.
+- Stripe shows a webhook signing secret only when the endpoint is created. Without a stored secret the script replaces the endpoint and sends the new secret to Netlify; with `GH_ADMIN_TOKEN` it also stores it as a GitHub secret so later runs keep it.
+- Unverified against the live APIs (calls follow the documented shapes): Stripe payment method configuration field names, Resend record format into Netlify DNS record names, Netlify `force_ssl`/`custom_domain` update. Each of these fails soft with a warning rather than stopping the run. Run the workflow as a dry run first.
+- Editor: Decap 3.17.3 with an npm override pinning `trim` to the patched 0.0.3; `npm audit` shows 0 high. The editor page needs `'unsafe-eval'` in its CSP (its schema validator compiles code); without it the editor stops at "Error loading the CMS configuration". `launch-check` verifies the editor CSP is a single policy.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

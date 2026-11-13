@@ -5,7 +5,7 @@
 //   { "name": "Harbor Light Photography", "brand": "Harbor Light", "tagline": "Photography",
 //     "place": "Portland, Maine", "lat": 43.66, "lon": -70.26, "timeZone": "America/New_York",
 //     "region": "ME", "country": "US", "phone": "", "accent": "#2b7fd9",
-//     "domain": "https://harborlight.example", "securityContact": "hello@harborlight.example" }
+//     "domain": "https://harborlight.example", "securityContact": "hello@harborlight.example", "emailDomain": "mail.harborlight.example" }
 // Photos, prices, FAQ and the rest are changed in the content editor or in public/Photography-Studio/content/.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -71,6 +71,15 @@ if (c.domain || c.securityContact) {
   t = t.replace(/^Expires:.*$/m, `Expires: ${next.toISOString()}`);
   t = t.replace(/^# Replace the contact.*\n/m, "");
   put(p, t);
+}
+
+// Service settings (Stripe webhook address, Netlify domain, Resend sending domain)
+if (c.domain || c.emailDomain) {
+  const sp = `${root}services.config.json`;
+  const cfg = JSON.parse(readFileSync(sp, "utf8"));
+  if (c.domain) { cfg.siteUrl = c.domain; cfg.customDomain = c.domain; }
+  if (c.emailDomain) cfg.resend.domain = c.emailDomain;
+  put(sp, JSON.stringify(cfg, null, 2) + "\n");
 }
 
 console.log(`${dry ? "Would change" : "Changed"} ${changed.length} file(s):\n- ${changed.join("\n- ") || "(nothing)"}`);
