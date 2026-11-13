@@ -7,7 +7,7 @@ name: Configure services
 #   - Netlify: custom domain, force HTTPS, and every environment variable (via the sync script)
 #   - GitHub: stores the signing secrets Stripe creates (only if GH_ADMIN_TOKEN is set)
 # "Run workflow" with dry_run on (the default) only reads and prints what it would change.
-# Pushes to this file also do a dry run on the dev branch.
+# Pushes to this file or to services.config.json on the dev branch APPLY the settings (it is idempotent).
 #
 # Repository secrets: those in netlify-env.yml, plus optional GH_ADMIN_TOKEN (a fine-grained token for this
 # repository with Secrets: read and write). Live keys: LIVE_STRIPE_* in the "production" environment.
@@ -43,7 +43,7 @@ jobs:
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
           GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          DRY: ${{ github.event_name == 'push' || inputs.dry_run }}
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         run: node tools/configure-services.mjs $([ "$DRY" = "true" ] && echo --dry)
 
   configure-live:
@@ -70,5 +70,5 @@ jobs:
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
           GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          DRY: ${{ github.event_name == 'push' || inputs.dry_run }}
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         run: node tools/configure-services.mjs $([ "$DRY" = "true" ] && echo --dry)
