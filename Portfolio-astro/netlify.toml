@@ -4,3 +4,8 @@
 
 [functions]
   directory = "netlify/functions"
+
+# Netlify fails a build if a secret variable's value appears in the repo or build output.
+# These two hold email addresses (the owner's contact address is on the site by design), so skip them.
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "OWNER_EMAIL,EMAIL_FROM"

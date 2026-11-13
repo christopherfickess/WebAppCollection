@@ -5,6 +5,9 @@ const API = "https://api.netlify.com/api/v1";
 const NAMES = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN"];
 const CONTEXTS = ["production", "deploy-preview", "branch-deploy"]; // secrets cannot use "dev"
 const SCOPES = ["builds", "functions", "runtime"];
+// Addresses are not secrets. Netlify fails a build when a secret's value appears in the code, and a contact
+// address legitimately does (it is on the site). These two are stored as plain variables.
+const PLAIN = new Set(["EMAIL_FROM", "OWNER_EMAIL"]);
 
 export async function sync(env, fetchFn = fetch, log = console.log) {
   const { NETLIFY_AUTH_TOKEN: token, NETLIFY_SITE_ID: siteId } = env;
@@ -30,7 +33,7 @@ export async function sync(env, fetchFn = fetch, log = console.log) {
     // Replace any existing value: delete (a missing one is fine), then create.
     const del = await call("DELETE", `/accounts/${account}/env/${name}${q}`);
     if (!del.ok && del.status !== 404) { log(`FAILED ${name}: delete returned HTTP ${del.status} ${del.text}`); failed++; continue; }
-    const add = await call("POST", `/accounts/${account}/env${q}`, [{ key: name, scopes: SCOPES, is_secret: true, values: CONTEXTS.map((context) => ({ context, value })) }]);
+    const add = await call("POST", `/accounts/${account}/env${q}`, [{ key: name, scopes: SCOPES, is_secret: !PLAIN.has(name), values: CONTEXTS.map((context) => ({ context, value })) }]);
     if (add.ok) log(`set ${name} (${CONTEXTS.join(", ")})`);
     else { log(`FAILED ${name}: HTTP ${add.status} ${add.text}`); failed++; }
   }

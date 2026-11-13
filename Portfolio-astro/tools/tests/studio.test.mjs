@@ -88,5 +88,5 @@ assert.equal(rq.status, 503); ok("unconfigured email is an error, not a fake suc
 
 // addresses are normalised before sending
 sent.length = 0;
-await handleRequest({ name: "Di", email: "  Di@X.co ", message: "m" }, { store, env: { ...env, OWNER_EMAIL: " Cfickess20@Gmail.com " }, fetch: fetchMock, now: NOW + 3 * 864e5 });
-assert.equal(sent[0].to[0], "cfickess20@gmail.com"); assert.equal(sent[0].reply_to, "di@x.co"); assert.equal(sent[1].to[0], "di@x.co"); ok("addresses are trimmed and lowercased");
+await handleRequest({ name: "Di", email: "  Di@X.co ", message: "m" }, { store, env: { ...env, OWNER_EMAIL: " Owner@Example.COM " }, fetch: fetchMock, now: NOW + 3 * 864e5 });
+assert.equal(sent[0].to[0], "owner@example.com"); assert.equal(sent[0].reply_to, "di@x.co"); assert.equal(sent[1].to[0], "di@x.co"); ok("addresses are trimmed and lowercased");

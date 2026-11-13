@@ -12,6 +12,7 @@ const posts = calls.filter((c) => c.method === "POST");
 assert.equal(posts.length, 2);
 const body = JSON.parse(posts[0].body)[0];
 assert.equal(body.key, "STRIPE_SECRET_KEY"); assert.equal(body.is_secret, true);
+assert.equal(JSON.parse(posts[1].body)[0].key, "OWNER_EMAIL"); assert.equal(JSON.parse(posts[1].body)[0].is_secret, false);
 assert.deepEqual(body.values.map((v) => v.context), ["production", "deploy-preview", "branch-deploy"]);
 assert.ok(posts[0].url.includes("/accounts/A1/env?site_id=S1"));
 assert.ok(out.includes("skip RESEND_API_KEY (empty)")); assert.ok(!out.join("\n").includes("sk_test_x"));
