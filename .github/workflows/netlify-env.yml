@@ -44,8 +44,11 @@ jobs:
           fi
           # EMAIL_FROM and OWNER_EMAIL are addresses, not secrets, but are set
           # the same way so there is one place to manage them.
-          # Secret values must name their deploy contexts (not "dev").
           npm install --global netlify-cli@27.16.2 > /dev/null 2>&1
+          # Shows whether the site and token can be found (no secret values are printed).
+          netlify api getSite --data "{\"site_id\":\"${NETLIFY_SITE_ID}\"}" > /tmp/site.json 2>/tmp/site.err || { echo "getSite failed:"; head -c 300 /tmp/site.err; }
+          node -e 'try{const s=require("/tmp/site.json");console.log("site name:",s.name,"| has account_id:",!!s.account_id,"| account_slug:",s.account_slug,"| id matches:",s.id===process.env.NETLIFY_SITE_ID)}catch(e){console.log("no site data:",e.message)}'
+          # Secret values must name their deploy contexts (not "dev").
           for name in STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET RESEND_API_KEY EMAIL_FROM OWNER_EMAIL STATS_TOKEN; do
             value="${!name}"
             if [ -z "$value" ]; then echo "skip $name (empty)"; continue; fi
