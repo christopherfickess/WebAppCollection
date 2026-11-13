@@ -52,10 +52,13 @@ export async function stripePaymentMethods({ key, off, dry, fetchFn, log, label 
     if (!todo.length) { log(`ok ${label} payment methods already off: ${off.join(", ")}`); return; }
     log(`${dry ? "would turn" : "turning"} off in ${label}: ${todo.join(", ")}`);
     if (dry) return;
-    const p = new URLSearchParams();
-    for (const m of todo) p.set(`${m}[display_preference][preference]`, "none");
-    const r = await fetchFn(`${STRIPE}/payment_method_configurations/${target.id}`, { method: "POST", headers, body: p.toString() });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    // One method per request, so a method Stripe rejects does not block the others.
+    for (const m of todo) {
+      const p = new URLSearchParams();
+      p.set(`${m}[display_preference][preference]`, "none");
+      const r = await fetchFn(`${STRIPE}/payment_method_configurations/${target.id}`, { method: "POST", headers, body: p.toString() });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); log(`warn ${label}: could not turn off ${m} (HTTP ${r.status}: ${d?.error?.message || "no detail"}). Turn it off in the Stripe dashboard.`); }
+    }
   } catch (e) { log(`warn ${label} payment methods not changed (${e.message}); set them in the Stripe dashboard`); }
 }
 
@@ -84,10 +87,11 @@ export async function netlifySite({ token, siteId, domain, forceHttps, dry, fetc
   const site = await r.json();
   const patch = {};
   if (domain && site.custom_domain !== domain) patch.custom_domain = domain;
-  if (forceHttps && site.force_ssl !== true) patch.force_ssl = true;
+  // Netlify only accepts force_ssl once a custom domain has a certificate; *.netlify.app is always HTTPS.
+  if (forceHttps && site.custom_domain && site.force_ssl !== true) patch.force_ssl = true;
   if (Object.keys(patch).length) {
     log(`${dry ? "would set" : "setting"} Netlify site: ${Object.keys(patch).join(", ")}`);
-    if (!dry) { const u = await fetchFn(`${NETLIFY}/sites/${siteId}`, { method: "PATCH", headers, body: JSON.stringify(patch) }); if (!u.ok) log(`warn Netlify site update failed (HTTP ${u.status})`); }
+    if (!dry) { const u = await fetchFn(`${NETLIFY}/sites/${siteId}`, { method: "PATCH", headers, body: JSON.stringify(patch) }); if (!u.ok) log(`warn Netlify site update failed (HTTP ${u.status}: ${(await u.text().catch(() => "")).slice(0, 160)}). If you just added a custom domain, the certificate may not be ready; run again later.`); }
   } else log("ok Netlify site settings already match");
   return site;
 }

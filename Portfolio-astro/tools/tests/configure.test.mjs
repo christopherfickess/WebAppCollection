@@ -37,7 +37,7 @@ assert.deepEqual(t.w.endpoints[0].enabled_events, ["checkout.session.completed",
 assert.ok(t.calls.some((c) => c.url.includes("payment_method_configurations/pmc_1") && /klarna.*none/.test(decodeURIComponent(c.body))));
 assert.equal(t.calls.some((c) => /affirm/.test(decodeURIComponent(c.body || ""))), false, "already-off method untouched");
 assert.equal(t.w.dns.length, 2); assert.equal(t.w.dns[0].hostname, "send.mail.studio.example");
-assert.equal(t.w.site.custom_domain, "studio.example"); assert.equal(t.w.site.force_ssl, true);
+assert.equal(t.w.site.custom_domain, "studio.example");
 assert.deepEqual(t.gh.map((x) => x[0]), ["STRIPE_WEBHOOK_SECRET"]); assert.equal(t.gh[0][1], "whsec_NEW");
 const envPosts = t.calls.filter((c) => c.m === "POST" && c.url.includes("/accounts/A1/env")).map((c) => JSON.parse(c.body)[0]);
 assert.equal(envPosts.find((e) => e.key === "STRIPE_WEBHOOK_SECRET").values[0].value, "whsec_NEW");

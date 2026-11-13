@@ -10,3 +10,4 @@
   "netlify": { "forceHttps": true, "manageDnsRecords": false },
   "_notes": "siteUrl is where Stripe sends payment notices. Use the live address once a custom domain is set. customDomain and resend.domain stay empty until the client has a domain. manageDnsRecords only works if Netlify hosts the domain's DNS."
 }
+
