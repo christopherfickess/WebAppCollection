@@ -13,6 +13,11 @@ name: Sync secrets to Netlify
 # Any that are empty are skipped. Nothing is ever printed.
 on:
   workflow_dispatch:
+  # Also runs when this file changes on the dev branch, because GitHub only
+  # offers the manual "Run workflow" button for workflows on the default branch.
+  push:
+    branches: [redesign/rails-nav-theme]
+    paths: [".github/workflows/netlify-env.yml"]
 
 jobs:
   sync:
