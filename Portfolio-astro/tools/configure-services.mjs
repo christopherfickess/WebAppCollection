@@ -55,7 +55,7 @@ export async function stripePaymentMethods({ key, off, dry, fetchFn, log, label 
     // One method per request, so a method Stripe rejects does not block the others.
     for (const m of todo) {
       const p = new URLSearchParams();
-      p.set(`${m}[display_preference][preference]`, "none");
+      p.set(`${m}[display_preference][preference]`, target.parent ? "none" : "off"); // "none" is only valid on child configurations
       const r = await fetchFn(`${STRIPE}/payment_method_configurations/${target.id}`, { method: "POST", headers, body: p.toString() });
       if (!r.ok) { const d = await r.json().catch(() => ({})); log(`warn ${label}: could not turn off ${m} (HTTP ${r.status}: ${d?.error?.message || "no detail"}). Turn it off in the Stripe dashboard.`); }
     }
