@@ -4,28 +4,28 @@ Checked 2026-11-13 at widths 390, 820, 1440 px, behind the site's real security 
 
 ## /Photography-Studio/  PASS
 - No problems found.
-- 290 KB loaded; 32 accessibility checks passed
+- 97 KB loaded; 32 accessibility checks passed
 
 ## /Photography-Studio/privacy/  PASS
 - No problems found.
-- 65 KB loaded; 21 accessibility checks passed
+- 20 KB loaded; 21 accessibility checks passed
 
 ## /Photography-Studio/terms/  PASS
 - No problems found.
-- 22 KB loaded; 21 accessibility checks passed
+- 39 KB loaded; 21 accessibility checks passed
 
 ## /Photography-Studio/thanks/  PASS
 - No problems found.
-- 90 KB loaded; 21 accessibility checks passed
+- 2 KB loaded; 21 accessibility checks passed
 
 ## /Photography-Studio/manage/  PASS
 - No problems found.
-- 82 KB loaded; 24 accessibility checks passed
+- 34 KB loaded; 24 accessibility checks passed
 
 ## /travel-advisor/  PASS
 - No problems found.
-- 374 KB loaded; 31 accessibility checks passed
+- 473 KB loaded; 31 accessibility checks passed
 
 ## /showcase/  PASS
 - No problems found.
-- 82 KB loaded; 24 accessibility checks passed
+- 256 KB loaded; 24 accessibility checks passed

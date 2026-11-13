@@ -35,6 +35,11 @@ check(!/example\.com/.test(robots), "robots.txt has the real domain", "robots.tx
 const map = await (await get("/sitemap.xml")).text();
 check(!/example\.com/.test(map) && map.includes("<loc>"), "sitemap has the real domain", "sitemap.xml still mentions example.com");
 
+const ad = await get("/Photography-Studio/admin/");
+const adCsp = ad.headers.get("content-security-policy") || "";
+check(ad.status === 200, "content editor page loads", `editor page returned ${ad.status} (the address is case-sensitive: /Photography-Studio/admin/)`);
+check(adCsp.includes("'unsafe-eval'") && (adCsp.match(/default-src/g) || []).length === 1, "editor has its own single CSP", "editor CSP is wrong: it must include 'unsafe-eval' and be ONE policy. If it lists two policies, the site-wide rule is being merged in; the editor will show 'Error loading the CMS configuration'");
+
 const bad = await get("/api/stripe-webhook", { method: "POST", headers: { "stripe-signature": "t=1,v1=00" }, body: "{}" });
 check(bad.status === 400, "webhook refuses unsigned calls", `webhook returned ${bad.status} to a forged call (expected 400)`);
 const xs = await get("/api/request", { method: "POST", headers: { Origin: "https://evil.example", "Content-Type": "application/json" }, body: "{}" });

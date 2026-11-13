@@ -24,8 +24,11 @@
   },
   "devDependencies": {
     "axe-core": "^4.14.0",
-    "decap-cms": "^3.8.4",
+    "decap-cms": "^3.17.3",
     "lighthouse": "^13.6.0",
     "playwright-core": "^1.65.0"
+  },
+  "overrides": {
+    "trim": "0.0.3"
   }
 }
