@@ -116,6 +116,9 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
 
 export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, replyTo }) {
   if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !to) return { skipped: true };
+  // Phone keyboards capitalise the first letter and add spaces; providers can treat that as a different address.
+  to = String(to).trim().toLowerCase();
+  if (replyTo) replyTo = String(replyTo).trim().toLowerCase();
   const res = await fetchFn("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
@@ -266,7 +269,7 @@ const REQUESTS_PER_DAY = 20; // cap on confirmation copies, so the form cannot b
 export async function handleRequest(body, deps) {
   const { store, now } = deps;
   if (body?.["bot-field"]) return json(200, { ok: true }); // honeypot: look successful, do nothing
-  const name = clip(body?.name, 100), email = clip(body?.email, 200), message = clip(body?.message, 2000);
+  const name = clip(body?.name, 100), email = clip(body?.email, 200).toLowerCase(), message = clip(body?.message, 2000);
   const session = clip(body?.session, 60), date = clip(body?.date, 10);
   if (!name || !EMAIL.test(email) || !message) return json(400, { error: "invalid-contact" });
   if (date && !DATE.test(date)) return json(400, { error: "invalid-date" });

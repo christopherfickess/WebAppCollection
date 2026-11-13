@@ -85,3 +85,8 @@ rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store
 assert.equal(rq.status, 502); assert.equal((await rq.json()).reason, undefined); ok("reason hidden on real sites");
 rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store, env: {}, fetch: fetchMock, now: NOW + 5 });
 assert.equal(rq.status, 503); ok("unconfigured email is an error, not a fake success");
+
+// addresses are normalised before sending
+sent.length = 0;
+await handleRequest({ name: "Di", email: "  Di@X.co ", message: "m" }, { store, env: { ...env, OWNER_EMAIL: " Cfickess20@Gmail.com " }, fetch: fetchMock, now: NOW + 9 });
+assert.equal(sent[0].to[0], "cfickess20@gmail.com"); assert.equal(sent[0].reply_to, "di@x.co"); assert.equal(sent[1].to[0], "di@x.co"); ok("addresses are trimmed and lowercased");
