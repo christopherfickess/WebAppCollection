@@ -121,7 +121,7 @@ export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, re
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, text, ...(replyTo ? { reply_to: replyTo } : {}) }),
   });
-  return { ok: res.ok };
+  return { ok: res.ok, status: res.status, detail: res.ok ? "" : String(await res.text().catch(() => "")).slice(0, 200) };
 }
 
 const sign = (n) => `${catalog.business.name}`;
@@ -273,7 +273,11 @@ export async function handleRequest(body, deps) {
   const form = { name, email, session, date, message };
   const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, `Message: ${message}`];
   const owner = await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `New request: ${name}`, text: lines.join("\n"), replyTo: email });
-  if (!owner.ok && !owner.skipped) return json(502, { error: "email-failed" });
+  if (owner.skipped) return json(503, { error: "email-not-configured" }); // never tell a visitor "sent" when nothing was
+  if (!owner.ok) {
+    console.error("request email failed", owner.status, owner.detail);
+    return json(502, { error: "email-failed", ...(deps.expose ? { reason: owner.detail } : {}) });
+  }
   const key = `reqs:${iso(new Date(now))}`;
   const count = (await store.get(key, { type: "json" })) || 0;
   if (count < REQUESTS_PER_DAY) {

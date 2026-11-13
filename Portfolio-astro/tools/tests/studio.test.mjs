@@ -76,3 +76,12 @@ assert.equal(rq.status, 200); assert.equal(sent.length, 0); ok("honeypot sends n
 rq = await handleRequest({ name: "", email: "bad", message: "" }, { store, env, fetch: fetchMock, now: NOW }); assert.equal(rq.status, 400); ok("invalid request rejected");
 sent.length = 0; for (let i = 0; i < 25; i++) await handleRequest({ name: "N", email: "n@x.co", message: "m" }, { store, env, fetch: fetchMock, now: NOW + 1 });
 assert.equal(sent.filter((m) => m.to[0] === "n@x.co").length <= 20, true); assert.equal(sent.filter((m) => m.to[0] === "o@b.co").length >= 25, true); ok("sender copies are capped per day, owner always notified");
+
+// failures are visible, not swallowed
+const refused = async (url, opt) => (url.includes("stripe") ? fetchMock(url, opt) : { ok: false, status: 403, text: async () => "You can only send testing emails to your own email address" });
+rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store, env, fetch: refused, now: NOW + 5, expose: true });
+assert.equal(rq.status, 502); assert.match((await rq.json()).reason, /only send testing emails/); ok("email refusal reported with reason on test deploys");
+rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store, env, fetch: refused, now: NOW + 5 });
+assert.equal(rq.status, 502); assert.equal((await rq.json()).reason, undefined); ok("reason hidden on real sites");
+rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store, env: {}, fetch: fetchMock, now: NOW + 5 });
+assert.equal(rq.status, 503); ok("unconfigured email is an error, not a fake success");

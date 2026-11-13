@@ -47,9 +47,15 @@ export class Booking {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: f.name.value, email: f.email.value, session: f.session.value, date: f.date.value, message: f.message.value, "bot-field": f["bot-field"]?.value || "" }),
       });
-      if (!res.ok) throw new Error();
-      location.assign(this.form.getAttribute("action"));
-    } catch {
+      if (res.ok) { location.assign(this.form.getAttribute("action")); return; }
+      // Function missing (404/405): use the normal form post. Any other failure: say so, do not lose the visitor on a 404 page.
+      if (res.status === 404 || res.status === 405) throw new Error("no-function");
+      let reason = "";
+      try { reason = (await res.json()).reason || ""; } catch {}
+      this.msg.textContent = `We could not send your request${reason ? ` (${reason})` : ""}. Please try again in a moment.`;
+      button.disabled = false;
+    } catch (err) {
+      if (err.message !== "no-function" && !(err instanceof TypeError)) { button.disabled = false; return; }
       this.fallback = true;
       this.form.requestSubmit();
     }
