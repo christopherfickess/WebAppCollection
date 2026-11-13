@@ -62,6 +62,9 @@ for (const path of PAGES) {
     if (!res || res.status() >= 400) { row.problems.push(`${width}px: page did not load`); await ctx.close(); continue; }
     await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 40)); } scrollTo(0, 0); });
     await page.waitForTimeout(500);
+    // Scroll-in fades take over a second; audit the finished page, not a frame mid-fade.
+    await page.evaluate(async () => { await Promise.all(document.getAnimations().filter((a) => a.effect?.getComputedTiming().endTime !== Infinity).map((a) => a.finished.catch(() => {}))); });
+    await page.waitForTimeout(200);
     const m = await page.evaluate(() => ({
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       broken: [...document.images].filter((i) => i.getAttribute("src") && i.complete && i.naturalWidth === 0).map((i) => i.currentSrc || i.outerHTML.slice(0, 80)),
@@ -81,7 +84,7 @@ for (const path of PAGES) {
       row.notes.push(`${(bytes / 1024).toFixed(0)} KB loaded`);
       await page.evaluate(axeSource);
       const axe = await page.evaluate(() => axe.run(document, { runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] }));
-      for (const v of axe.violations) row.problems.push(`accessibility (${v.impact}): ${v.id}, ${v.nodes.length} element(s). ${v.help}`);
+      for (const v of axe.violations) row.problems.push(`accessibility (${v.impact}): ${v.id}, ${v.nodes.length} element(s). ${v.help}. First: ${v.nodes[0].target.join(" ")} ${(v.nodes[0].any[0]?.message || "").slice(0, 160)}`);
       row.notes.push(`${axe.passes.length} accessibility checks passed`);
     }
     await ctx.close();
