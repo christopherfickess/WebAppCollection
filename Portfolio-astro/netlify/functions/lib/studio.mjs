@@ -258,3 +258,27 @@ export async function alertOwner(deps, what, err) {
     await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `Site problem: ${what}`, text: `${what}\n\n${String(err?.message || err).slice(0, 500)}\n\nStripe retries failed payment notices for up to three days, so the booking will usually fix itself. If it does not, check the Netlify function logs.` });
   } catch {}
 }
+
+// ---- plain request form (no payment) --------------------------------------
+
+const REQUESTS_PER_DAY = 20; // cap on confirmation copies, so the form cannot be used to mail strangers
+
+export async function handleRequest(body, deps) {
+  const { store, now } = deps;
+  if (body?.["bot-field"]) return json(200, { ok: true }); // honeypot: look successful, do nothing
+  const name = clip(body?.name, 100), email = clip(body?.email, 200), message = clip(body?.message, 2000);
+  const session = clip(body?.session, 60), date = clip(body?.date, 10);
+  if (!name || !EMAIL.test(email) || !message) return json(400, { error: "invalid-contact" });
+  if (date && !DATE.test(date)) return json(400, { error: "invalid-date" });
+  const form = { name, email, session, date, message };
+  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, `Message: ${message}`];
+  const owner = await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `New request: ${name}`, text: lines.join("\n"), replyTo: email });
+  if (!owner.ok && !owner.skipped) return json(502, { error: "email-failed" });
+  const key = `reqs:${iso(new Date(now))}`;
+  const count = (await store.get(key, { type: "json" })) || 0;
+  if (count < REQUESTS_PER_DAY) {
+    await store.setJSON(key, count + 1);
+    await sendEmail(deps, { to: email, subject: "We received your request", text: `Hi ${name},\n\nThanks for your request. I reply within two business days.\n\nWhat you sent:\n${lines.join("\n")}\n\n${sign()}` });
+  }
+  return json(200, { ok: true });
+}

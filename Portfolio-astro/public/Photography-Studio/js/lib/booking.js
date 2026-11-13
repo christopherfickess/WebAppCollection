@@ -28,6 +28,31 @@ export class Booking {
       this.date.addEventListener("input", () => this.check());
     }
     if (info.payments) this.addPayButton();
+    else this.form.querySelector('button[type="submit"]').after(this.msg);
+    form.addEventListener("submit", (e) => this.send(e));
+  }
+
+  // Sends the plain request through the site's own email function. If that
+  // fails for any reason, the form is submitted the normal way (Netlify Forms).
+  async send(e) {
+    if (this.fallback) return;
+    e.preventDefault();
+    const f = this.form.elements;
+    const button = this.form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    this.msg.textContent = "Sending…";
+    try {
+      const res = await fetch("/api/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: f.name.value, email: f.email.value, session: f.session.value, date: f.date.value, message: f.message.value, "bot-field": f["bot-field"]?.value || "" }),
+      });
+      if (!res.ok) throw new Error();
+      location.assign(this.form.getAttribute("action"));
+    } catch {
+      this.fallback = true;
+      this.form.requestSubmit();
+    }
   }
 
   problem() {

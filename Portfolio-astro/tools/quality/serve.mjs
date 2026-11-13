@@ -23,6 +23,7 @@ const mockApi = (req, res) => {
   const send = (code, body) => res.writeHead(code, { ...headers, "Content-Type": "application/json" }).end(body === undefined ? "" : JSON.stringify(body));
   if (url === "/api/availability") return send(200, { configured: true, payments: Boolean(process.env.MOCK_PAY), minLeadDays: 7, closedWeekdays: [0], unavailable: [process.env.MOCK_TAKEN || "2099-01-05"], depositNote: "Deposit is credited to your final balance." });
   if (url === "/api/collect") return send(204);
+  if (url === "/api/request") return process.env.MOCK_REQUEST_FAIL ? send(500, { error: "x" }) : send(200, { ok: true });
   if (url === "/api/checkout") return send(200, { url: "/Photography-Studio/thanks/?paid=1" });
   return send(404, { error: "not-found" });
 };

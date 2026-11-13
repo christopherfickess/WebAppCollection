@@ -492,6 +492,14 @@ internal links return 200, autoplay advances and pauses.
 - **Tests:** `npm test` now runs 26 checks.
 - **Not built (decide later):** private client galleries for delivery, a staging branch, a site-wide 404 page (the deployment also holds other pages), and a `security.txt` (needs a real contact address).
 
+### Plain request form no longer depends on Netlify Forms (Photography-Studio)
+
+- Found on the first live test: "Send request" posted to Netlify Forms and returned Netlify's 404 because form detection was not enabled on the site. `POST /api/request` (`studio-request.mjs`, `handleRequest` in `lib/studio.mjs`) now takes the plain request: emails the owner, sends the sender a copy (capped at 20 copies a day so the form cannot be used to mail strangers), and ignores honeypot submissions. `Booking.send()` in `js/lib/booking.js` uses it and, if the call fails, submits the form the normal way, so Netlify Forms (and `submission-created`) still work as a fallback when enabled.
+- Nothing from the request is stored except the daily copy counter; the email is the record.
+- Sync workflow: `.github/workflows/netlify-env.yml` runs `tools/sync-netlify-env.mjs`, which calls Netlify's API directly (the CLI's `env:set` failed with a missing account id). It also runs on pushes to the dev branch that change the workflow file; for the manual button, the file must be on the default branch.
+- `/api/availability?setup=1` reports which settings the deploy can see (yes or no only).
+- Verified live on the branch deploy: Stripe Checkout creates a session and redirects to the thank-you page.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

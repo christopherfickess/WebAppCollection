@@ -44,6 +44,9 @@ Until step 1 is done, visitors see only the request form. Until step 3 is done, 
 ## Kind words (testimonials)
 Add real quotes in the editor under "Kind words", or in `content/testimonials.json`. Only use quotes a client has agreed you may publish. With none added, the section does not appear.
 
+## If a request or booking does not arrive
+Open `/api/availability?setup=1` on the live site. Each setting should show `true`. A `false` means that value is missing from Netlify; re-run the "Sync secrets to Netlify" workflow or add it by hand.
+
 ## Visitor counts
 The site counts page views without cookies, IP addresses or user ids, and ignores visitors who send Do Not Track. Set `STATS_TOKEN` (16 or more random characters), then open `/Photography-Studio/admin/stats.html` and enter it.
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+import { handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
 const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
 const NOW = Date.parse("2026-11-06T12:00:00Z");
@@ -66,3 +66,13 @@ assert.equal((await exportData({ store })).booked[0], "2026-12-01"); ok("export 
 sent.length = 0; await alertOwner({ env, fetch: fetchMock }, "x failed", new Error("boom")); assert.equal(sent[0].to[0], "o@b.co"); assert.match(sent[0].text, /boom/); ok("owner alert");
 const failing = async () => { throw new Error("network down"); };
 await alertOwner({ env, fetch: failing }, "x failed", new Error("boom")); ok("alert never throws");
+
+// plain request form
+sent.length = 0;
+let rq = await handleRequest({ name: "Ben", email: "ben@x.co", session: "Half day", message: "hello" }, { store, env, fetch: fetchMock, now: NOW });
+assert.equal(rq.status, 200); assert.equal(sent.length, 2); assert.equal(sent[0].to[0], "o@b.co"); assert.equal(sent[1].to[0], "ben@x.co"); ok("request emails owner and sender");
+sent.length = 0; rq = await handleRequest({ name: "Bot", email: "b@x.co", message: "x", "bot-field": "spam" }, { store, env, fetch: fetchMock, now: NOW });
+assert.equal(rq.status, 200); assert.equal(sent.length, 0); ok("honeypot sends nothing");
+rq = await handleRequest({ name: "", email: "bad", message: "" }, { store, env, fetch: fetchMock, now: NOW }); assert.equal(rq.status, 400); ok("invalid request rejected");
+sent.length = 0; for (let i = 0; i < 25; i++) await handleRequest({ name: "N", email: "n@x.co", message: "m" }, { store, env, fetch: fetchMock, now: NOW + 1 });
+assert.equal(sent.filter((m) => m.to[0] === "n@x.co").length <= 20, true); assert.equal(sent.filter((m) => m.to[0] === "o@b.co").length >= 25, true); ok("sender copies are capped per day, owner always notified");
