@@ -553,6 +553,7 @@ export default {
       "a": "Send the form below. I reply within two business days."
     }
   ],
+  "testimonials": [],
   "day": [
     {
       "light": "dawn",

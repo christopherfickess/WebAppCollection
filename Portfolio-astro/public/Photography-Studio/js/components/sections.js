@@ -232,6 +232,21 @@ export class Wall extends Component {
   }
 }
 
+// <fx-testimonials data-from="testimonials">  Shows only real quotes: with no
+// entries in content/testimonials.json the whole section stays hidden.
+export class Testimonials extends Component {
+  static tag = "fx-testimonials";
+
+  render(items) {
+    return html`${(items || []).map((t) => html`<figure class="quote"><blockquote><p>${t.quote}</p></blockquote><figcaption>${t.name}${t.detail ? html`, ${t.detail}` : ""}</figcaption></figure>`)}`;
+  }
+
+  afterRender() {
+    const has = (this.data || []).length > 0;
+    this.closest("section")?.toggleAttribute("hidden", !has);
+  }
+}
+
 // <fx-faq data-from="faq">  Native <details>, so it works without script.
 export class Faq extends Component {
   static tag = "fx-faq";

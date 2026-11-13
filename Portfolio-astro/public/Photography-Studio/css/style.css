@@ -576,3 +576,10 @@ html.lightbox-open {
 .book-msg { min-height: 1.4em; margin-top: 0.6rem; color: var(--mauve); font-size: var(--t-sm); }
 .contact-form .btn-ghost { justify-self: start; margin-top: 0.75rem; }
 .wall-controls .btn { justify-self: start; margin-top: 1rem; }
+/* testimonials: the section is hidden until content/testimonials.json has entries */
+.quotes { display: grid; gap: 2rem; }
+.quote { margin: 0; }
+.quote blockquote { margin: 0; font-family: var(--display); font-size: clamp(1.25rem, 1rem + 0.9vw, 1.7rem); line-height: 1.4; }
+.quote blockquote p { margin: 0; }
+.quote figcaption { margin-top: 0.75rem; color: var(--muted); font-size: var(--t-sm); }
+.band[hidden] { display: none; }

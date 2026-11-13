@@ -36,6 +36,14 @@ Prefer to keep every key in GitHub? Add them as repository secrets (names above,
 
 Until step 1 is done, visitors see only the request form. Until step 3 is done, no emails are sent. Paid dates disappear from the calendar by themselves. To free a date after a refund, remove it from the booked list (ask your developer, or block/unblock dates in `booking.json`).
 
+## Reminders, backups, and problem alerts
+- Clients get a reminder email two days before their session (once, with the balance due). It runs on the live site only.
+- To back up bookings, run: `curl -H "Authorization: Bearer YOUR_STATS_TOKEN" https://your-site/api/export > backup.json`. The file contains client names and emails, so keep it private.
+- If a payment notice fails to process, you get an email at `OWNER_EMAIL`.
+
+## Kind words (testimonials)
+Add real quotes in the editor under "Kind words", or in `content/testimonials.json`. Only use quotes a client has agreed you may publish. With none added, the section does not appear.
+
 ## Visitor counts
 The site counts page views without cookies, IP addresses or user ids, and ignores visitors who send Do Not Track. Set `STATS_TOKEN` (16 or more random characters), then open `/Photography-Studio/admin/stats.html` and enter it.
 

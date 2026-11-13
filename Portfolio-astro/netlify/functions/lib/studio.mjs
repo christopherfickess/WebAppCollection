@@ -162,6 +162,9 @@ export async function handleStripeEvent(event, deps) {
       const booked = (await store.get("booked", { type: "json" })) || [];
       if (!booked.includes(m.date)) booked.push(m.date);
       await store.setJSON("booked", booked.sort());
+      const bookings = (await store.get("bookings", { type: "json" })) || {};
+      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, paidAt: now, reminded: false };
+      await store.setJSON("bookings", bookings);
       const holds = (await store.get("holds", { type: "json" })) || {};
       delete holds[m.date];
       await store.setJSON("holds", holds);
@@ -217,4 +220,41 @@ export function tokenOk(req, env) {
   const given = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   const want = env.STATS_TOKEN || "";
   return want.length >= 16 && given.length === want.length && timingSafeEqual(Buffer.from(given), Buffer.from(want));
+}
+
+// ---- reminders, backup, alerts ------------------------------------------
+
+// Emails each client once, `daysAhead` days before their session. Run daily.
+export async function sendReminders(deps, daysAhead = 2) {
+  const { store, now } = deps;
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const target = iso(new Date(now + daysAhead * 864e5));
+  const sent = [];
+  for (const [date, b] of Object.entries(bookings)) {
+    if (date !== target || b.reminded || !b.email) continue;
+    const pkg = catalog.packages[b.package];
+    const balance = pkg ? pkg.amount - pkg.deposit : null;
+    const text = `Hi ${b.name},\n\nA reminder that your ${b.package} session is on ${date}.\n${balance ? `The remaining balance of ${money(balance)} is due on the day.\n` : ""}\nIf you need to change the date, reply to this email as soon as you can and we will find a new one.\n\n${sign()}`;
+    const r = await sendEmail(deps, { to: b.email, subject: `Your session is on ${date}`, text });
+    if (r.ok) { b.reminded = true; sent.push(date); }
+  }
+  if (sent.length) await store.setJSON("bookings", bookings);
+  return { sent };
+}
+
+// Everything the site stores, for a backup. Contains client names and emails.
+export async function exportData({ store }) {
+  return {
+    exportedAt: new Date().toISOString(),
+    booked: (await store.get("booked", { type: "json" })) || [],
+    bookings: (await store.get("bookings", { type: "json" })) || {},
+    holds: (await store.get("holds", { type: "json" })) || {},
+  };
+}
+
+// Tells the owner when something fails behind the scenes.
+export async function alertOwner(deps, what, err) {
+  try {
+    await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `Site problem: ${what}`, text: `${what}\n\n${String(err?.message || err).slice(0, 500)}\n\nStripe retries failed payment notices for up to three days, so the booking will usually fix itself. If it does not, check the Netlify function logs.` });
+  } catch {}
 }

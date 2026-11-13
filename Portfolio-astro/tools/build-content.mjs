@@ -11,7 +11,7 @@ const errors = [];
 const need = (ok, msg) => ok || errors.push(msg);
 
 const site = read("site"), hero = read("hero"), about = read("about"), packages = read("packages"), faq = read("faq"),
-  day = read("day"), printSizes = read("print-sizes"), booking = read("booking"), photoData = read("photos");
+  day = read("day"), testimonials = read("testimonials"), printSizes = read("print-sizes"), booking = read("booking"), photoData = read("photos");
 
 const LIGHTS = ["dawn", "day", "dusk", "night"];
 const setIds = photoData.sets.map((s) => s.id);
@@ -31,6 +31,7 @@ for (const d of day.items) need(LIGHTS.includes(d.light), `day "${d.title}": lig
 for (const s of printSizes.items) need(s.label && s.w > 0 && s.h > 0 && s.price > 0, `print size "${s.label}": needs label, width, height, and price`);
 need(Array.isArray(booking.blockedDates) && booking.blockedDates.every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)), "booking: blockedDates must be YYYY-MM-DD dates");
 need((site.theme?.sky || []).length === 4, "site: theme.sky needs exactly four colour pairs");
+for (const t of testimonials.items) need(t.quote && t.name, `testimonial from "${t.name}": needs a quote and a name`);
 if (errors.length) {
   console.error("Content problems:\n- " + errors.join("\n- "));
   process.exit(1);
@@ -44,7 +45,7 @@ const out = {
   site, sets: photoData.sets, photos: photoData.photos,
   hero: { ...hero, image: photoOf(hero.image) },
   about: { ...about, image: photoOf(about.image) },
-  packages: packages.items, faq: faq.items, day: day.items, printSizes: printSizes.items, booking,
+  packages: packages.items, faq: faq.items, testimonials: testimonials.items, day: day.items, printSizes: printSizes.items, booking,
 };
 writeFileSync(new URL("js/content.generated.js", root), `// Written by tools/build-content.mjs from content/*.json. Do not edit by hand.\nexport default ${JSON.stringify(out, null, 2)};\n`);
 

@@ -26,5 +26,6 @@ export const content = {
   packages: generated.packages,
   day: generated.day,
   faq: generated.faq,
+  testimonials: generated.testimonials,
   booking: generated.booking,
 };

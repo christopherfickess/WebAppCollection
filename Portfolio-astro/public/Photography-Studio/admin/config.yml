@@ -141,6 +141,20 @@ collections:
           - { name: closedWeekdays, label: Closed weekdays (0 = Sunday ... 6 = Saturday), widget: list, required: false, field: { name: day, label: Day, widget: number, value_type: int, min: 0, max: 6 } }
           - { name: blockedDates, label: Dates you are away (YYYY-MM-DD), widget: list, required: false, field: { name: date, label: Date, widget: string, pattern: ['^\d{4}-\d{2}-\d{2}$', "Use YYYY-MM-DD"] } }
           - { name: depositNote, label: Deposit explanation, widget: text }
+      - name: testimonials
+        label: Kind words (real client quotes only)
+        file: Portfolio-astro/public/Photography-Studio/content/testimonials.json
+        format: json
+        fields:
+          - name: items
+            label: Quotes
+            widget: list
+            required: false
+            hint: "Only add quotes a client has said you may publish. With none, the section stays hidden."
+            fields:
+              - { name: quote, label: Quote, widget: text }
+              - { name: name, label: Client name, widget: string }
+              - { name: detail, label: Detail (for example, Wedding, 2026), widget: string, required: false }
       - name: faq
         label: Questions
         file: Portfolio-astro/public/Photography-Studio/content/faq.json

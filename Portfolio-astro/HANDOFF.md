@@ -483,6 +483,15 @@ internal links return 200, autoplay advances and pauses.
 
 - New collection "Dinner at Nonesuch" (`nonesuch`): nine tasting-menu photos in course order (brioche to cake), all light `night` (indoor, dim). Cropped to each plate to remove the phone shadow and empty table; the pork belly photo had the diner's hand and lap cropped out. Titles and alt text describe what is visible and do not name ingredients beyond that; the restaurant's own menu wording was not available. Check with the restaurant or the photographer before publishing for a client: photos of a restaurant's dishes are fine as a portfolio sample, but a client site should use the client's own photos.
 
+### Reminders, backup, alerts, testimonials (Photography-Studio)
+
+- **Session reminder:** `studio-reminders.mjs` is a scheduled function (daily, 15:00 UTC) that emails each paid client two days before their session, with the balance due, once. The webhook now remembers name, email, package and date per booking (`bookings` in the `studio` Blobs store). Netlify runs scheduled functions only on the published (production) deploy as far as I know, so reminders will not fire on a branch deploy. Not verified.
+- **Backup:** `GET /api/export` with `Authorization: Bearer <STATS_TOKEN>` returns booked dates, bookings (client names and emails) and holds as JSON. Save it now and then; Netlify Blobs is the only copy.
+- **Alerts:** if the Stripe webhook fails while processing, the owner gets an email and the function returns 500 so Stripe retries.
+- **Testimonials:** `content/testimonials.json` (editor: "Kind words"). The section is hidden until at least one real quote is added; no placeholder quotes ship.
+- **Tests:** `npm test` now runs 26 checks.
+- **Not built (decide later):** private client galleries for delivery, a staging branch, a site-wide 404 page (the deployment also holds other pages), and a `security.txt` (needs a real contact address).
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

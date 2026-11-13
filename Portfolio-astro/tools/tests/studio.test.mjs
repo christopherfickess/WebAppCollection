@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+import { sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
 const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
 const NOW = Date.parse("2026-11-06T12:00:00Z");
@@ -54,3 +54,15 @@ assert.equal(s.totalViews, 1); assert.deepEqual(s.topPages, { "/Photography-Stud
 assert.equal(tokenOk(new Request("https://s.test", { headers: { authorization: "Bearer " + "x".repeat(20) } }), env), true);
 assert.equal(tokenOk(new Request("https://s.test", { headers: { authorization: "Bearer wrong" } }), env), false);
 assert.equal(tokenOk(new Request("https://s.test"), { STATS_TOKEN: "" }), false); ok("stats token");
+
+// reminders, export, alerts
+const bk = await store.get("bookings"); assert.equal(bk["2026-12-01"].email, "ana@x.co"); ok("booking details remembered");
+sent.length = 0;
+const DEC = Date.parse("2026-11-29T15:00:00Z");
+assert.deepEqual((await sendReminders({ store, env, fetch: fetchMock, now: Date.parse("2026-11-20T15:00:00Z") })).sent, []); assert.equal(sent.length, 0); ok("no reminder too early");
+assert.deepEqual((await sendReminders({ store, env, fetch: fetchMock, now: DEC })).sent, ["2026-12-01"]); assert.equal(sent.length, 1); assert.match(sent[0].text, /\$450/); ok("reminder sent two days ahead with balance");
+assert.deepEqual((await sendReminders({ store, env, fetch: fetchMock, now: DEC })).sent, []); assert.equal(sent.length, 1); ok("reminder sent only once");
+assert.equal((await exportData({ store })).booked[0], "2026-12-01"); ok("export includes booked dates");
+sent.length = 0; await alertOwner({ env, fetch: fetchMock }, "x failed", new Error("boom")); assert.equal(sent[0].to[0], "o@b.co"); assert.match(sent[0].text, /boom/); ok("owner alert");
+const failing = async () => { throw new Error("network down"); };
+await alertOwner({ env, fetch: failing }, "x failed", new Error("boom")); ok("alert never throws");
