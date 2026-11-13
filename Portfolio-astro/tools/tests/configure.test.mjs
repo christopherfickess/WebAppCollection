@@ -34,7 +34,7 @@ const run = async (env, c = cfg, opts = {}) => { const out = []; const gh = []; 
 // 1. fresh setup creates the webhook with both events, turns off methods, adds domain, sets DNS and Netlify
 let t = await run({ ...base, GH_ADMIN_TOKEN: "gh", GITHUB_REPOSITORY: "o/r" });
 assert.deepEqual(t.w.endpoints[0].enabled_events, ["checkout.session.completed", "charge.refunded"]);
-assert.ok(t.calls.some((c) => c.url.includes("payment_method_configurations/pmc_1") && /klarna.*none/.test(decodeURIComponent(c.body))));
+assert.ok(t.calls.some((c) => c.url.includes("payment_method_configurations/pmc_1") && /klarna.*off/.test(decodeURIComponent(c.body))));
 assert.equal(t.calls.some((c) => /affirm/.test(decodeURIComponent(c.body || ""))), false, "already-off method untouched");
 assert.equal(t.w.dns.length, 2); assert.equal(t.w.dns[0].hostname, "send.mail.studio.example");
 assert.equal(t.w.site.custom_domain, "studio.example");
