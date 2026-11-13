@@ -15,7 +15,8 @@
     "content": "node tools/build-content.mjs",
     "test": "node tools/tests/studio.test.mjs && node tools/tests/sync-env.test.mjs",
     "test:e2e": "node tools/tests/e2e.mjs",
-    "launch-check": "node tools/launch-check.mjs"
+    "launch-check": "node tools/launch-check.mjs",
+    "new-client": "node tools/new-client.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.7",
