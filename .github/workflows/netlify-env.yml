@@ -44,9 +44,13 @@ jobs:
           fi
           # EMAIL_FROM and OWNER_EMAIL are addresses, not secrets, but are set
           # the same way so there is one place to manage them.
+          # Secret values must name their deploy contexts (not "dev").
+          npm install --global netlify-cli@27.16.2 > /dev/null 2>&1
           for name in STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET RESEND_API_KEY EMAIL_FROM OWNER_EMAIL STATS_TOKEN; do
             value="${!name}"
             if [ -z "$value" ]; then echo "skip $name (empty)"; continue; fi
-            npx --yes netlify-cli@27.16.2 env:set "$name" "$value" --secret --force > /dev/null
-            echo "set $name"
+            for ctx in production deploy-preview branch-deploy; do
+              netlify env:set "$name" "$value" --secret --force --context "$ctx" > /dev/null
+            done
+            echo "set $name (production, deploy-preview, branch-deploy)"
           done
