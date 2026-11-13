@@ -9,6 +9,7 @@ export default async (req) => {
     const names = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN"];
     body.setup = Object.fromEntries(names.map((n) => [n, Boolean(deps.env[n])]));
     body.setup.stripeKeyLooksRight = /^sk_(test|live)_/.test(deps.env.STRIPE_SECRET_KEY || "");
+    body.setup.stripeMode = (/^sk_(test|live)_/.exec(deps.env.STRIPE_SECRET_KEY || "") || [])[1] || "unknown";
     body.setup.context = deps.env.CONTEXT || "unknown";
     // On *.netlify.app test deploys only: a masked view of the two addresses, to catch typos and mismatches.
     if (new URL(req.url).hostname.endsWith(".netlify.app")) {

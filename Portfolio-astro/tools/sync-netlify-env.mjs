@@ -4,6 +4,8 @@
 const API = "https://api.netlify.com/api/v1";
 const NAMES = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN"];
 const CONTEXTS = ["production", "deploy-preview", "branch-deploy"]; // secrets cannot use "dev"
+// Only these differ between test and live. Everything else (email, token) is the same on both.
+const LIVE_NAMES = new Set(["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]);
 const SCOPES = ["builds", "functions", "runtime"];
 // Addresses are not secrets. Netlify fails a build when a secret's value appears in the code, and a contact
 // address legitimately does (it is on the site). These two are stored as plain variables.
@@ -25,10 +27,21 @@ export async function sync(env, fetchFn = fetch, log = console.log) {
   const account = site.account_id;
   if (!account) throw new Error("The site has no account_id.");
 
+  // SYNC_MODE=test (default): every context gets the test values.
+  // SYNC_MODE=live: production gets LIVE_STRIPE_* values, previews and branch deploys keep the test values.
+  const mode = env.SYNC_MODE || "test";
+  if (mode !== "test" && mode !== "live") throw new Error(`SYNC_MODE must be test or live, not "${mode}".`);
+  if (mode === "live") {
+    if (!/^sk_live_/.test(env.LIVE_STRIPE_SECRET_KEY || "")) throw new Error("Live mode needs LIVE_STRIPE_SECRET_KEY starting with sk_live_.");
+    if (!/^whsec_/.test(env.LIVE_STRIPE_WEBHOOK_SECRET || "")) throw new Error("Live mode needs LIVE_STRIPE_WEBHOOK_SECRET starting with whsec_.");
+    if (/^sk_live_/.test(env.STRIPE_SECRET_KEY || "")) throw new Error("STRIPE_SECRET_KEY (used for previews) must stay a test key.");
+  } else if (/^sk_live_/.test(env.STRIPE_SECRET_KEY || "")) throw new Error("Test mode refuses a live Stripe key. Use SYNC_MODE=live and the LIVE_ secrets.");
+
   let failed = 0;
   for (const name of NAMES) {
     const value = env[name];
     if (!value) { log(`skip ${name} (empty)`); continue; }
+    const liveValue = mode === "live" && LIVE_NAMES.has(name) ? env[`LIVE_${name}`] : value;
     const q = `?site_id=${siteId}`;
     // Replace any existing value: delete (a missing one is fine), then create.
     const del = await call("DELETE", `/accounts/${account}/env/${name}${q}`);
@@ -36,9 +49,9 @@ export async function sync(env, fetchFn = fetch, log = console.log) {
     // Plain variables use Netlify's defaults (all scopes, all contexts): choosing specific scopes needs a paid plan.
     const payload = PLAIN.has(name)
       ? { key: name, is_secret: false, values: [{ context: "all", value }] }
-      : { key: name, scopes: SCOPES, is_secret: true, values: CONTEXTS.map((context) => ({ context, value })) };
+      : { key: name, scopes: SCOPES, is_secret: true, values: CONTEXTS.map((context) => ({ context, value: context === "production" ? liveValue : value })) };
     const add = await call("POST", `/accounts/${account}/env${q}`, [payload]);
-    if (add.ok) log(`set ${name} (${CONTEXTS.join(", ")})`);
+    if (add.ok) log(`set ${name} (${CONTEXTS.join(", ")}${liveValue !== value ? "; production uses the live value" : ""})`);
     else { log(`FAILED ${name}: HTTP ${add.status} ${add.text}`); failed++; }
   }
   if (failed) throw new Error(`${failed} variable(s) failed.`);

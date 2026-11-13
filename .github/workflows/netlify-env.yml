@@ -11,8 +11,19 @@ name: Sync secrets to Netlify
 #   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY,
 #   EMAIL_FROM, OWNER_EMAIL, STATS_TOKEN  (what the functions read)
 # Any that are empty are skipped. Nothing is ever printed.
+#
+# Going live: put LIVE_STRIPE_SECRET_KEY and LIVE_STRIPE_WEBHOOK_SECRET in a GitHub Environment named
+# "production" (Settings > Environments, with yourself as a required reviewer), then set the repository
+# variable GO_LIVE to true. The test job below then stops, and "Run workflow" with mode = live
+# (after your approval) gives the production site the live keys while previews keep test keys.
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "test = test keys everywhere. live = live Stripe keys on production only (needs approval)."
+        type: choice
+        options: [test, live]
+        default: test
   # Also runs when this file changes on the dev branch, because GitHub only
   # offers the manual "Run workflow" button for workflows on the default branch.
   push:
@@ -20,21 +31,47 @@ on:
     paths: [".github/workflows/netlify-env.yml"]
 
 jobs:
-  sync:
+  sync-test:
+    if: ${{ vars.GO_LIVE != 'true' && (github.event_name == 'push' || inputs.mode != 'live') }}
     runs-on: ubuntu-latest
-    # Add "environment: production" here later to require an approval first.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Set variables on Netlify
+      - name: Set variables on Netlify (test keys)
         working-directory: Portfolio-astro
         env:
+          SYNC_MODE: test
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+        run: node tools/sync-netlify-env.mjs
+
+  sync-live:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' }}
+    runs-on: ubuntu-latest
+    environment: production   # waits for your approval; LIVE_ secrets live only in this environment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Set variables on Netlify (live keys on production only)
+        working-directory: Portfolio-astro
+        env:
+          SYNC_MODE: live
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          LIVE_STRIPE_SECRET_KEY: ${{ secrets.LIVE_STRIPE_SECRET_KEY }}
+          LIVE_STRIPE_WEBHOOK_SECRET: ${{ secrets.LIVE_STRIPE_WEBHOOK_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
