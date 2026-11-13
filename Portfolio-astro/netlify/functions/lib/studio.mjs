@@ -159,7 +159,7 @@ export async function notifyBooking(deps, form, { paid } = {}) {
   out.push(await sendEmail(deps, { to: owner, subject: `${paid ? "Deposit paid" : "New request"}: ${form.name}`, text: lines.join("\n"), replyTo: form.email }));
   const pkg = catalog.packages[form.package || form.session];
   const text = paid
-    ? `Hi ${form.name},\n\nThank you. Your ${money(pkg?.deposit ?? 0)} deposit for ${form.package} on ${form.date} is received and the date is yours.\n${catalog.booking.depositNote || ""}\n\nReply to this email with any questions.\n\n${sign()}`
+    ? `Hi ${form.name},\n\nThank you. Your ${money(pkg?.deposit ?? 0)} deposit for ${form.package} on ${form.date} is received and the date is yours.\n${catalog.booking.depositNote || ""}\n${manageLink(deps, form.date, form.email) ? `\nChange the date, cancel, or pay the balance here:\n${manageLink(deps, form.date, form.email)}\n` : ""}\nReply to this email with any questions.\n\n${sign()}`
     : `Hi ${form.name},\n\nThanks for your request. I reply within two business days.\n\nWhat you sent:\n${lines.join("\n")}\n\n${sign()}`;
   out.push(await sendEmail(deps, { to: form.email, subject: paid ? `Your date is booked, ${form.date}` : "We received your request", text }));
   return out;
@@ -188,12 +188,17 @@ export async function handleStripeEvent(event, deps) {
       if (!booked.includes(m.date)) booked.push(m.date);
       await store.setJSON("booked", booked.sort());
       const bookings = (await store.get("bookings", { type: "json" })) || {};
-      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, paidAt: now, reminded: false };
+      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, paidAt: now, reminded: false, pi: s.payment_intent || null };
       await store.setJSON("bookings", bookings);
       const holds = (await store.get("holds", { type: "json" })) || {};
       delete holds[m.date];
       await store.setJSON("holds", holds);
       await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, message: m.message }, { paid: true });
+    } else if (m.kind === "balance") {
+      const bookings = (await store.get("bookings", { type: "json" })) || {};
+      if (bookings[m.date]) { bookings[m.date].balancePaidAt = now; await store.setJSON("bookings", bookings); }
+      await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Balance paid: ${m.date}`, text: `The balance for the session on ${m.date} was paid (${money((s.amount_total || 0) / 100)}).` });
+      await sendEmail(deps, { to: s.customer_details?.email || s.customer_email, subject: "Balance received", text: `Thank you. Your balance for ${m.date} is paid.\n\n${sign()}` });
     } else if (m.kind === "print") {
       const ship = s.shipping_details || s.collected_information?.shipping_details;
       const a = ship?.address || {};
@@ -203,8 +208,113 @@ export async function handleStripeEvent(event, deps) {
       await sendEmail(deps, { to, subject: "Your print order", text: `Thank you for your order of ${m.photo}, ${m.size}. I will email tracking details when it ships.\n\n${sign()}` });
     }
   }
+  if (event.type === "charge.refunded") await handleRefund(event.data.object, deps);
   await store.setJSON(`event:${event.id}`, { at: now });
   return { handled: event.type };
+}
+
+// ---- refunds, cancel, reschedule, balance --------------------------------
+
+// A full refund (made in the Stripe dashboard or by a client cancelling) frees the date.
+export async function handleRefund(charge, { store, env, now, ...rest }) {
+  const deps = { store, env, now, ...rest };
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const date = Object.keys(bookings).find((d) => bookings[d].pi && bookings[d].pi === charge.payment_intent);
+  if (!date) return { ignored: true };
+  const full = charge.amount_refunded >= charge.amount;
+  if (full) await freeDate(store, date);
+  await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `${full ? "Refunded, date freed" : "Partial refund"}: ${date}`, text: `${money(charge.amount_refunded / 100)} was refunded for ${bookings[date].name} (${date}).\n${full ? "The date is open for booking again." : "The date stays booked."}` });
+  return { date, full };
+}
+
+async function freeDate(store, date) {
+  const booked = ((await store.get("booked", { type: "json" })) || []).filter((d) => d !== date);
+  await store.setJSON("booked", booked);
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  delete bookings[date];
+  await store.setJSON("bookings", bookings);
+}
+
+// Links in emails carry an HMAC of date + email, so no login is needed and links cannot be guessed.
+const secretOf = (env) => env.MANAGE_SECRET || env.STATS_TOKEN || "";
+export const manageToken = (env, date, email) => createHmac("sha256", secretOf(env)).update(`${date}|${String(email).toLowerCase()}`).digest("hex").slice(0, 32);
+export const manageLink = ({ env, origin }, date, email) => (secretOf(env) && origin ? `${origin}/Photography-Studio/manage/?d=${date}&t=${manageToken(env, date, email)}` : "");
+function authorised(env, date, t) {
+  return async (bookings) => {
+    const b = bookings[date];
+    if (!b || !t || !secretOf(env)) return null;
+    const want = manageToken(env, date, b.email);
+    return want.length === String(t).length && timingSafeEqual(Buffer.from(want), Buffer.from(String(t))) ? b : null;
+  };
+}
+
+export async function manageView({ date, t }, { store, env, now }) {
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const b = await authorised(env, date, t)(bookings);
+  if (!b) return json(404, { error: "not-found" });
+  const pkg = catalog.packages[b.package];
+  const daysLeft = Math.floor((Date.parse(`${date}T12:00:00Z`) - now) / 864e5);
+  const fullDays = catalog.booking.refundFullDays ?? 14;
+  return json(200, { date, name: b.name, package: b.package, deposit: pkg?.deposit ?? null, balance: pkg ? pkg.amount - pkg.deposit : null, balancePaid: Boolean(b.balancePaidAt), canRefund: daysLeft >= fullDays && Boolean(b.pi), refundFullDays: fullDays, rescheduled: Boolean(b.rescheduledFrom), payments: Boolean(env.STRIPE_SECRET_KEY) });
+}
+
+export async function manageAct(body, deps) {
+  const { store, env, fetch: fetchFn, now, origin } = deps;
+  const date = clip(body?.date, 10), action = clip(body?.action, 12);
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const b = await authorised(env, date, body?.t)(bookings);
+  if (!b) return json(404, { error: "not-found" });
+  const daysLeft = Math.floor((Date.parse(`${date}T12:00:00Z`) - now) / 864e5);
+  if (daysLeft < 0) return json(409, { error: "past" });
+
+  if (action === "cancel") {
+    const refund = daysLeft >= (catalog.booking.refundFullDays ?? 14) && b.pi && env.STRIPE_SECRET_KEY;
+    if (refund) {
+      const res = await fetchFn("https://api.stripe.com/v1/refunds", { method: "POST", headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ payment_intent: b.pi }).toString() });
+      if (!res.ok) { await alertOwner(deps, `Refund failed for ${date}`, new Error(`Stripe ${res.status}`)); return json(502, { error: "refund-failed" }); }
+    }
+    await freeDate(store, date);
+    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Cancelled: ${b.name}, ${date}`, text: `${b.name} cancelled ${date}.\n${refund ? "The deposit was refunded in full." : "Inside the refund window, so the deposit was kept."}`, replyTo: b.email });
+    await sendEmail(deps, { to: b.email, subject: `Your session on ${date} is cancelled`, text: `Hi ${b.name},\n\nYour session on ${date} is cancelled. ${refund ? "Your deposit is being refunded and should reach you in 5 to 10 days." : `Cancellations less than ${catalog.booking.refundFullDays ?? 14} days before the session keep the deposit.`}\n\n${sign()}` });
+    return json(200, { ok: true, refunded: Boolean(refund) });
+  }
+
+  if (action === "reschedule") {
+    if (b.rescheduledFrom) return json(409, { error: "already-rescheduled" });
+    const to = clip(body?.newDate, 10);
+    const problem = dayProblem(to, now, await unavailable(store, now));
+    if (problem) return json(409, { error: problem });
+    const booked = ((await store.get("booked", { type: "json" })) || []).filter((d) => d !== date);
+    booked.push(to);
+    await store.setJSON("booked", booked.sort());
+    delete bookings[date];
+    bookings[to] = { ...b, rescheduledFrom: date, reminded: false };
+    await store.setJSON("bookings", bookings);
+    const link = manageLink({ env, origin }, to, b.email);
+    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Rescheduled: ${b.name}`, text: `${b.name} moved ${date} to ${to}.`, replyTo: b.email });
+    await sendEmail(deps, { to: b.email, subject: `Your session is moved to ${to}`, text: `Hi ${b.name},\n\nYour ${b.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}` });
+    return json(200, { ok: true, date: to });
+  }
+
+  if (action === "balance") {
+    const pkg = catalog.packages[b.package];
+    if (!env.STRIPE_SECRET_KEY || !pkg) return json(503, { error: "payments-not-configured" });
+    if (b.balancePaidAt) return json(409, { error: "already-paid" });
+    const p = new URLSearchParams();
+    p.set("mode", "payment");
+    p.set("line_items[0][quantity]", "1");
+    p.set("line_items[0][price_data][currency]", "usd");
+    p.set("line_items[0][price_data][unit_amount]", String((pkg.amount - pkg.deposit) * 100));
+    p.set("line_items[0][price_data][product_data][name]", `${b.package} balance for ${date}`);
+    p.set("customer_email", b.email);
+    p.set("success_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}&paid=1`);
+    p.set("cancel_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}`);
+    p.set("metadata[kind]", "balance");
+    p.set("metadata[date]", date);
+    const s = await stripe(env, fetchFn, p);
+    return json(200, { url: s.url });
+  }
+  return json(400, { error: "unknown-action" });
 }
 
 // ---- visitor counts (no cookies, no IP addresses, no user ids) -----------
@@ -259,7 +369,7 @@ export async function sendReminders(deps, daysAhead = 2) {
     if (date !== target || b.reminded || !b.email) continue;
     const pkg = catalog.packages[b.package];
     const balance = pkg ? pkg.amount - pkg.deposit : null;
-    const text = `Hi ${b.name},\n\nA reminder that your ${b.package} session is on ${date}.\n${balance ? `The remaining balance of ${money(balance)} is due on the day.\n` : ""}\nIf you need to change the date, reply to this email as soon as you can and we will find a new one.\n\n${sign()}`;
+    const text = `Hi ${b.name},\n\nA reminder that your ${b.package} session is on ${date}.\n${balance ? `The remaining balance of ${money(balance)} is due on the day.\n` : ""}\n${manageLink(deps, date, b.email) ? `Change the date, cancel, or pay the balance online:\n${manageLink(deps, date, b.email)}` : "If you need to change the date, reply to this email as soon as you can and we will find a new one."}\n\n${sign()}`;
     const r = await sendEmail(deps, { to: b.email, subject: `Your session is on ${date}`, text });
     if (r.ok) { b.reminded = true; sent.push(date); }
   }

@@ -1,7 +1,7 @@
 import { handleStripeEvent, verifySignature, alertOwner, json } from "./lib/studio.mjs";
-import { live } from "./lib/runtime.mjs";
+import { live, originOf } from "./lib/runtime.mjs";
 export default async (req) => {
-  const deps = live();
+  const deps = { ...live(), origin: originOf(req) };
   const raw = await req.text();
   if (!verifySignature(raw, req.headers.get("stripe-signature"), deps.env.STRIPE_WEBHOOK_SECRET, Math.floor(deps.now / 1000))) return json(400, { error: "bad-signature" });
   try {

@@ -12,7 +12,7 @@ import { chromium } from "playwright-core";
 
 const ROOT = resolve("public");
 const PORT = 4488;
-const PAGES = (process.env.PAGES || "/Photography-Studio/,/Photography-Studio/privacy/,/Photography-Studio/terms/,/Photography-Studio/thanks/,/travel-advisor/,/showcase/").split(",");
+const PAGES = (process.env.PAGES || "/Photography-Studio/,/Photography-Studio/privacy/,/Photography-Studio/terms/,/Photography-Studio/thanks/,/Photography-Studio/manage/,/travel-advisor/,/showcase/").split(",");
 const WIDTHS = [390, 820, 1440];
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".woff2": "font/woff2", ".json": "application/json", ".xml": "application/xml", ".txt": "text/plain" };
 

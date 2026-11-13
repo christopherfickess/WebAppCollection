@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Change, cancel, or pay for your session." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#112019" />
+  <link rel="icon" href="../img/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="../fonts/montserrat-regular.woff2" as="font" type="font/woff2" crossorigin />
+  <script src="../js/boot.js"></script>
+  <link rel="stylesheet" href="../css/style.css" />
+  <script type="module" src="../js/main.js"></script>
+  <script type="module" src="../js/manage.js"></script>
+  <title>Manage your session | Fox & Fern Photography</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <fx-header data-from="site"></fx-header>
+  <main id="main">
+    <section class="thanks" id="manage">
+      <h1>Your session</h1>
+      <p id="manage-summary">Loading your booking…</p>
+      <div id="manage-actions" hidden>
+        <label for="manage-date">New date</label>
+        <input id="manage-date" type="date" />
+        <p>
+          <button class="btn" type="button" id="manage-move">Change date</button>
+          <button class="btn btn-ghost" type="button" id="manage-balance" hidden>Pay balance</button>
+          <button class="btn btn-ghost" type="button" id="manage-cancel">Cancel session</button>
+        </p>
+      </div>
+      <p id="manage-msg" role="status"></p>
+      <a class="btn btn-ghost" href="../">Back to the site</a>
+    </section>
+  </main>
+  <fx-footer data-from="site"></fx-footer>
+</body>
+</html>

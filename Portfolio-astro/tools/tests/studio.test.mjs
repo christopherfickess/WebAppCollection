@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+import { manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
 const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
 const NOW = Date.parse("2026-11-06T12:00:00Z");
@@ -104,3 +104,49 @@ assert.equal(rq.status, 503); ok("unconfigured email is an error, not a fake suc
 sent.length = 0;
 await handleRequest({ name: "Di", email: "  Di@X.co ", message: "m" }, { store, env: { ...env, OWNER_EMAIL: " Owner@Example.COM " }, fetch: fetchMock, now: NOW + 3 * 864e5 });
 assert.equal(sent[0].to[0], "owner@example.com"); assert.equal(sent[0].reply_to, "di@x.co"); assert.equal(sent[1].to[0], "di@x.co"); ok("addresses are trimmed and lowercased");
+
+// ---- refunds, manage links, balance ----
+{
+  const st = memStore(); const mdeps = { ...deps(st), origin: "https://s.test" };
+  const book = async (date, email, pi, id) => handleStripeEvent({ id, type: "checkout.session.completed", data: { object: { payment_intent: pi, customer_details: { email }, metadata: { kind: "session", package: "Half day", date, name: "Cy", message: "" } } } }, mdeps);
+  sent.length = 0;
+  await book("2026-12-20", "cy@x.co", "pi_1", "evt_a");
+  assert.ok(sent.some((m) => /manage\/\?d=2026-12-20&t=/.test(m.text))); ok("confirmation email has manage link");
+  const t = manageToken(env, "2026-12-20", "cy@x.co");
+  assert.equal((await manageView({ date: "2026-12-20", t: "bad" }, mdeps)).status, 404); ok("bad token rejected");
+  const v = await (await manageView({ date: "2026-12-20", t }, mdeps)).json();
+  assert.equal(v.balance, 450); assert.equal(v.canRefund, true); ok("manage view shows balance and refund eligibility");
+
+  // full refund in Stripe frees the date; partial does not
+  assert.deepEqual(await handleRefund({ payment_intent: "pi_1", amount: 15000, amount_refunded: 5000 }, mdeps), { date: "2026-12-20", full: false });
+  assert.deepEqual(await st.get("booked"), ["2026-12-20"]); ok("partial refund keeps date");
+  await handleStripeEvent({ id: "evt_r", type: "charge.refunded", data: { object: { payment_intent: "pi_1", amount: 15000, amount_refunded: 15000 } } }, mdeps);
+  assert.deepEqual(await st.get("booked"), []); assert.deepEqual(await st.get("bookings"), {}); ok("full refund frees the date");
+  assert.equal((await handleRefund({ payment_intent: "pi_x", amount: 1, amount_refunded: 1 }, mdeps)).ignored, true); ok("unknown refund ignored");
+
+  // client cancel inside / outside window
+  await book("2026-12-22", "cy@x.co", "pi_2", "evt_b");
+  const t2 = manageToken(env, "2026-12-22", "cy@x.co");
+  let calls = []; const f2 = async (url, o) => { calls.push(url); return fetchMock(url, o); };
+  let res = await manageAct({ date: "2026-12-22", t: t2, action: "cancel" }, { ...mdeps, fetch: f2 });
+  assert.equal((await res.json()).refunded, true); assert.ok(calls.some((u) => u.endsWith("/refunds"))); assert.deepEqual(await st.get("booked"), []); ok("early cancel refunds and frees date");
+  await book("2026-11-14", "cy@x.co", "pi_3", "evt_c");
+  calls = [];
+  res = await manageAct({ date: "2026-11-14", t: manageToken(env, "2026-11-14", "cy@x.co"), action: "cancel" }, { ...mdeps, fetch: f2 });
+  assert.equal((await res.json()).refunded, false); assert.equal(calls.some((u) => u.endsWith("/refunds")), false); ok("late cancel keeps deposit but frees date");
+
+  // reschedule once
+  await book("2026-12-24", "cy@x.co", "pi_4", "evt_d");
+  const t4 = manageToken(env, "2026-12-24", "cy@x.co");
+  res = await manageAct({ date: "2026-12-24", t: t4, action: "reschedule", newDate: "2026-11-09" }, mdeps); assert.equal(res.status, 409); ok("reschedule respects notice rule");
+  res = await manageAct({ date: "2026-12-24", t: t4, action: "reschedule", newDate: "2026-12-26" }, mdeps); assert.equal(res.status, 200);
+  assert.deepEqual(await st.get("booked"), ["2026-12-26"]); ok("reschedule moves the date");
+  const t5 = manageToken(env, "2026-12-26", "cy@x.co");
+  res = await manageAct({ date: "2026-12-26", t: t5, action: "reschedule", newDate: "2026-12-28" }, mdeps); assert.equal(res.status, 409); ok("only one reschedule");
+
+  // balance
+  res = await manageAct({ date: "2026-12-26", t: t5, action: "balance" }, mdeps); assert.equal(res.status, 200); assert.ok((await res.json()).url);
+  await handleStripeEvent({ id: "evt_e", type: "checkout.session.completed", data: { object: { amount_total: 45000, customer_details: { email: "cy@x.co" }, metadata: { kind: "balance", date: "2026-12-26" } } } }, mdeps);
+  assert.ok((await st.get("bookings"))["2026-12-26"].balancePaidAt);
+  res = await manageAct({ date: "2026-12-26", t: t5, action: "balance" }, mdeps); assert.equal(res.status, 409); ok("balance paid once");
+}

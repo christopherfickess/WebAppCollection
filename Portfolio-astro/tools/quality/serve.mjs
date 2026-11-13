@@ -25,6 +25,7 @@ const mockApi = (req, res) => {
   if (url === "/api/collect") return send(204);
   if (url === "/api/request") return process.env.MOCK_REQUEST_FAIL ? send(502, { error: "email-failed", reason: "test reason" }) : send(200, { ok: true });
   if (url === "/api/checkout") return send(200, { url: "/Photography-Studio/thanks/?paid=1" });
+  if (url === "/api/manage") return send(200, { date: "2099-02-02", package: "Half day", deposit: 150, balance: 450, balancePaid: false, canRefund: true, refundFullDays: 14, rescheduled: false, payments: true });
   return send(404, { error: "not-found" });
 };
 const handler = (req, res) => {
