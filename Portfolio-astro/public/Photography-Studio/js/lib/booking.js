@@ -51,7 +51,7 @@ export class Booking {
       // Function missing (404/405): use the normal form post. Any other failure: say so, do not lose the visitor on a 404 page.
       if (res.status === 404 || res.status === 405) throw new Error("no-function");
       let reason = "";
-      try { reason = (await res.json()).reason || ""; } catch {}
+      try { const j = await res.json(); reason = j.reason || ""; if (j.error === "slow-down") reason = "too many attempts, please try later"; } catch {}
       this.msg.textContent = `We could not send your request${reason ? ` (${reason})` : ""}. Please try again in a moment.`;
       button.disabled = false;
     } catch (err) {
@@ -109,7 +109,7 @@ export class Booking {
       });
       const data = await res.json();
       if (!res.ok) {
-        const why = { held: "Someone is paying for that date right now. Try again in half an hour.", booked: "That date was just booked.", "too-soon": "That date is too soon." };
+        const why = { held: "Someone is paying for that date right now. Try again in half an hour.", booked: "That date was just booked.", "too-soon": "That date is too soon.", "hold-exists": "You already have a date on hold. Finish that payment or wait half an hour.", "too-many-holds": "Several dates are being paid for right now. Try again in half an hour.", "slow-down": "Too many attempts. Please try again later.", "bad-origin": "This request did not come from the site." };
         throw new Error(why[data.error] || "Payment could not start. Send the request instead and I will follow up.");
       }
       location.assign(data.url);

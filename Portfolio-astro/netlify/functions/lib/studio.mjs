@@ -60,6 +60,23 @@ async function stripe(env, fetchFn, params) {
   return data;
 }
 
+export const MAX_OPEN_HOLDS = 10; // total unpaid date holds at once, so checkouts cannot be used to lock the calendar
+
+// Requests must come from the site itself. Browsers always send Origin on cross-site POSTs.
+export function sameOrigin(req) {
+  const o = req.headers.get("origin");
+  if (!o) return true; // non-browser callers (Stripe webhook, curl) carry no Origin; they are not the abuse path
+  try { return new URL(o).host === new URL(req.url).host; } catch { return false; }
+}
+
+// Fixed-window counter in the store. Returns true when the caller is over the limit.
+export async function limited(store, key, max, windowMs, now) {
+  const k = `rl:${key}:${Math.floor(now / windowMs)}`;
+  const n = ((await store.get(k, { type: "json" })) || 0) + 1;
+  await store.setJSON(k, n);
+  return n > max;
+}
+
 export async function createCheckout(body, { origin, env, store, fetch: fetchFn, now }) {
   if (!env.STRIPE_SECRET_KEY) return json(503, { error: "payments-not-configured" });
   const base = `${origin}/Photography-Studio/`;
@@ -92,6 +109,13 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   const problem = dayProblem(date, now, taken);
   if (problem) return json(409, { error: problem });
 
+  const holds = (await store.get("holds", { type: "json" })) || {};
+  for (const [d, v] of Object.entries(holds)) if (v.expires <= now) delete holds[d];
+  const open = Object.entries(holds);
+  const mine = email.toLowerCase();
+  if (open.some(([d, v]) => v.email === mine && d !== date)) return json(429, { error: "hold-exists" });
+  if (open.length >= MAX_OPEN_HOLDS && !holds[date]) return json(429, { error: "too-many-holds" });
+
   const expires = Math.floor((now + HOLD_MS) / 1000);
   p.set("line_items[0][price_data][unit_amount]", String(pkg.deposit * 100));
   p.set("line_items[0][price_data][product_data][name]", `${body.package} deposit for ${date}`);
@@ -105,9 +129,7 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   p.set("metadata[name]", name);
   p.set("metadata[message]", message);
   const s = await stripe(env, fetchFn, p);
-  const holds = (await store.get("holds", { type: "json" })) || {};
-  for (const [d, v] of Object.entries(holds)) if (v.expires <= now) delete holds[d];
-  holds[date] = { expires: now + HOLD_MS, session: s.id };
+  holds[date] = { expires: now + HOLD_MS, session: s.id, email: mine };
   await store.setJSON("holds", holds);
   return json(200, { url: s.url });
 }

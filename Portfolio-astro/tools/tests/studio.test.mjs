@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+import { sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
 const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
 const NOW = Date.parse("2026-11-06T12:00:00Z");
@@ -25,6 +25,20 @@ r = await createCheckout({ ...good, package: "Free" }, deps(store)); assert.equa
 r = await createCheckout({ ...good, email: "nope" }, deps(store)); assert.equal(r.status, 400); ok("bad email");
 r = await createCheckout({ kind: "print", photo: "nope", size: "12x18" }, deps(store)); assert.equal(r.status, 400); ok("unknown print");
 r = await createCheckout(good, { ...deps(store), env: {} }); assert.equal(r.status, 503); ok("no stripe key");
+
+// hold limits
+r = await createCheckout({ ...good, date: "2026-12-03" }, deps(store)); assert.equal(r.status, 429); assert.equal((await r.json()).error, "hold-exists"); ok("one open hold per email");
+r = await createCheckout({ ...good, email: "ANA@x.co ", date: "2026-12-03" }, deps(store)); assert.equal(r.status, 429); ok("email compared case-insensitively");
+const crowded = memStore();
+for (let i = 0; i < MAX_OPEN_HOLDS; i++) r = await createCheckout({ ...good, email: `p${i}@x.co`, date: `2026-12-${String(10 + i).padStart(2, "0")}` }, deps(crowded));
+assert.equal(r.status, 200);
+r = await createCheckout({ ...good, email: "late@x.co", date: "2026-12-28" }, deps(crowded)); assert.equal(r.status, 429); assert.equal((await r.json()).error, "too-many-holds"); ok("cap on open holds");
+// origin and rate limit
+const fakeReq = (o) => ({ url: "https://s.test/api/x", headers: { get: (h) => (h === "origin" ? o : null) } });
+assert.equal(sameOrigin(fakeReq("https://s.test")), true); assert.equal(sameOrigin(fakeReq(null)), true); assert.equal(sameOrigin(fakeReq("https://evil.test")), false); ok("origin check");
+const rl = memStore(); let over = false;
+for (let i = 0; i < 4; i++) over = await limited(rl, "a", 3, 60000, NOW);
+assert.equal(over, true); assert.equal(await limited(rl, "b", 3, 60000, NOW), false); ok("rate limit per key");
 
 // a hold expires
 assert.equal(dayProblem("2026-12-01", NOW + 40 * 60 * 1000, { booked: [], blocked: [], held: [] }), null); ok("expired hold frees date");
