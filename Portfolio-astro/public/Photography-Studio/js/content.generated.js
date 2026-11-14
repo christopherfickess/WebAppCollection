@@ -322,15 +322,6 @@ export default {
       "alt": "A gravel avenue under a canopy of plane trees"
     },
     {
-      "set": "nature",
-      "light": "day",
-      "title": "Hedge walk",
-      "file": "img/photos/nature-hedge-walk",
-      "width": 1600,
-      "height": 2133,
-      "alt": "A woman with a walking stick on a stone path between tall, square-clipped hedges, with a red brick house behind"
-    },
-    {
       "set": "london",
       "light": "day",
       "title": "Big Ben from the wheel",
@@ -469,7 +460,7 @@ export default {
   },
   "about": {
     "title": "About Fox & Fern",
-    "lead": "I photograph quiet places at the edge of the day, then print them large enough to live with.",
+    "lead": "I photograph quiet places at the edge of the day, then print them large enough to live with. ",
     "image": {
       "file": "img/photos/nature-ficus-roots",
       "width": 1190,

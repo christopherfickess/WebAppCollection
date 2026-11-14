@@ -23,9 +23,9 @@ export const travelInfo = {
     advisory: {
       level: 2,
       label: "Exercise increased caution",
-      reasons: ["Check the current reasons on the official page before you book."],
+      reasons: ["Terrorism: terrorist groups continue to plot possible attacks in the United Kingdom."],
       url: "https://travel.state.gov/en/international-travel/travel-advisories/united-kingdom.html",
-      asOf: "Level reported by a travel-news source; the official page was not readable when we checked.",
+      asOf: "Level 2, issued September 9, 2026, as shown on the State Department's country page.",
     },
     airlines: {
       intro: "American, Delta, and United fly nonstop to Heathrow from many US cities, including New York (JFK), Newark, Boston, Chicago, Washington Dulles, Atlanta, Dallas, Los Angeles, San Francisco, Seattle, Miami, and Houston. British Airways and Virgin Atlantic also serve Heathrow.",
@@ -63,9 +63,10 @@ export const travelInfo = {
       reasons: [
         "Terrorism: groups continue to plot possible attacks in Spain.",
         "Civil unrest: demonstrations over political or economic issues are common.",
+        "Ceuta, the Spanish city in North Africa, is Level 3 (Reconsider travel). It is not on the mainland or the islands.",
       ],
       url: "https://travel.state.gov/en/international-travel/travel-advisories/spain.html",
-      asOf: "Level 2 as listed in August 2026, from a travel-advisory tracker.",
+      asOf: "Level 2 for Spain, reissued August 1, 2026 (Ceuta raised to Level 3), per the State Department advisory as republished by OSAC.",
     },
     airlines: {
       intro: "Nonstop flights to Barcelona leave from several US cities, including New York, Miami, Atlanta, and Philadelphia. Which airline flies each route varies by season.",
@@ -83,9 +84,10 @@ export const travelInfo = {
       reasons: [
         "Terrorism: groups continue to plot possible attacks in Spain.",
         "Civil unrest: demonstrations over political or economic issues are common.",
+        "Ceuta, the Spanish city in North Africa, is Level 3 (Reconsider travel). It is not on the mainland or the islands.",
       ],
       url: "https://travel.state.gov/en/international-travel/travel-advisories/spain.html",
-      asOf: "Level 2 as listed in August 2026, from a travel-advisory tracker.",
+      asOf: "Level 2 for Spain, reissued August 1, 2026 (Ceuta raised to Level 3), per the State Department advisory as republished by OSAC.",
     },
     airlines: {
       intro: "Valencia has no nonstop flights from the US today, so most trips connect in Europe or arrive in Madrid or Barcelona and continue by train. United plans to start Newark to Valencia on June 2, 2027, three flights a week in summer.",
