@@ -11,7 +11,9 @@ const problems = [], passes = [];
 const warnings = [];
 const check = (ok, good, bad) => (ok ? passes.push(good) : problems.push(bad));
 const soft = (ok, good, bad) => (ok ? passes.push(good) : (preview ? warnings : problems).push(bad));
-const get = async (path, init) => { try { return await fetch(site + path, { redirect: "manual", ...init }); } catch (e) { return { ok: false, status: 0, headers: new Headers(), text: async () => "", json: async () => ({}), error: e.message }; } };
+// Pages may redirect on the way (Netlify answers /Photography-Studio/ with a 301 to the lower-case folder), so follow
+// redirects, except where the redirect itself is what is being tested.
+const get = async (path, init) => { try { return await fetch(site + path, { redirect: init?.method === "POST" || path.startsWith("/api/oauth") ? "manual" : "follow", ...init }); } catch (e) { return { ok: false, status: 0, headers: new Headers(), text: async () => "", json: async () => ({}), error: e.message }; } };
 
 const a = await get("/api/availability?setup=1");
 const info = a.ok ? await a.json() : {};
