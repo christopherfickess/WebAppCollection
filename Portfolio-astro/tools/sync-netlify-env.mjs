@@ -2,7 +2,7 @@
 // Netlify site's environment variables, using Netlify's API directly.
 // Run by .github/workflows/netlify-env.yml. Prints names and status codes only.
 const API = "https://api.netlify.com/api/v1";
-const NAMES = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN"];
+const NAMES = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN", "OAUTH_GITHUB_CLIENT_ID", "OAUTH_GITHUB_CLIENT_SECRET"];
 const CONTEXTS = ["production", "deploy-preview", "branch-deploy"]; // secrets cannot use "dev"
 // Only these differ between test and live. Everything else (email, token) is the same on both.
 const LIVE_NAMES = new Set(["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]);

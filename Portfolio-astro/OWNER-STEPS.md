@@ -44,14 +44,23 @@ Developers > Webhooks (in newer dashboards it may sit under Workbench). Open you
 
 Use any monitor that checks a web address every few minutes and emails you (UptimeRobot and Better Stack both have free plans). Add two checks: the home page, and `https://<site>/api/availability` which should return JSON containing `"configured":true`. Send alerts to the studio owner's email.
 
-## Verify the content editor login on Netlify (not yet confirmed)
+## Content editor sign-in (GitHub OAuth app)
 
-The editor at `/Photography-Studio/admin/` signs in with GitHub through Netlify. Two things have never been confirmed on a real deploy:
+The editor at `/Photography-Studio/admin/` signs in with GitHub through the site's own `/api/oauth/auth` and `/api/oauth/callback` functions. It does not use Netlify's sign-in service. It needs a GitHub OAuth app, which is a one-time setup per site address. GitHub screens may differ slightly from these steps; the field names are what matter.
 
-1. Open the editor on the deployed site and sign in. If the page stays blank, open the browser console: a Content-Security-Policy error means the relaxed rule for `/Photography-Studio/admin/*` in `public/_headers` is being combined with the strict site-wide rule. Fix by changing the site-wide rule to exclude the admin path.
-2. If sign-in opens a popup that closes without logging in, in Netlify go to Site configuration > Access & security > OAuth and make sure a GitHub provider is installed. *Menu names unverified.*
+1. Open https://github.com/settings/applications/new (Settings > Developer settings > OAuth Apps > New OAuth App).
+2. Application name: the site name, for example `Fox & Fern editor`.
+3. Homepage URL: the site address, for example `https://redesign-rails-nav-theme--starlight-dogfood-test-1.netlify.app`. It must match `siteUrl` (or `customDomain`) in `services.config.json`.
+4. Authorization callback URL: that same address plus `/api/oauth/callback`. GitHub accepts one address per app, so a different site address needs its own OAuth app.
+5. Leave "Enable Device Flow" off and Register application.
+6. Copy the **Client ID**. Choose **Generate a new client secret** and copy it right away; GitHub shows it once.
+7. In the repository go to Settings > Secrets and variables > Actions and add two secrets: `OAUTH_GITHUB_CLIENT_ID` and `OAUTH_GITHUB_CLIENT_SECRET`. (The names cannot start with `GITHUB_`.)
+8. Apply them: Actions > Configure services > open the latest run > Re-run all jobs. Then redeploy the site.
+9. Open `/Photography-Studio/admin/` (capital P and S) on the site address from step 3, choose Login with GitHub, authorise, and make a small edit. A commit should appear on the branch.
 
-Make a small edit in the editor, save, and check a commit appears on the branch.
+Only people with write access to the repository can save changes, because the token is theirs.
+If the popup says "Editor sign-in is not set up yet", the two secrets did not reach Netlify: re-run step 8.
+If GitHub says the redirect_uri is not associated with the application, step 4 does not match the site address.
 
 ## GitHub settings used by the workflows
 

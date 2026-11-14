@@ -15,7 +15,7 @@ const info = a.ok ? await a.json() : {};
 check(a.ok, "booking API answers", `booking API did not answer (status ${a.status}). Functions may not be deployed.`);
 check(info.payments === true, "payments are on", "payments are off: STRIPE_SECRET_KEY is missing in this deploy");
 const s = info.setup || {};
-for (const n of ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN"]) check(s[n] === true, `${n} set`, `${n} is missing in this deploy`);
+for (const n of ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN", "OAUTH_GITHUB_CLIENT_ID", "OAUTH_GITHUB_CLIENT_SECRET"]) check(s[n] === true, `${n} set`, `${n} is missing in this deploy`);
 check(s.stripeKeyLooksRight === true, "Stripe key has a valid prefix", "STRIPE_SECRET_KEY does not start with sk_test_ or sk_live_");
 if (live) check(s.stripeMode === "live", "Stripe is in live mode", `Stripe is in ${s.stripeMode} mode, expected live`);
 else check(s.stripeMode !== "live", "Stripe is in test mode", "Stripe is LIVE: use test keys for this check, or pass --live on purpose");
@@ -39,6 +39,9 @@ const ad = await get("/Photography-Studio/admin/");
 const adCsp = ad.headers.get("content-security-policy") || "";
 check(ad.status === 200, "content editor page loads", `editor page returned ${ad.status} (the address is case-sensitive: /Photography-Studio/admin/)`);
 check(adCsp.includes("'unsafe-eval'") && (adCsp.match(/default-src/g) || []).length === 1, "editor has its own single CSP", "editor CSP is wrong: it must include 'unsafe-eval' and be ONE policy. If it lists two policies, the site-wide rule is being merged in; the editor will show 'Error loading the CMS configuration'");
+
+const oa = await get("/api/oauth/auth?provider=github&scope=repo");
+check(oa.status === 302 && (oa.headers.get("location") || "").startsWith("https://github.com/login/oauth/authorize"), "editor GitHub sign-in is set up", `editor sign-in returned ${oa.status} (expected a redirect to GitHub): add OAUTH_GITHUB_CLIENT_ID and OAUTH_GITHUB_CLIENT_SECRET`);
 
 const bad = await get("/api/stripe-webhook", { method: "POST", headers: { "stripe-signature": "t=1,v1=00" }, body: "{}" });
 check(bad.status === 400, "webhook refuses unsigned calls", `webhook returned ${bad.status} to a forged call (expected 400)`);

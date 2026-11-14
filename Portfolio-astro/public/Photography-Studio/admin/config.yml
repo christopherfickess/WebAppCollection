@@ -5,8 +5,7 @@ backend:
   name: github
   repo: christopherfickess/webappcollection
   branch: redesign/rails-nav-theme   # change to main when the site goes live
-  base_url: https://api.netlify.com
-  auth_endpoint: auth
+  # base_url and auth_endpoint come from admin/init.js (generated at build from services.config.json)
 publish_mode: simple
 site_url: /Photography-Studio/
 display_url: /Photography-Studio/

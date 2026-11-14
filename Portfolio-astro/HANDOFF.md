@@ -520,6 +520,12 @@ internal links return 200, autoplay advances and pauses.
 - Unverified against the live APIs (calls follow the documented shapes): Stripe payment method configuration field names, Resend record format into Netlify DNS record names, Netlify `force_ssl`/`custom_domain` update. Each of these fails soft with a warning rather than stopping the run. Run the workflow as a dry run first.
 - Editor: Decap 3.17.3 with an npm override pinning `trim` to the patched 0.0.3; `npm audit` shows 0 high. The editor page needs `'unsafe-eval'` in its CSP (its schema validator compiles code); without it the editor stops at "Error loading the CMS configuration". `launch-check` verifies the editor CSP is a single policy.
 
+## Editor sign-in (own OAuth, replaces Netlify's)
+
+- Netlify's sign-in service returned "Not Found" for this site, so the editor now signs in through `netlify/functions/oauth-auth.mjs` and `oauth-callback.mjs` (`lib/oauth.mjs`) using a GitHub OAuth app (`OAUTH_GITHUB_CLIENT_ID` / `OAUTH_GITHUB_CLIENT_SECRET`, synced to Netlify by the pipeline). Steps in `OWNER-STEPS.md`.
+- `tools/build-admin.mjs` generates `admin/boot.js` and `admin/init.js` (gitignored), which set Decap's `base_url` to `customDomain || siteUrl` from `services.config.json`. The callback URL registered in GitHub must be that address + `/api/oauth/callback`. One OAuth app per site address.
+- Security: signed state (HMAC, 10 minute expiry) plus an HttpOnly cookie; the popup page hands the token only to the site's own origin(s) (`OAUTH_ALLOWED_ORIGINS` adds more) and carries its own hash-based CSP. Tests: `tools/tests/oauth.test.mjs`; the opener-popup handshake was also run in a real browser against these functions. Not yet run against real GitHub.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

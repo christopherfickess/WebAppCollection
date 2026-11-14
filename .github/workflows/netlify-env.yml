@@ -51,6 +51,8 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+          OAUTH_GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+          OAUTH_GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
         run: node tools/sync-netlify-env.mjs
 
   sync-live:
@@ -76,5 +78,7 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+          OAUTH_GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+          OAUTH_GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
         run: node tools/sync-netlify-env.mjs
 # Last re-synced: address variables stored as plain, all-context variables (free plan).

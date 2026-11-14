@@ -6,7 +6,7 @@ export default async (req) => {
   // /api/availability?setup=1 also reports which settings this deploy can see
   // (yes or no only, never the values), to help with first-time set-up.
   if (new URL(req.url).searchParams.has("setup")) {
-    const names = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN"];
+    const names = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN", "OAUTH_GITHUB_CLIENT_ID", "OAUTH_GITHUB_CLIENT_SECRET"];
     body.setup = Object.fromEntries(names.map((n) => [n, Boolean(deps.env[n])]));
     body.setup.stripeKeyLooksRight = /^sk_(test|live)_/.test(deps.env.STRIPE_SECRET_KEY || "");
     body.setup.stripeMode = (/^sk_(test|live)_/.exec(deps.env.STRIPE_SECRET_KEY || "") || [])[1] || "unknown";
