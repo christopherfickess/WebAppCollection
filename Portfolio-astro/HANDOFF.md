@@ -526,6 +526,12 @@ internal links return 200, autoplay advances and pauses.
 - `tools/build-admin.mjs` generates `admin/boot.js` and `admin/init.js` (gitignored), which set Decap's `base_url` to `customDomain || siteUrl` from `services.config.json`. The callback URL registered in GitHub must be that address + `/api/oauth/callback`. One OAuth app per site address.
 - Security: signed state (HMAC, 10 minute expiry) plus an HttpOnly cookie; the popup page hands the token only to the site's own origin(s) (`OAUTH_ALLOWED_ORIGINS` adds more) and carries its own hash-based CSP. Tests: `tools/tests/oauth.test.mjs`; the opener-popup handshake was also run in a real browser against these functions. Not yet run against real GitHub.
 
+## Come back to (decided 2026-11-14)
+
+- **Editor edits as pull requests**: switch `publish_mode` in `admin/config.yml` to `editorial_workflow` so each content edit is a pull request with a Netlify deploy preview; make `quality.yml` run on `pull_request` too (it only runs on pushes now) so the content validator checks an edit before it is merged.
+- **Ship the code**: open a pull request `redesign/rails-nav-theme` -> `main`, then set the editor `branch` in `config.yml` to `main`. Scheduled reminders and live Stripe keys only work on the production deploy.
+- Then the go-live list in `CLIENT-LAUNCH.md` (own domain, Resend domain, Stripe live, `GH_ADMIN_TOKEN`, `production` environment, `GO_LIVE`).
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —
