@@ -1,4 +1,12 @@
 import assert from "node:assert/strict";
+import { catalog } from "../../netlify/functions/lib/catalog.mjs";
+
+// These tests check the booking LOGIC, so they run against fixed rules and prices instead of whatever the
+// current client's content says. Without this, a client with different prices or closed days would "break" them.
+catalog.packages = { "Mini session": { amount: 250, deposit: 75 }, "Half day": { amount: 600, deposit: 150 }, "Full day": { amount: 1100, deposit: 275 } };
+catalog.printSizes = { "12x18": 95, "16x20": 140, "24x36": 260, "30x40": 380 };
+Object.assign(catalog.booking, { minLeadDays: 7, closedWeekdays: [], blockedDates: [], refundFullDays: 14, slots: ["Morning", "Afternoon", "Golden hour"] });
+catalog.business = { ...catalog.business, name: "Test Studio" };
 import { createHmac } from "node:crypto";
 import { reportError, emailHtml, calendarInvite, manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
