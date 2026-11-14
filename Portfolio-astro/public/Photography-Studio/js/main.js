@@ -10,8 +10,10 @@ import { Light } from "./lib/light.js";
 import { LightNote } from "./lib/sun.js";
 import { Theme } from "./lib/theme.js";
 import { Calm } from "./lib/calm.js";
+import { ErrorReporter } from "./lib/errors.js";
 import { Booking, PrintOrder, Beacon, Thanks } from "./lib/booking.js";
 
+ErrorReporter.attach();
 setStore(content);
 [SiteHeader, SiteFooter, Hero, About, Gallery, Packages, Day, Trail, Wall, Faq, Testimonials].forEach((C) => C.define());
 

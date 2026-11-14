@@ -1,7 +1,7 @@
 // Booking, payment, email, and visitor-count logic for the studio site.
 // Every function takes its outside world (store, fetch, env, clock) as
 // arguments, so tests can run them without Stripe, email, or Netlify.
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, createHash, timingSafeEqual } from "node:crypto";
 import { catalog } from "./catalog.mjs";
 
 export const json = (status, body) => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
@@ -418,6 +418,35 @@ export async function alertOwner(deps, what, err) {
   try {
     await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `Site problem: ${what}`, text: `${what}\n\n${String(err?.message || err).slice(0, 500)}\n\nStripe retries failed payment notices for up to three days, so the booking will usually fix itself. If it does not, check the Netlify function logs.` });
   } catch {}
+}
+
+// ---- browser error reports ---------------------------------------------------
+// Visitors' browsers report JavaScript errors here. Nothing personal is kept: the message, the script file,
+// the line and the page path. The owner is emailed the first time each distinct error appears on a day,
+// at most MAX_ERROR_EMAILS a day, so one broken page cannot flood an inbox.
+const MAX_ERROR_EMAILS = 5, MAX_ERROR_KINDS = 50;
+export async function reportError(req, body, deps) {
+  const { store, now } = deps;
+  if (req.headers.get("dnt") === "1" || req.headers.get("sec-gpc") === "1") return json(204, null);
+  if (BOTS.test(req.headers.get("user-agent") || "")) return json(204, null);
+  const message = clip(body?.message, 200);
+  if (!message) return json(400, { error: "no-message" });
+  let source = clip(body?.source, 200);
+  try { source = new URL(source).pathname; } catch {}
+  const line = Math.max(0, Math.min(1e6, parseInt(body?.line, 10) || 0));
+  const path = clip(body?.path, 120).split(/[?#]/)[0];
+  const sig = createHash("sha1").update(`${message}|${source}|${line}`).digest("hex").slice(0, 12);
+  const key = `errs:${iso(new Date(now))}`;
+  const day = (await store.get(key, { type: "json" })) || { emails: 0, errors: {} };
+  const known = day.errors[sig];
+  if (known) known.count += 1;
+  else if (Object.keys(day.errors).length < MAX_ERROR_KINDS) day.errors[sig] = { message, source, line, path, count: 1 };
+  else return json(204, null);
+  let mail = false;
+  if (!known && day.emails < MAX_ERROR_EMAILS) { day.emails += 1; mail = true; }
+  await store.setJSON(key, day);
+  if (mail) await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `Browser error on the site: ${message.slice(0, 60)}`, text: `A visitor's browser hit a JavaScript error.\n\nMessage: ${message}\nScript: ${source || "unknown"}${line ? `:${line}` : ""}\nPage: ${path || "unknown"}\n\nThis email is sent once per distinct error per day (at most ${MAX_ERROR_EMAILS} a day). Counts are kept in the site's data.` }).catch(() => {});
+  return json(204, null);
 }
 
 // ---- plain request form (no payment) --------------------------------------

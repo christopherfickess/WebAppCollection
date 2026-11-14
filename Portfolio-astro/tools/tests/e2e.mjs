@@ -33,7 +33,7 @@ globalThis.__studioDeps = { store, env, fetch: fakeFetch };
 
 const fn = async (name) => (await import(`../../netlify/functions/${name}.mjs`));
 const routes = {};
-for (const name of ["studio-availability", "studio-checkout", "studio-request", "studio-webhook", "studio-manage", "studio-collect"]) { const m = await fn(name); routes[m.config.path] = m.default; }
+for (const name of ["studio-availability", "studio-checkout", "studio-request", "studio-webhook", "studio-manage", "studio-collect", "studio-error"]) { const m = await fn(name); routes[m.config.path] = m.default; }
 
 const server = createServer(async (req, res) => {
   const chunks = []; for await (const c of req) chunks.push(c);
@@ -109,6 +109,16 @@ try {
   console.log("ok 7 a second visitor cannot pick the booked date");
 
   assert.deepEqual(errors, [], `page errors: ${errors}`);
+
+  // a JavaScript error in a visitor's browser reaches the owner
+  const page3 = await (await browser.newContext({ userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36" })).newPage(); // headless Chrome is filtered as a bot, as intended
+  await page3.goto(`${BASE}/Photography-Studio/`);
+  await page3.waitForSelector("fx-header *");
+  mails.length = 0;
+  await page3.evaluate(() => setTimeout(() => { throw new Error("e2e deliberate error"); }, 0));
+  for (let i = 0; i < 40 && !mails.some((m) => /Browser error/.test(m.subject)); i++) await new Promise((r) => setTimeout(r, 100));
+  assert.ok(mails.some((m) => m.to[0] === "owner@example.com" && /e2e deliberate error/.test(m.subject)), "owner should be emailed about the browser error");
+  console.log("ok 8 a browser error is reported to the owner");
 } catch (e) { failed = e; }
 await browser.close();
 server.close();

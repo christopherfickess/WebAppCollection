@@ -116,13 +116,31 @@ export async function netlifyDns({ token, zoneName, records, dry, fetchFn, log }
   return true;
 }
 
+// Points a subdomain at the Netlify site, when Netlify hosts the zone. Otherwise says which record to add.
+export async function netlifyCname({ token, host, target, dry, fetchFn, log }) {
+  const parts = host.split(".");
+  if (parts.length < 3) { log(`note ${host} is an apex domain: add it in Netlify's domain settings (it gives you the records)`); return; }
+  const zoneName = parts.slice(-2).join(".");
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const zr = await fetchFn(`${NETLIFY}/dns_zones`, { headers });
+  const zone = (zr.ok ? await zr.json() : []).find((z) => z.name === zoneName);
+  if (!zone) { log(`DNS record to add at your DNS host:  CNAME ${host} -> ${target}`); return; }
+  const have = (await (await fetchFn(`${NETLIFY}/dns_zones/${zone.id}/dns_records`, { headers })).json()) || [];
+  if (have.some((h) => h.hostname === host && h.type === "CNAME" && String(h.value).replace(/\.$/, "") === target)) { log(`ok DNS ${host} already points to ${target}`); return; }
+  log(`${dry ? "would add" : "adding"} DNS CNAME ${host} -> ${target}`);
+  if (dry) return;
+  const res = await fetchFn(`${NETLIFY}/dns_zones/${zone.id}/dns_records`, { method: "POST", headers, body: JSON.stringify({ type: "CNAME", hostname: host, value: target, ttl: 3600 }) });
+  if (!res.ok) log(`warn DNS CNAME ${host} failed (HTTP ${res.status})`);
+}
+
 // ---- GitHub (optional) --------------------------------------------------
 export const ghSetSecret = (name, value, repo, token) => execFileSync("gh", ["secret", "set", name, "--repo", repo, "--body", value], { env: { ...process.env, GH_TOKEN: token }, stdio: "pipe" });
 
 // ---- orchestration ------------------------------------------------------
 export async function configure(env, cfg, { fetchFn = fetch, log = console.log, dry = false, setSecret = ghSetSecret } = {}) {
   const live = env.GO_LIVE === "true" && /^sk_live_/.test(env.LIVE_STRIPE_SECRET_KEY || "");
-  const url = `${(cfg.siteUrl || "").replace(/\/$/, "")}/api/stripe-webhook`;
+  const active = cfg.useCustomDomain && cfg.customDomain ? cfg.customDomain : cfg.siteUrl;
+  const url = `${(active || "").replace(/\/$/, "")}/api/stripe-webhook`;
   if (!/^https:\/\//.test(url)) throw new Error("services.config.json: siteUrl must be an https address");
   log(`mode: ${live ? "live (production gets live keys)" : "test"}${dry ? ", dry run: nothing is changed" : ""}`);
   const derived = {};
@@ -151,7 +169,9 @@ export async function configure(env, cfg, { fetchFn = fetch, log = console.log, 
   } else log("skip Resend domain (no resend.domain in services.config.json, or no RESEND_API_KEY)");
 
   if (env.NETLIFY_AUTH_TOKEN && env.NETLIFY_SITE_ID) {
-    await netlifySite({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: cfg.customDomain?.replace(/^https?:\/\//, ""), forceHttps: cfg.netlify?.forceHttps, dry, fetchFn, log });
+    const site = await netlifySite({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: cfg.customDomain?.replace(/^https?:\/\//, ""), forceHttps: cfg.netlify?.forceHttps, dry, fetchFn, log });
+    if (cfg.customDomain && cfg.netlify?.manageDnsRecords) await netlifyCname({ token: env.NETLIFY_AUTH_TOKEN, host: cfg.customDomain.replace(/^https?:\/\//, ""), target: `${site.name}.netlify.app`, dry, fetchFn, log });
+    else if (cfg.customDomain) log(`DNS record to add at your DNS host:  CNAME ${cfg.customDomain.replace(/^https?:\/\//, "")} -> ${site.name}.netlify.app`);
   } else log("skip Netlify site settings (no NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID)");
 
   // Keep what we learned: GitHub secrets (if a token that can write them is supplied), then Netlify variables.

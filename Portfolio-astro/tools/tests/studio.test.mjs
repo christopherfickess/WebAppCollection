@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { emailHtml, calendarInvite, manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+import { reportError, emailHtml, calendarInvite, manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
 const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
 const NOW = Date.parse("2026-11-06T12:00:00Z");
@@ -165,4 +165,20 @@ assert.equal(sent[0].to[0], "owner@example.com"); assert.equal(sent[0].reply_to,
   assert.equal(String(calls[0]).includes("metadata%5Bslot%5D"), false); ok("unknown time window ignored");
   await handleStripeEvent({ id: "evt_s", type: "checkout.session.completed", data: { object: { payment_intent: "pi_s", customer_details: { email: "slot@x.co" }, metadata: { kind: "session", package: "Half day", date: "2026-12-05", name: "Sl", message: "", slot: "Golden hour" } } } }, { ...deps(st) });
   assert.ok(sent.some((m) => m.attachments?.[0]?.filename === "session.ics" && m.to[0] === "slot@x.co")); assert.ok(sent.some((m) => /Time: Golden hour/.test(m.text))); ok("paid booking emails invite and time window");
+}
+
+// ---- browser error reports ----
+{
+  const st = memStore(); sent.length = 0;
+  const rq = (h = {}) => ({ url: "https://s.test/api/client-error", headers: { get: (k) => h[k] ?? null } });
+  const dps = deps(st);
+  const e1 = { message: "x is not a function", source: "https://s.test/Photography-Studio/js/main.js", line: 12, path: "/Photography-Studio/?a=1" };
+  assert.equal((await reportError(rq(), e1, dps)).status, 204);
+  assert.equal(sent.filter((m) => /Browser error/.test(m.subject)).length, 1); assert.ok(sent[0].text.includes("/Photography-Studio/js/main.js:12")); assert.ok(!sent[0].text.includes("a=1")); ok("first error emails the owner, without query strings");
+  await reportError(rq(), e1, dps); await reportError(rq(), e1, dps);
+  assert.equal(sent.length, 1); const day = Object.values((await st.get(`errs:${new Date(NOW).toISOString().slice(0, 10)}`)).errors)[0]; assert.equal(day.count, 3); ok("same error is counted, not re-emailed");
+  for (let i = 0; i < 9; i++) await reportError(rq(), { ...e1, message: `different ${i}` }, dps);
+  assert.equal(sent.length, 5); ok("at most 5 error emails a day");
+  assert.equal((await reportError(rq({ dnt: "1" }), { ...e1, message: "dnt" }, dps)).status, 204); assert.equal(sent.length, 5);
+  assert.equal((await reportError(rq(), { message: "" }, dps)).status, 400); ok("empty and Do Not Track reports ignored");
 }

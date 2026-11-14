@@ -4,10 +4,13 @@
 const args = process.argv.slice(2);
 const site = (args.find((a) => a.startsWith("http")) || "").replace(/\/$/, "");
 const live = args.includes("--live");
+const preview = args.includes("--preview"); // branch or pull-request deploys: placeholders warn instead of fail
 if (!site) { console.error("Usage: node tools/launch-check.mjs https://your-site.example [--live]"); process.exit(2); }
 
 const problems = [], passes = [];
+const warnings = [];
 const check = (ok, good, bad) => (ok ? passes.push(good) : problems.push(bad));
+const soft = (ok, good, bad) => (ok ? passes.push(good) : (preview ? warnings : problems).push(bad));
 const get = async (path, init) => { try { return await fetch(site + path, { redirect: "manual", ...init }); } catch (e) { return { ok: false, status: 0, headers: new Headers(), text: async () => "", json: async () => ({}), error: e.message }; } };
 
 const a = await get("/api/availability?setup=1");
@@ -29,11 +32,11 @@ check(h.headers.get("x-content-type-options") === "nosniff", "nosniff header pre
 
 for (const path of ["/Photography-Studio/privacy/", "/Photography-Studio/terms/", "/Photography-Studio/manage/"]) check((await get(path)).status === 200, `${path} loads`, `${path} is missing`);
 const sec = await (await get("/.well-known/security.txt")).text();
-check(/^Contact: mailto:(?!security@example\.com)/m.test(sec), "security.txt has a real contact", "security.txt still has the placeholder contact");
+soft(/^Contact: mailto:(?!security@example\.com)/m.test(sec), "security.txt has a real contact", "security.txt still has the placeholder contact");
 const robots = await (await get("/robots.txt")).text();
-check(!/example\.com/.test(robots), "robots.txt has the real domain", "robots.txt still mentions example.com (set SITE_URL or the site URL in Netlify)");
+soft(!/example\.com/.test(robots), "robots.txt has the real domain", "robots.txt still mentions example.com (set SITE_URL or the site URL in Netlify)");
 const map = await (await get("/sitemap.xml")).text();
-check(!/example\.com/.test(map) && map.includes("<loc>"), "sitemap has the real domain", "sitemap.xml still mentions example.com");
+soft(!/example\.com/.test(map) && map.includes("<loc>"), "sitemap has the real domain", "sitemap.xml still mentions example.com");
 
 const ad = await get("/Photography-Studio/admin/");
 const adCsp = ad.headers.get("content-security-policy") || "";
@@ -51,6 +54,7 @@ const ex = await get("/api/export");
 check(ex.status === 401, "export needs the token", `export returned ${ex.status} without a token (expected 401)`);
 
 for (const p of passes) console.log("ok  ", p);
+for (const p of warnings) console.log("warn", p);
 for (const p of problems) console.log("FAIL", p);
 console.log(problems.length ? `\n${problems.length} problem(s). Not ready.` : "\nAll checks passed.");
 process.exit(problems.length ? 1 : 0);

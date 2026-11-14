@@ -6,7 +6,7 @@ backend:
   repo: christopherfickess/webappcollection
   branch: redesign/rails-nav-theme   # change to main when the site goes live
   # base_url and auth_endpoint come from admin/init.js (generated at build from services.config.json)
-publish_mode: simple
+publish_mode: editorial_workflow   # each edit becomes a pull request (Draft > In review > Ready); publishing merges it
 site_url: /Photography-Studio/
 display_url: /Photography-Studio/
 locale: en

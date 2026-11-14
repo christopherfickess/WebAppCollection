@@ -43,6 +43,19 @@ const envPosts = t.calls.filter((c) => c.m === "POST" && c.url.includes("/accoun
 assert.equal(envPosts.find((e) => e.key === "STRIPE_WEBHOOK_SECRET").values[0].value, "whsec_NEW");
 assert.ok(!t.out.join("\n").includes("whsec_NEW") && !t.out.join("\n").includes("sk_test_a")); console.log("ok fresh setup configures every service, never logs secrets");
 
+// DNS: subdomain on a Netlify-hosted zone gets a CNAME to the site; a site address is used until useCustomDomain
+{
+  const c2 = { ...cfg, customDomain: "https://fox.studio.example", resend: {} };
+  const x = await run({ ...base }, c2);
+  assert.ok(x.w.dns.some((r) => r.type === "CNAME" && r.hostname === "fox.studio.example" && r.value === "n.netlify.app"), "cname added");
+  assert.equal(x.w.site.custom_domain, "fox.studio.example");
+  assert.ok(x.calls.some((c) => c.url.includes("webhook_endpoints") && c.m === "POST"));
+  assert.equal(JSON.stringify(x.w.endpoints).includes("s.test"), true, "webhook still points at siteUrl while useCustomDomain is off");
+  const y = await run({ ...base }, { ...c2, useCustomDomain: true });
+  assert.equal(JSON.stringify(y.w.endpoints).includes("fox.studio.example") || y.calls.some((c) => /fox\.studio\.example/.test(c.body || "")), true, "webhook moves to the custom domain once enabled");
+}
+console.log("ok custom domain: CNAME created, webhook address follows useCustomDomain");
+
 // 2. second run with the stored secret changes nothing on Stripe
 const again = await run({ ...base, STRIPE_WEBHOOK_SECRET: "whsec_KEEP" }, cfg, { world: { endpoints: [{ id: "we_1", url: "https://s.test/api/stripe-webhook", enabled_events: ["charge.refunded", "checkout.session.completed"], status: "enabled" }], site: { custom_domain: "studio.example", force_ssl: true, name: "n", account_id: "A1" }, resendDomains: [{ id: "d1", name: "mail.studio.example" }], pmcs: [] } });
 assert.equal(again.calls.filter((c) => c.url.includes("webhook_endpoints") && c.m !== "GET").length, 0); assert.equal(again.calls.some((c) => c.m === "PATCH"), false); assert.deepEqual(again.r.derived, []); console.log("ok idempotent: nothing to change, secret kept");

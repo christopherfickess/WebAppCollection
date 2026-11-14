@@ -1,15 +1,26 @@
 {
   "siteUrl": "https://redesign-rails-nav-theme--starlight-dogfood-test-1.netlify.app",
-  "customDomain": "",
+  "customDomain": "https://fox-and-hound.starlight-dogfood.me",
   "stripe": {
-    "webhookEvents": ["checkout.session.completed", "charge.refunded"],
+    "webhookEvents": [
+      "checkout.session.completed",
+      "charge.refunded"
+    ],
     "webhookDescription": "Studio bookings (managed by the configure-services workflow)",
-    "disablePaymentMethods": ["klarna", "affirm", "afterpay_clearpay"]
+    "disablePaymentMethods": [
+      "klarna",
+      "affirm",
+      "afterpay_clearpay"
+    ]
   },
-  "resend": { "domain": "", "region": "us-east-1" },
-  "netlify": { "forceHttps": true, "manageDnsRecords": false },
-  "_notes": "siteUrl is where Stripe sends payment notices. Use the live address once a custom domain is set. customDomain and resend.domain stay empty until the client has a domain. manageDnsRecords only works if Netlify hosts the domain's DNS."
+  "resend": {
+    "domain": "mail.starlight-dogfood.me",
+    "region": "us-east-1"
+  },
+  "netlify": {
+    "forceHttps": true,
+    "manageDnsRecords": true
+  },
+  "_notes": "siteUrl is the working address Stripe and the editor sign-in use today. customDomain is added to Netlify, and its DNS record is created if Netlify hosts the zone (otherwise the workflow prints it). Set useCustomDomain to true only after the domain loads the site over HTTPS, the GitHub OAuth app has the new callback URL, and the Stripe webhook should move. A custom domain serves the production (main) deploy.",
+  "useCustomDomain": false
 }
-
-
-
