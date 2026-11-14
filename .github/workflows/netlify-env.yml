@@ -83,3 +83,4 @@ jobs:
         run: node tools/sync-netlify-env.mjs
 # Last re-synced: address variables stored as plain, all-context variables (free plan).
 # Re-run 2026-11-14 21:58 UTC: picks up the editor sign-in secrets.
+# Re-run 2026-11-14 22:20 UTC: retry after adding the OAuth client secret.
