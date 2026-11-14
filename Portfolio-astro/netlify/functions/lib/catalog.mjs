@@ -106,6 +106,10 @@ export const catalog = {
       "title": "Plane tree avenue"
     },
     {
+      "id": "nature-hedge-walk",
+      "title": "Hedge walk"
+    },
+    {
       "id": "london-big-ben-from-the-river",
       "title": "Big Ben from the wheel"
     },

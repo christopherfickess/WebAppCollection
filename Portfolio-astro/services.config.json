@@ -1,6 +1,6 @@
 {
   "siteUrl": "https://redesign-rails-nav-theme--starlight-dogfood-test-1.netlify.app",
-  "customDomain": "https://fox-and-hound.starlight-dogfood.me",
+  "customDomain": "https://fox-and-fern.starlight-dogfood.me",
   "stripe": {
     "webhookEvents": [
       "checkout.session.completed",
