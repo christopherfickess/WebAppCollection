@@ -16,8 +16,10 @@ while (Date.now() < deadline) {
   const line = d ? `${d.state} (${d.context}, branch ${d.branch})` : "no deploy yet for this commit";
   if (line !== last) { console.log(line); last = line; }
   if (d && d.state === "ready") {
-    console.log(`deploy ready: ${d.deploy_ssl_url}`);
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `url=${d.deploy_ssl_url}\n`);
+    // A production deploy answers on the site's main address; its branch address just redirects there.
+    const url = d.context === "production" ? d.ssl_url || d.url : d.deploy_ssl_url;
+    console.log(`deploy ready: ${url}`);
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `url=${url}\n`);
     process.exit(0);
   }
   if (d && (d.state === "error" || d.state === "rejected")) {

@@ -9,7 +9,8 @@ name: Configure services
 # "Run workflow" with dry_run on (the default) only reads and prints what it would change.
 # Pushes to this file or to services.config.json on the dev branch APPLY the settings (it is idempotent).
 #
-# Repository secrets: those in netlify-env.yml, plus optional GH_ADMIN_TOKEN (a fine-grained token for this
+# Repository secrets: those in netlify-env.yml, plus RESEND_ADMIN_API_KEY (a full-access Resend key; the everyday
+# RESEND_API_KEY can stay send-only), plus optional GH_ADMIN_TOKEN (a fine-grained token for this
 # repository with Secrets: read and write). Live keys: LIVE_STRIPE_* in the "production" environment.
 on:
   workflow_dispatch:
@@ -38,6 +39,7 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_ADMIN_API_KEY: ${{ secrets.RESEND_ADMIN_API_KEY }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
@@ -67,6 +69,7 @@ jobs:
           LIVE_STRIPE_SECRET_KEY: ${{ secrets.LIVE_STRIPE_SECRET_KEY }}
           LIVE_STRIPE_WEBHOOK_SECRET: ${{ secrets.LIVE_STRIPE_WEBHOOK_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_ADMIN_API_KEY: ${{ secrets.RESEND_ADMIN_API_KEY }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}

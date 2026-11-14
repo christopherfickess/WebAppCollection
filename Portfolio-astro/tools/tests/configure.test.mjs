@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { configure } from "../configure-services.mjs";
 
 const cfg = { siteUrl: "https://s.test", customDomain: "https://studio.example", stripe: { webhookEvents: ["checkout.session.completed", "charge.refunded"], webhookDescription: "d", disablePaymentMethods: ["klarna", "affirm"] }, resend: { domain: "mail.studio.example", region: "us-east-1" }, netlify: { forceHttps: true, manageDnsRecords: true } };
-const base = { NETLIFY_AUTH_TOKEN: "nt", NETLIFY_SITE_ID: "S1", STRIPE_SECRET_KEY: "sk_test_a", RESEND_API_KEY: "re_k", STATS_TOKEN: "x" };
+const base = { NETLIFY_AUTH_TOKEN: "nt", NETLIFY_SITE_ID: "S1", STRIPE_SECRET_KEY: "sk_test_a", RESEND_API_KEY: "re_send", RESEND_ADMIN_API_KEY: "re_admin", STATS_TOKEN: "x" };
 
 function world(over = {}) {
   const calls = [];
@@ -77,3 +77,16 @@ const live = await run({ ...base, GO_LIVE: "true", LIVE_STRIPE_SECRET_KEY: "sk_l
 assert.equal(live.r.live, true); assert.ok(live.calls.some((c) => c.url.includes("webhook_endpoints")));
 await assert.rejects(run({ ...base, STRIPE_SECRET_KEY: "sk_live_x" }), /must be a test key/);
 await assert.rejects(run(base, { ...cfg, siteUrl: "http://x" }), /https/); console.log("ok live mode and guard rails");
+
+// a failing step does not stop the others, and is reported at the end
+{
+  const w = world(); const orig = w.f;
+  const f = async (url, o) => (url.startsWith("https://api.resend.com") ? { ok: false, status: 403, json: async () => ({ message: "This API key is restricted to only send emails" }) } : orig(url, o));
+  const out = [];
+  await assert.rejects(configure({ ...base }, cfg, { fetchFn: f, log: (m) => out.push(m), setSecret: () => {} }), /1 step\(s\) failed[\s\S]*Resend domain/);
+  assert.ok(w.calls.some((c) => c.url.includes("/accounts/A1/env")), "Netlify variables still synced after Resend failed");
+  assert.equal(w.w.site.custom_domain, "studio.example", "Netlify site still configured");
+  const noAdmin = []; await configure({ ...base, RESEND_ADMIN_API_KEY: "" }, cfg, { fetchFn: orig, log: (m) => noAdmin.push(m), dry: true });
+  assert.ok(noAdmin.some((m) => /RESEND_ADMIN_API_KEY/.test(m)));
+}
+console.log("ok failures are isolated; missing Resend admin key is explained");

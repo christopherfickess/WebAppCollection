@@ -146,42 +146,54 @@ export async function configure(env, cfg, { fetchFn = fetch, log = console.log, 
   const derived = {};
   const s = cfg.stripe || {};
 
-  if (env.STRIPE_SECRET_KEY) {
-    if (/^sk_live_/.test(env.STRIPE_SECRET_KEY)) throw new Error("STRIPE_SECRET_KEY must be a test key. Live keys go in LIVE_STRIPE_SECRET_KEY.");
-    const w = await stripeWebhook({ key: env.STRIPE_SECRET_KEY, url, events: s.webhookEvents, description: s.webhookDescription, existingSecret: env.STRIPE_WEBHOOK_SECRET, dry, fetchFn, log, label: "test" });
-    if (w.secret && w.secret !== env.STRIPE_WEBHOOK_SECRET) derived.STRIPE_WEBHOOK_SECRET = w.secret;
-    await stripePaymentMethods({ key: env.STRIPE_SECRET_KEY, off: s.disablePaymentMethods || [], dry, fetchFn, log, label: "test" });
-  } else log("skip Stripe test mode (no STRIPE_SECRET_KEY)");
+  // Each service is its own step: one failing (a restricted key, an outage) must not stop the others.
+  const failures = [];
+  const step = async (name, fn) => { try { await fn(); } catch (e) { failures.push(`${name}: ${e.message}`); log(`FAILED ${name}: ${e.message}`); } };
 
-  if (live) {
-    const w = await stripeWebhook({ key: env.LIVE_STRIPE_SECRET_KEY, url, events: s.webhookEvents, description: s.webhookDescription, existingSecret: env.LIVE_STRIPE_WEBHOOK_SECRET, dry, fetchFn, log, label: "live" });
-    if (w.secret && w.secret !== env.LIVE_STRIPE_WEBHOOK_SECRET) derived.LIVE_STRIPE_WEBHOOK_SECRET = w.secret;
-    await stripePaymentMethods({ key: env.LIVE_STRIPE_SECRET_KEY, off: s.disablePaymentMethods || [], dry, fetchFn, log, label: "live" });
+  if (/^sk_live_/.test(env.STRIPE_SECRET_KEY || "")) throw new Error("STRIPE_SECRET_KEY must be a test key. Live keys go in LIVE_STRIPE_SECRET_KEY.");
+  const stripeModes = [["test", env.STRIPE_SECRET_KEY, env.STRIPE_WEBHOOK_SECRET, "STRIPE_WEBHOOK_SECRET"]];
+  if (live) stripeModes.push(["live", env.LIVE_STRIPE_SECRET_KEY, env.LIVE_STRIPE_WEBHOOK_SECRET, "LIVE_STRIPE_WEBHOOK_SECRET"]);
+  for (const [label, key, existing, secretName] of stripeModes) {
+    if (!key) { log(`skip Stripe ${label} mode (no key)`); continue; }
+    await step(`Stripe ${label} webhook`, async () => {
+      const w = await stripeWebhook({ key, url, events: s.webhookEvents, description: s.webhookDescription, existingSecret: existing, dry, fetchFn, log, label });
+      if (w.secret && w.secret !== existing) derived[secretName] = w.secret;
+    });
+    await step(`Stripe ${label} payment methods`, () => stripePaymentMethods({ key, off: s.disablePaymentMethods || [], dry, fetchFn, log, label }));
   }
 
+  // Resend domain management needs a full-access key; the everyday RESEND_API_KEY may be send-only.
   const domain = cfg.resend?.domain;
-  if (domain && env.RESEND_API_KEY) {
-    const r = await resendDomain({ key: env.RESEND_API_KEY, name: domain, region: cfg.resend.region || "us-east-1", dry, fetchFn, log });
-    if (r.status !== "verified" && r.records.length) {
-      const placed = cfg.netlify?.manageDnsRecords && env.NETLIFY_AUTH_TOKEN ? await netlifyDns({ token: env.NETLIFY_AUTH_TOKEN, zoneName: domain.split(".").slice(-2).join("."), records: r.records, dry, fetchFn, log }) : false;
-      if (!placed) { log("DNS records to add at your DNS host:"); for (const rec of r.records) log(`  ${rec.type} ${rec.name} -> ${rec.value}${rec.priority != null ? ` (priority ${rec.priority})` : ""}`); }
-    }
-  } else log("skip Resend domain (no resend.domain in services.config.json, or no RESEND_API_KEY)");
+  const resendKey = env.RESEND_ADMIN_API_KEY;
+  if (domain && resendKey) {
+    await step("Resend domain", async () => {
+      const r = await resendDomain({ key: resendKey, name: domain, region: cfg.resend.region || "us-east-1", dry, fetchFn, log });
+      if (r.status !== "verified" && r.records.length) {
+        const placed = cfg.netlify?.manageDnsRecords && env.NETLIFY_AUTH_TOKEN ? await netlifyDns({ token: env.NETLIFY_AUTH_TOKEN, zoneName: domain.split(".").slice(-2).join("."), records: r.records, dry, fetchFn, log }) : false;
+        if (!placed) { log("DNS records to add at your DNS host:"); for (const rec of r.records) log(`  ${rec.type} ${rec.name} -> ${rec.value}${rec.priority != null ? ` (priority ${rec.priority})` : ""}`); }
+      }
+    });
+  } else log(`skip Resend domain (${domain ? "add a full-access key as the RESEND_ADMIN_API_KEY secret" : "no resend.domain in services.config.json"})`);
 
   if (env.NETLIFY_AUTH_TOKEN && env.NETLIFY_SITE_ID) {
-    const site = await netlifySite({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: cfg.customDomain?.replace(/^https?:\/\//, ""), forceHttps: cfg.netlify?.forceHttps, dry, fetchFn, log });
-    if (cfg.customDomain && cfg.netlify?.manageDnsRecords) await netlifyCname({ token: env.NETLIFY_AUTH_TOKEN, host: cfg.customDomain.replace(/^https?:\/\//, ""), target: `${site.name}.netlify.app`, dry, fetchFn, log });
-    else if (cfg.customDomain) log(`DNS record to add at your DNS host:  CNAME ${cfg.customDomain.replace(/^https?:\/\//, "")} -> ${site.name}.netlify.app`);
+    await step("Netlify site settings", async () => {
+      const host = cfg.customDomain?.replace(/^https?:\/\//, "");
+      const site = await netlifySite({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: host, forceHttps: cfg.netlify?.forceHttps, dry, fetchFn, log });
+      if (host && cfg.netlify?.manageDnsRecords) await netlifyCname({ token: env.NETLIFY_AUTH_TOKEN, host, target: `${site.name}.netlify.app`, dry, fetchFn, log });
+      else if (host) log(`DNS record to add at your DNS host:  CNAME ${host} -> ${site.name}.netlify.app`);
+    });
   } else log("skip Netlify site settings (no NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID)");
 
   // Keep what we learned: GitHub secrets (if a token that can write them is supplied), then Netlify variables.
   if (Object.keys(derived).length) {
-    if (env.GH_ADMIN_TOKEN && env.GITHUB_REPOSITORY && !dry) { for (const [k, v] of Object.entries(derived)) { setSecret(k, v, env.GITHUB_REPOSITORY, env.GH_ADMIN_TOKEN); log(`saved GitHub secret ${k}`); } }
-    else log(`new secrets not stored in GitHub (${dry ? "dry run" : "no GH_ADMIN_TOKEN"}): ${Object.keys(derived).join(", ")}${dry ? "" : ". They are still sent to Netlify now, but re-running will replace the webhook again until GH_ADMIN_TOKEN is set."}`);
+    if (env.GH_ADMIN_TOKEN && env.GITHUB_REPOSITORY && !dry) {
+      for (const [k, v] of Object.entries(derived)) await step(`save GitHub secret ${k}`, async () => { setSecret(k, v, env.GITHUB_REPOSITORY, env.GH_ADMIN_TOKEN); log(`saved GitHub secret ${k}`); });
+    } else log(`new secrets not stored in GitHub (${dry ? "dry run" : "no GH_ADMIN_TOKEN"}): ${Object.keys(derived).join(", ")}${dry ? "" : ". They are still sent to Netlify now, but re-running will replace the webhook again until GH_ADMIN_TOKEN is set."}`);
   }
   if (!dry && env.NETLIFY_AUTH_TOKEN && env.NETLIFY_SITE_ID) {
-    await sync({ ...env, ...derived, SYNC_MODE: live ? "live" : "test" }, fetchFn, log);
+    await step("Netlify variables", () => sync({ ...env, ...derived, SYNC_MODE: live ? "live" : "test" }, fetchFn, log));
   } else log(dry ? "dry run: Netlify variables not changed" : "skip Netlify variables");
+  if (failures.length) throw new Error(`${failures.length} step(s) failed:\n- ${failures.join("\n- ")}`);
   return { derived: Object.keys(derived), live };
 }
 

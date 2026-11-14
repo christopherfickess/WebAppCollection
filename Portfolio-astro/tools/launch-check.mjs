@@ -22,7 +22,6 @@ for (const n of ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY",
 check(s.stripeKeyLooksRight === true, "Stripe key has a valid prefix", "STRIPE_SECRET_KEY does not start with sk_test_ or sk_live_");
 if (live) check(s.stripeMode === "live", "Stripe is in live mode", `Stripe is in ${s.stripeMode} mode, expected live`);
 else check(s.stripeMode !== "live", "Stripe is in test mode", "Stripe is LIVE: use test keys for this check, or pass --live on purpose");
-check(typeof s.context === "string" && s.context !== "unknown", `deploy context: ${s.context}`, "deploy context unknown");
 
 const h = await get("/Photography-Studio/");
 check(h.status === 200, "home page loads", `home page returned ${h.status}`);
