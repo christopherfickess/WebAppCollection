@@ -21,6 +21,11 @@ function world(over = {}) {
     if (url === "https://api.resend.com/domains" && m === "POST") { w.resendDomains.push({ id: "d1", name: "mail.studio.example" }); return J({ id: "d1" }); }
     if (url.endsWith("/domains/d1")) return J({ status: "pending", records: [{ type: "TXT", name: "send.mail", value: "v=spf1", ttl: "Auto" }, { type: "MX", name: "send.mail", value: "feedback", priority: 10 }] });
     if (url.endsWith("/verify")) return J({});
+    if (url.startsWith("https://api.cloudflare.com/client/v4/zones?")) return J({ result: w.cfZones || [] });
+    if (url.includes("api.cloudflare.com") && url.includes("/dns_records")) {
+      if (m === "GET") { const nm = decodeURIComponent(url.split("name=")[1]), ty = url.match(/type=(\w+)/)[1]; return J({ result: (w.cf = w.cf || []).filter((r) => r.name === nm && r.type === ty) }); }
+      const b = JSON.parse(o.body); (w.cf = w.cf || []).push({ id: "r" + w.cf.length, ...b }); return J({ success: true });
+    }
     if (url.endsWith("/dns_zones")) return J(w.zones);
     if (url.includes("/dns_records")) return m === "GET" ? J(w.dns) : (w.dns.push(JSON.parse(o.body)), J({}, 201));
     if (url.endsWith("/sites/S1")) return m === "PATCH" ? (Object.assign(w.site, JSON.parse(o.body)), J({})) : J(w.site);
@@ -90,3 +95,18 @@ await assert.rejects(run(base, { ...cfg, siteUrl: "http://x" }), /https/); conso
   assert.ok(noAdmin.some((m) => /RESEND_ADMIN_API_KEY/.test(m)));
 }
 console.log("ok failures are isolated; missing Resend admin key is explained");
+
+// Cloudflare: CNAME and Resend records go there (DNS-only) in place of Netlify DNS; re-run changes nothing
+{
+  const cfEnv = { ...base, CLOUDFLARE_API_TOKEN: "cf" };
+  const w1 = world({ cfZones: [{ id: "CZ", name: "example" }], zones: [] });
+  const out = [];
+  await configure(cfEnv, { ...cfg, customDomain: "https://fox.studio.example" }, { fetchFn: w1.f, log: (m) => out.push(m), setSecret: () => {} });
+  const cname = w1.w.cf.find((r) => r.type === "CNAME");
+  assert.ok(cname, "CNAME created at Cloudflare"); assert.equal(cname.name, "fox.studio.example"); assert.equal(cname.content, "n.netlify.app"); assert.equal(cname.proxied, false);
+  assert.equal(w1.w.dns.length, 0, "nothing written to Netlify DNS");
+  const before = w1.w.cf.length;
+  await configure(cfEnv, { ...cfg, customDomain: "https://fox.studio.example" }, { fetchFn: w1.f, log: () => {}, setSecret: () => {} });
+  assert.equal(w1.w.cf.length, before, "second run adds nothing");
+}
+console.log("ok Cloudflare DNS");

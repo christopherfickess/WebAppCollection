@@ -537,6 +537,7 @@ internal links return 200, autoplay advances and pauses.
 - **Browser errors**: `js/lib/errors.js` posts to `/api/client-error`; the owner gets an alert email (rate-limited, daily counts in the `errs:<date>` blob key). Mentioned in the privacy page.
 - **new-client** takes `--ask` to prompt for the extra per-client fields.
 - **Custom domain**: `services.config.json` has `customDomain: https://fox-and-fern.starlight-dogfood.me`, `useCustomDomain: false`. Configure services sets it on Netlify; the DNS CNAME to `starlight-dogfood-test-1.netlify.app` must be added at the DNS host (the pipeline log prints it). Custom domains serve the production deploy. Before flipping `useCustomDomain` to true: add a second GitHub OAuth app for the new address and move the Stripe webhook.
+- **DNS at Cloudflare**: with a `CLOUDFLARE_API_TOKEN` secret (Zone > DNS > Edit, limited to the one zone) the pipeline creates the custom-domain CNAME and the Resend records itself, DNS-only (not proxied, so Netlify can issue HTTPS). Without it, it tries Netlify DNS, then prints the record.
 - **Resend domain** needs a full-access key in the `RESEND_ADMIN_API_KEY` secret (the everyday `RESEND_API_KEY` can stay send-only). Configure services now isolates each service so one failure does not stop the rest.
 - Content: UK Level 2 (terrorism, issued 9 Sep 2026); Spain Level 2 with Ceuta at Level 3 (1 Aug 2026); Valencia band colour darkened for contrast; "Hedge walk" photo removed (no consent from the person shown).
 

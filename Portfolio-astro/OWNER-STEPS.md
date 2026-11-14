@@ -68,3 +68,9 @@ If GitHub says the redirect_uri is not associated with the application, step 4 d
 - Environment `production`: required reviewer yourself; holds the two `LIVE_` secrets.
 - Repository variable `GO_LIVE`: `true` after going live.
 - Backups and the daily reminder only run on the default branch and the production deploy respectively. Reminders are Netlify scheduled functions, which run on production deploys only.
+
+## Cloudflare DNS token (lets the pipeline create DNS records)
+1. Cloudflare dashboard > My Profile > API Tokens > Create Token > "Edit zone DNS" template.
+2. Zone Resources: Include > Specific zone > `starlight-dogfood.me`. Create the token and copy it.
+3. GitHub repo > Settings > Secrets and variables > Actions > New repository secret: name `CLOUDFLARE_API_TOKEN`.
+4. Push any commit that touches `services.config.json` (or run Configure services). It adds `fox-and-fern` as a CNAME to `starlight-dogfood-test-1.netlify.app`, DNS only (grey cloud).

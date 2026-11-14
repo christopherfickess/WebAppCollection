@@ -133,6 +133,38 @@ export async function netlifyCname({ token, host, target, dry, fetchFn, log }) {
   if (!res.ok) log(`warn DNS CNAME ${host} failed (HTTP ${res.status})`);
 }
 
+// ---- Cloudflare DNS (optional) -------------------------------------------
+// Needs CLOUDFLARE_API_TOKEN: a token with "Zone > DNS > Edit" for just this zone. Records are created DNS-only
+// (not proxied) so Netlify can issue the HTTPS certificate. Returns false when there is no token or no such zone.
+const CF = "https://api.cloudflare.com/client/v4";
+export async function cloudflareDns({ token, zoneName, records, dry, fetchFn, log }) {
+  if (!token) return false;
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const zr = await fetchFn(`${CF}/zones?name=${encodeURIComponent(zoneName)}`, { headers });
+  const zj = zr.ok ? await zr.json() : {};
+  const zone = (zj.result || [])[0];
+  if (!zone) { log(`note Cloudflare token cannot see a zone named ${zoneName}${zr.ok ? "" : ` (HTTP ${zr.status})`}`); return false; }
+  for (const rec of records) {
+    const name = !rec.name || rec.name === "@" ? zoneName : rec.name.endsWith(zoneName) ? rec.name : `${rec.name}.${zoneName}`;
+    const q = await (await fetchFn(`${CF}/zones/${zone.id}/dns_records?type=${rec.type}&name=${encodeURIComponent(name)}`, { headers })).json();
+    const have = (q.result || [])[0];
+    const content = String(rec.value).replace(/\.$/, "");
+    if (have && String(have.content).replace(/\.$/, "") === content) { log(`ok Cloudflare ${rec.type} ${name} already set`); continue; }
+    log(`${dry ? "would " : ""}${have ? "update" : "add"} Cloudflare ${rec.type} ${name} -> ${content}`);
+    if (dry) continue;
+    const body = { type: rec.type, name, content, ttl: 1, proxied: false, ...(rec.priority != null ? { priority: Number(rec.priority) } : {}) };
+    const res = await fetchFn(`${CF}/zones/${zone.id}/dns_records${have ? `/${have.id}` : ""}`, { method: have ? "PUT" : "POST", headers, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`Cloudflare ${rec.type} ${name}: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
+  }
+  return true;
+}
+
+// Places records at the first DNS host that manages the zone: Cloudflare, then Netlify. False means do it by hand.
+export async function placeDns({ env, zoneName, records, dry, fetchFn, log }) {
+  if (await cloudflareDns({ token: env.CLOUDFLARE_API_TOKEN, zoneName, records, dry, fetchFn, log })) return true;
+  return env.NETLIFY_AUTH_TOKEN ? netlifyDns({ token: env.NETLIFY_AUTH_TOKEN, zoneName, records, dry, fetchFn, log }) : false;
+}
+
 // ---- GitHub (optional) --------------------------------------------------
 export const ghSetSecret = (name, value, repo, token) => execFileSync("gh", ["secret", "set", name, "--repo", repo, "--body", value], { env: { ...process.env, GH_TOKEN: token }, stdio: "pipe" });
 
@@ -169,7 +201,7 @@ export async function configure(env, cfg, { fetchFn = fetch, log = console.log, 
     await step("Resend domain", async () => {
       const r = await resendDomain({ key: resendKey, name: domain, region: cfg.resend.region || "us-east-1", dry, fetchFn, log });
       if (r.status !== "verified" && r.records.length) {
-        const placed = cfg.netlify?.manageDnsRecords && env.NETLIFY_AUTH_TOKEN ? await netlifyDns({ token: env.NETLIFY_AUTH_TOKEN, zoneName: domain.split(".").slice(-2).join("."), records: r.records, dry, fetchFn, log }) : false;
+        const placed = cfg.netlify?.manageDnsRecords ? await placeDns({ env, zoneName: domain.split(".").slice(-2).join("."), records: r.records, dry, fetchFn, log }) : false;
         if (!placed) { log("DNS records to add at your DNS host:"); for (const rec of r.records) log(`  ${rec.type} ${rec.name} -> ${rec.value}${rec.priority != null ? ` (priority ${rec.priority})` : ""}`); }
       }
     });
@@ -179,8 +211,11 @@ export async function configure(env, cfg, { fetchFn = fetch, log = console.log, 
     await step("Netlify site settings", async () => {
       const host = cfg.customDomain?.replace(/^https?:\/\//, "");
       const site = await netlifySite({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: host, forceHttps: cfg.netlify?.forceHttps, dry, fetchFn, log });
-      if (host && cfg.netlify?.manageDnsRecords) await netlifyCname({ token: env.NETLIFY_AUTH_TOKEN, host, target: `${site.name}.netlify.app`, dry, fetchFn, log });
-      else if (host) log(`DNS record to add at your DNS host:  CNAME ${host} -> ${site.name}.netlify.app`);
+      if (host && cfg.netlify?.manageDnsRecords) {
+        const target = `${site.name}.netlify.app`;
+        const placed = host.split(".").length >= 3 && await cloudflareDns({ token: env.CLOUDFLARE_API_TOKEN, zoneName: host.split(".").slice(-2).join("."), records: [{ type: "CNAME", name: host, value: target }], dry, fetchFn, log });
+        if (!placed) await netlifyCname({ token: env.NETLIFY_AUTH_TOKEN, host, target, dry, fetchFn, log });
+      } else if (host) log(`DNS record to add at your DNS host:  CNAME ${host} -> ${site.name}.netlify.app`);
     });
   } else log("skip Netlify site settings (no NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID)");
 
