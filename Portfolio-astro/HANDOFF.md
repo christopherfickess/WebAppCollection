@@ -532,6 +532,14 @@ internal links return 200, autoplay advances and pauses.
 - **Ship the code**: open a pull request `redesign/rails-nav-theme` -> `main`, then set the editor `branch` in `config.yml` to `main`. Scheduled reminders and live Stripe keys only work on the production deploy.
 - Then the go-live list in `CLIENT-LAUNCH.md` (own domain, Resend domain, Stripe live, `GH_ADMIN_TOKEN`, `production` environment, `GO_LIVE`).
 
+## Verify deploy, error reports, custom domain (2026-11-14)
+- **Verify deploy** (`.github/workflows/verify-deploy.yml`) waits for Netlify to build the pushed commit, then runs `tools/launch-check.mjs --preview` and the smoke test against the first address of that deploy that answers. Run it before every merge. Netlify redirects `/Photography-Studio/` to the lower-case folder; the check follows page redirects.
+- **Browser errors**: `js/lib/errors.js` posts to `/api/client-error`; the owner gets an alert email (rate-limited, daily counts in the `errs:<date>` blob key). Mentioned in the privacy page.
+- **new-client** takes `--ask` to prompt for the extra per-client fields.
+- **Custom domain**: `services.config.json` has `customDomain: https://fox-and-hound.starlight-dogfood.me`, `useCustomDomain: false`. Configure services sets it on Netlify; the DNS CNAME to `starlight-dogfood-test-1.netlify.app` must be added at the DNS host (the pipeline log prints it). Custom domains serve the production deploy. Before flipping `useCustomDomain` to true: add a second GitHub OAuth app for the new address and move the Stripe webhook.
+- **Resend domain** needs a full-access key in the `RESEND_ADMIN_API_KEY` secret (the everyday `RESEND_API_KEY` can stay send-only). Configure services now isolates each service so one failure does not stop the rest.
+- Content: UK Level 2 (terrorism, issued 9 Sep 2026); Spain Level 2 with Ceuta at Level 3 (1 Aug 2026); Valencia band colour darkened for contrast; "Hedge walk" photo removed (no consent from the person shown).
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —
