@@ -24,7 +24,7 @@ if (live) check(s.stripeMode === "live", "Stripe is in live mode", `Stripe is in
 else check(s.stripeMode !== "live", "Stripe is in test mode", "Stripe is LIVE: use test keys for this check, or pass --live on purpose");
 
 const h = await get("/Photography-Studio/");
-check(h.status === 200, "home page loads", `home page returned ${h.status}`);
+check(h.status === 200, "home page loads", `home page returned ${h.status}${h.headers.get("location") ? ` -> ${h.headers.get("location")}` : ""}`);
 check(/max-age=\d{7,}/.test(h.headers.get("strict-transport-security") || ""), "HSTS header present", "Strict-Transport-Security header missing");
 check(/default-src 'self'/.test(h.headers.get("content-security-policy") || ""), "CSP header present", "Content-Security-Policy header missing");
 check(h.headers.get("x-content-type-options") === "nosniff", "nosniff header present", "X-Content-Type-Options missing");
