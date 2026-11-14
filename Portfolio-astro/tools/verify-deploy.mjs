@@ -16,8 +16,18 @@ while (Date.now() < deadline) {
   const line = d ? `${d.state} (${d.context}, branch ${d.branch})` : "no deploy yet for this commit";
   if (line !== last) { console.log(line); last = line; }
   if (d && d.state === "ready") {
-    // A production deploy answers on the site's main address; its branch address just redirects there.
-    const url = d.context === "production" ? d.ssl_url || d.url : d.deploy_ssl_url;
+    // Try each address this deploy has and use the first that really answers. A custom domain only works once its
+    // DNS record exists, and a production deploy's other addresses may redirect to it, so follow redirects here.
+    const candidates = [...new Set([d.deploy_ssl_url, d.ssl_url, d.url, `https://${d.name}.netlify.app`].filter((u) => /^https:/.test(u || "")))];
+    let url = "";
+    for (const c of candidates) {
+      try {
+        const r = await fetch(`${c.replace(/\/$/, "")}/Photography-Studio/`, { redirect: "follow" });
+        console.log(`probe ${c}: ${r.status}${r.url && !r.url.startsWith(c) ? ` (ended at ${r.url})` : ""}`);
+        if (r.status === 200 && !url) url = c;
+      } catch (e) { console.log(`probe ${c}: unreachable (${e.cause?.code || e.message})`); }
+    }
+    if (!url) { console.error("::error::No address of this deploy answers. If you set a custom domain, add its DNS record (the Configure services log prints it)."); process.exit(1); }
     console.log(`deploy ready: ${url}`);
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `url=${url}\n`);
     process.exit(0);
