@@ -21,7 +21,7 @@
     "forceHttps": true,
     "manageDnsRecords": true
   },
-  "_notes": "DNS at Cloudflare (domain, certificate, then HTTPS). siteUrl is the working address Stripe and the editor sign-in use today. customDomain is added to Netlify, and its DNS record is created if Netlify hosts the zone (otherwise the workflow prints it). Set useCustomDomain to true only after the domain loads the site over HTTPS, the GitHub OAuth app has the new callback URL, and the Stripe webhook should move. A custom domain serves the production (main) deploy.",
+  "_notes": "DNS at Cloudflare (domain, certificate, HTTPS, forwarding). siteUrl is the working address Stripe and the editor sign-in use today. customDomain is added to Netlify, and its DNS record is created if Netlify hosts the zone (otherwise the workflow prints it). Set useCustomDomain to true only after the domain loads the site over HTTPS, the GitHub OAuth app has the new callback URL, and the Stripe webhook should move. A custom domain serves the production (main) deploy.",
   "useCustomDomain": false,
   "emailRouting": {
     "address": "hello"
