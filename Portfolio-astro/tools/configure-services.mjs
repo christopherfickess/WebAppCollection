@@ -189,11 +189,14 @@ export async function cloudflareEmailRouting({ token, zoneName, address, forward
     if (!dry) dest = await call(`/accounts/${zone.account.id}/email/routing/addresses`, { method: "POST", body: JSON.stringify({ email: forwardTo }) });
   }
   if (dest && !dest.verified) log(`ACTION Cloudflare emailed ${forwardTo.replace(/^(.).*(@.*)$/, "$1***$2")} a confirmation link. Click it once; mail forwards after that.`);
-  const status = await call(`/zones/${zone.id}/email/routing`);
-  if (!status?.enabled) {
-    log(`${dry ? "would enable" : "enabling"} Email Routing on ${zoneName}`);
-    if (!dry) await call(`/zones/${zone.id}/email/routing/enable`, { method: "POST", body: "{}" });
-  } else log(`ok Email Routing already enabled on ${zoneName}`);
+  // Turning routing on needs permissions beyond the rule one; if refused, say so and carry on with the rule.
+  try {
+    const status = await call(`/zones/${zone.id}/email/routing`);
+    if (!status?.enabled) {
+      log(`${dry ? "would enable" : "enabling"} Email Routing on ${zoneName}`);
+      if (!dry) await call(`/zones/${zone.id}/email/routing/enable`, { method: "POST", body: "{}" });
+    } else log(`ok Email Routing already enabled on ${zoneName}`);
+  } catch (e) { log(`note could not check or enable Email Routing (${e.message}). If it is not on yet: Cloudflare > ${zoneName} > Email > Email Routing > Enable.`); }
   const rules = (await call(`/zones/${zone.id}/email/routing/rules`)) || [];
   const rule = rules.find((r) => (r.matchers || []).some((m) => m.field === "to" && String(m.value).toLowerCase() === local.toLowerCase()));
   const want = { name: `Forward ${local}`, enabled: true, matchers: [{ type: "literal", field: "to", value: local }], actions: [{ type: "forward", value: [forwardTo] }] };
