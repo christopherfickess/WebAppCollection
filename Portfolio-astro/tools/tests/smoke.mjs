@@ -47,7 +47,7 @@ try {
   assert.equal(far.mode, "flight"); assert.ok(far.fee > 500); ok("travel estimate: distant city is quoted as a flight");
 
   // payments: a real Stripe (test mode) checkout session is created for a far-off date, then expired
-  const d = new Date(Date.now() + 250 * 864e5); while ([0, 6].includes(d.getUTCDay())) d.setUTCDate(d.getUTCDate() + 1);
+  const d = new Date(Date.now() + (250 + Math.floor(Math.random() * 300)) * 864e5); while ([0, 6].includes(d.getUTCDay())) d.setUTCDate(d.getUTCDate() + 1);
   const date = d.toISOString().slice(0, 10);
   const pkg = "Mini session"; // must exist in content/packages.json
   const co = await fetch(`${base}/api/checkout`, { method: "POST", headers: { Origin: base, "Content-Type": "application/json" }, body: JSON.stringify({ name: "CI Check", email: `ci-${Date.now()}@example.com`, package: pkg, date, message: "automated deploy check" }) });
