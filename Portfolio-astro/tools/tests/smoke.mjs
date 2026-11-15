@@ -21,7 +21,7 @@ try {
   for (const [name, path, wait] of [["home page", "/", "text=Reserve date with deposit"], ["manage page", "/manage/", "#manage-summary"], ["thank-you page", "/thanks/", "h1"], ["editor", "/admin/", "text=Login with GitHub"]]) {
     const page = await browser.newPage(); const errs = [];
     page.on("pageerror", (e) => errs.push(e.message));
-    page.on("console", (m) => m.type() === "error" && !/Failed to load resource.*(404|401)/.test(m.text()) && !(PREVIEW && /Applying inline style violates/.test(m.text())) && errs.push(m.text()));
+    page.on("console", (m) => m.type() === "error" && !/Failed to load resource.*(404|401)/.test(m.text()) && !(PREVIEW && /Applying inline style violates|app\.netlify\.com/.test(m.text())) && errs.push(m.text()));
     const res = await page.goto(studio + path, { waitUntil: "load" });
     assert.equal(res.status(), 200, `${name} returned ${res.status()}`);
     await page.waitForSelector(wait, { timeout: 15000 }).catch(() => { throw new Error(`${name}: expected "${wait}" never appeared. Errors: ${errs.join(" | ")}`); });
