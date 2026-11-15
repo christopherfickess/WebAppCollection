@@ -85,14 +85,23 @@ export async function netlifySite({ token, siteId, domain, forceHttps, dry, fetc
   const r = await fetchFn(`${NETLIFY}/sites/${siteId}`, { headers });
   if (!r.ok) throw new Error(`Netlify site read failed (HTTP ${r.status})`);
   const site = await r.json();
-  const patch = {};
-  if (domain && site.custom_domain !== domain) patch.custom_domain = domain;
-  // Netlify only accepts force_ssl once a custom domain has a certificate; *.netlify.app is always HTTPS.
-  if (forceHttps && site.custom_domain && site.force_ssl !== true) patch.force_ssl = true;
-  if (Object.keys(patch).length) {
-    log(`${dry ? "would set" : "setting"} Netlify site: ${Object.keys(patch).join(", ")}`);
-    if (!dry) { const u = await fetchFn(`${NETLIFY}/sites/${siteId}`, { method: "PATCH", headers, body: JSON.stringify(patch) }); if (!u.ok) log(`warn Netlify site update failed (HTTP ${u.status}: ${(await u.text().catch(() => "")).slice(0, 160)}). If you just added a custom domain, the certificate may not be ready; run again later.`); }
-  } else log("ok Netlify site settings already match");
+  // Separate requests: Netlify rejects the whole update if force_ssl is refused, which would also drop the domain.
+  const patch = async (what, body, soft) => {
+    log(`${dry ? "would set" : "setting"} Netlify site: ${what}`);
+    if (dry) return true;
+    const u = await fetchFn(`${NETLIFY}/sites/${siteId}`, { method: "PATCH", headers, body: JSON.stringify(body) });
+    if (!u.ok) log(`${soft ? "note" : "warn"} Netlify ${what} not set yet (HTTP ${u.status}: ${(await u.text().catch(() => "")).slice(0, 160)})${soft ? ". The HTTPS certificate is probably still being issued; run this again in a few minutes." : ""}`);
+    return u.ok;
+  };
+  let changed = false;
+  if (domain && site.custom_domain !== domain) { changed = true; if (await patch("custom_domain", { custom_domain: domain })) site.custom_domain = domain; }
+  // A custom domain needs a certificate before HTTPS can be forced (and the DNS record must exist first).
+  if (domain && site.custom_domain === domain && !dry && !site.ssl) {
+    const c = await fetchFn(`${NETLIFY}/sites/${siteId}/ssl`, { method: "POST", headers }).catch(() => null);
+    log(c?.ok ? "requested an HTTPS certificate for the custom domain" : `note certificate not issued yet${c ? ` (HTTP ${c.status})` : ""}: it needs the DNS record to resolve; run this again later`);
+  }
+  if (forceHttps && site.custom_domain && site.custom_domain === domain && site.force_ssl !== true) { changed = true; await patch("force_ssl", { force_ssl: true }, true); }
+  if (!changed) log("ok Netlify site settings already match");
   return site;
 }
 
