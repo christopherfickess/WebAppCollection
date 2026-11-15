@@ -30,7 +30,7 @@ if (env.CLOUDFLARE_API_TOKEN) {
 if (env.RESEND_API_KEY && env.EMAIL_FROM) {
   const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject: `Forwarding test ${new Date().toISOString()}`, text: "If you can read this in your inbox, hello@ forwarding works." }) });
   const j = await r.json().catch(() => ({}));
-  say(r.ok, r.ok ? `test message sent to ${to} (id ${j.id}); check the owner inbox` : `Resend refused the test message: ${j.message || r.status}. From address in use: ${env.EMAIL_FROM.replace(/.*</, "").replace(/>.*/, "")}`);
+  say(r.ok, r.ok ? `test message sent to ${to} (id ${j.id}); check the owner inbox` : `Resend refused the test message: ${j.message || r.status}. Sending domain in EMAIL_FROM: ${(env.EMAIL_FROM.match(/@([^>\s]+)/) || [])[1] || "none found"}`);
 }
 process.exit(bad ? 1 : 0);
 // rerun 1794755846
