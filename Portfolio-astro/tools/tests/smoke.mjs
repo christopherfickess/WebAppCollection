@@ -6,6 +6,8 @@ import { chromium } from "playwright-core";
 const base = (process.argv[2] || "").replace(/\/$/, "");
 if (!/^https:\/\//.test(base)) { console.error("Usage: node tools/tests/smoke.mjs https://deploy-address"); process.exit(2); }
 const studio = `${base}/Photography-Studio`;
+// Netlify injects its own review toolbar into deploy-preview pages; it uses inline styles our policy rightly refuses.
+const PREVIEW = /^https:\/\/deploy-preview-\d+--/.test(base);
 const results = []; const ok = (m) => { results.push(m); console.log("ok  ", m); };
 let browser;
 try {
@@ -19,7 +21,7 @@ try {
   for (const [name, path, wait] of [["home page", "/", "text=Reserve date with deposit"], ["manage page", "/manage/", "#manage-summary"], ["thank-you page", "/thanks/", "h1"], ["editor", "/admin/", "text=Login with GitHub"]]) {
     const page = await browser.newPage(); const errs = [];
     page.on("pageerror", (e) => errs.push(e.message));
-    page.on("console", (m) => m.type() === "error" && !/Failed to load resource.*(404|401)/.test(m.text()) && errs.push(m.text()));
+    page.on("console", (m) => m.type() === "error" && !/Failed to load resource.*(404|401)/.test(m.text()) && !(PREVIEW && /Applying inline style violates/.test(m.text())) && errs.push(m.text()));
     const res = await page.goto(studio + path, { waitUntil: "load" });
     assert.equal(res.status(), 200, `${name} returned ${res.status()}`);
     await page.waitForSelector(wait, { timeout: 15000 }).catch(() => { throw new Error(`${name}: expected "${wait}" never appeared. Errors: ${errs.join(" | ")}`); });
