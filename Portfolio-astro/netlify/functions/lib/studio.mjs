@@ -3,6 +3,7 @@
 // arguments, so tests can run them without Stripe, email, or Netlify.
 import { createHmac, createHash, timingSafeEqual } from "node:crypto";
 import { catalog } from "./catalog.mjs";
+import { quoteTravel } from "./travel.mjs";
 
 export const json = (status, body) => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 
@@ -46,6 +47,7 @@ export async function availability({ store, env, now }) {
     depositNote: catalog.booking.depositNote || "",
     slots: catalog.booking.slots || [],
     travelNote: catalog.booking.travelNote || "",
+    travel: catalog.booking.travel && catalog.booking.travel.enabled !== false ? { homeBase: catalog.booking.travel.homeBase, freeMiles: catalog.booking.travel.freeMiles } : null,
   };
 }
 
@@ -62,6 +64,15 @@ async function stripe(env, fetchFn, params) {
   return data;
 }
 
+// The session location a visitor typed, and our own estimate for it (never the figure the browser claims).
+async function travelOf(raw, deps) {
+  const location = clip(raw, 120);
+  const t = catalog.booking.travel;
+  if (!location) return { location: "", travel: "" };
+  if (!t || t.enabled === false) return { location, travel: "" };
+  const q = await quoteTravel(location, deps, t);
+  return { location, travel: q.ok ? q.summary : "Distance could not be worked out automatically; please check the location." };
+}
 const slotOf = (v) => { const x = clip(v, 40); return (catalog.booking.slots || []).includes(x) ? x : ""; };
 
 export const MAX_OPEN_HOLDS = 10; // total unpaid date holds at once, so checkouts cannot be used to lock the calendar
@@ -134,6 +145,9 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   p.set("metadata[message]", message);
   const slot = slotOf(body?.slot);
   if (slot) p.set("metadata[slot]", slot);
+  const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now });
+  if (tv.location) p.set("metadata[location]", tv.location);
+  if (tv.travel) p.set("metadata[travel]", tv.travel.slice(0, 480));
   const s = await stripe(env, fetchFn, p);
   holds[date] = { expires: now + HOLD_MS, session: s.id, email: mine };
   await store.setJSON("holds", holds);
@@ -182,7 +196,7 @@ const sign = (n) => `${catalog.business.name}`;
 export async function notifyBooking(deps, form, { paid } = {}) {
   const { env } = deps;
   const owner = env.OWNER_EMAIL;
-  const lines = [`Name: ${form.name}`, `Email: ${form.email}`, `Session: ${form.session || form.package || "not chosen"}`, `Date: ${form.date || "not chosen"}`, ...(form.slot ? [`Time: ${form.slot}`] : []), `Message: ${form.message || ""}`];
+  const lines = [`Name: ${form.name}`, `Email: ${form.email}`, `Session: ${form.session || form.package || "not chosen"}`, `Date: ${form.date || "not chosen"}`, ...(form.slot ? [`Time: ${form.slot}`] : []), ...(form.location ? [`Location: ${form.location}`] : []), ...(form.travel ? [`Travel estimate: ${form.travel}`] : []), `Message: ${form.message || ""}`];
   const out = [];
   out.push(await sendEmail(deps, { to: owner, subject: `${paid ? "Deposit paid" : "New request"}: ${form.name}`, text: lines.join("\n"), replyTo: form.email }));
   const pkg = catalog.packages[form.package || form.session];
@@ -216,12 +230,12 @@ export async function handleStripeEvent(event, deps) {
       if (!booked.includes(m.date)) booked.push(m.date);
       await store.setJSON("booked", booked.sort());
       const bookings = (await store.get("bookings", { type: "json" })) || {};
-      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, slot: m.slot || "", paidAt: now, reminded: false, pi: s.payment_intent || null };
+      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi: s.payment_intent || null };
       await store.setJSON("bookings", bookings);
       const holds = (await store.get("holds", { type: "json" })) || {};
       delete holds[m.date];
       await store.setJSON("holds", holds);
-      await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, slot: m.slot, message: m.message }, { paid: true });
+      await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, slot: m.slot, message: m.message, location: m.location, travel: m.travel }, { paid: true });
     } else if (m.kind === "balance") {
       const bookings = (await store.get("bookings", { type: "json" })) || {};
       if (bookings[m.date]) { bookings[m.date].balancePaidAt = now; await store.setJSON("bookings", bookings); }
@@ -462,7 +476,8 @@ export async function handleRequest(body, deps) {
   const session = clip(body?.session, 60), date = clip(body?.date, 10), slot = slotOf(body?.slot);
   if (!name || !EMAIL.test(email) || !message) return json(400, { error: "invalid-contact" });
   if (date && !DATE.test(date)) return json(400, { error: "invalid-date" });
-  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, ...(slot ? [`Time: ${slot}`] : []), `Message: ${message}`];
+  const tv = await travelOf(body?.location, deps);
+  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, ...(slot ? [`Time: ${slot}`] : []), ...(tv.location ? [`Location: ${tv.location}`] : []), ...(tv.travel ? [`Travel estimate: ${tv.travel}`] : []), `Message: ${message}`];
   const owner = await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `New request: ${name}`, text: lines.join("\n"), replyTo: email });
   if (owner.skipped) return json(503, { error: "email-not-configured" }); // never tell a visitor "sent" when nothing was
   if (!owner.ok) {

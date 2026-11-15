@@ -618,6 +618,19 @@ export default {
       "Afternoon",
       "Golden hour"
     ],
-    "travelNote": "Sessions more than 60 miles from the studio include a travel fee, quoted before you pay."
+    "travelNote": "Sessions start from Oklahoma City. Locations more than 60 miles away include a travel fee; enter yours below for an estimate. The final amount is confirmed before the session.",
+    "travel": {
+      "enabled": true,
+      "homeBase": "Oklahoma City, OK",
+      "freeMiles": 60,
+      "perMile": 0.75,
+      "maxDriveHours": 5,
+      "flight": {
+        "base": 350,
+        "perMile": 0.2,
+        "ground": 120,
+        "lodging": 150
+      }
+    }
   }
 };

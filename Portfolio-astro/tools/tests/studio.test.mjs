@@ -96,6 +96,21 @@ assert.equal(rq.status, 200); assert.equal(sent.length, 2); assert.equal(sent[0]
 sent.length = 0; rq = await handleRequest({ name: "Bot", email: "b@x.co", message: "x", "bot-field": "spam" }, { store, env, fetch: fetchMock, now: NOW });
 assert.equal(rq.status, 200); assert.equal(sent.length, 0); ok("honeypot sends nothing");
 rq = await handleRequest({ name: "", email: "bad", message: "" }, { store, env, fetch: fetchMock, now: NOW }); assert.equal(rq.status, 400); ok("invalid request rejected");
+// a session location gets our own travel estimate in the emails, never a figure from the browser
+{
+  const out = [];
+  const tf = async (url, opt) => {
+    const j = (b) => ({ ok: true, status: 200, json: async () => b });
+    if (url.includes("nominatim")) { const q = decodeURIComponent(url.split("q=")[1]).toLowerCase(); return j(q.startsWith("oklahoma") ? [{ lat: "35.4676", lon: "-97.5164", display_name: "Oklahoma City, USA" }] : [{ lat: "36.154", lon: "-95.9928", display_name: "Tulsa, USA" }]); }
+    if (url.includes("osrm")) return j({ routes: [{ distance: 105 * 1609.344, duration: 1.7 * 3600 }] });
+    out.push(JSON.parse(opt.body)); return { ok: true };
+  };
+  const r2 = await handleRequest({ name: "Ann", email: "ann@x.co", message: "hi", location: "Tulsa", travel: "FREE" }, { store: memStore(), env, fetch: tf, now: NOW });
+  assert.equal(r2.status, 200);
+  assert.match(out[0].text, /Location: Tulsa/); assert.match(out[0].text, /Travel estimate: .*\$68/); assert.ok(!out[0].text.includes("FREE"));
+  assert.match(out[1].text, /Travel estimate/);
+  ok("request carries the location and a server-made travel estimate");
+}
 sent.length = 0; for (let i = 0; i < 25; i++) await handleRequest({ name: "N", email: "n@x.co", message: "m" }, { store, env, fetch: fetchMock, now: NOW + 1 });
 assert.equal(sent.filter((m) => m.to[0] === "n@x.co").length <= 20, true); assert.equal(sent.filter((m) => m.to[0] === "o@b.co").length >= 25, true); ok("sender copies are capped per day, owner always notified");
 

@@ -142,6 +142,24 @@ collections:
           - { name: refundFullDays, label: Days before the session when a cancellation gets a full deposit refund, widget: number, value_type: int, min: 0 }
           - { name: slots, label: Time windows clients can ask for (leave empty to hide), widget: list, required: false, field: { name: slot, label: Window, widget: string } }
           - { name: travelNote, label: Note about travel (shown by the booking form; leave empty to hide), widget: string, required: false }
+          - name: travel
+            label: Travel fee estimate (the booking form asks for a location and shows an estimate)
+            widget: object
+            required: false
+            fields:
+              - { name: enabled, label: Ask for a session location and show an estimate, widget: boolean, default: true }
+              - { name: homeBase, label: Where you travel from (city or address), widget: string }
+              - { name: freeMiles, label: Free driving radius in miles, widget: number, value_type: int, min: 0 }
+              - { name: perMile, label: Dollars per mile beyond the free radius (counted both ways), widget: number, value_type: float, min: 0 }
+              - { name: maxDriveHours, label: Longest one-way drive before it is quoted as a flight (hours), widget: number, value_type: int, min: 1 }
+              - name: flight
+                label: Flight estimate
+                widget: object
+                fields:
+                  - { name: base, label: Round-trip airfare allowance in dollars, widget: number, value_type: int, min: 0 }
+                  - { name: perMile, label: Added dollars per straight-line mile, widget: number, value_type: float, min: 0 }
+                  - { name: ground, label: Rental car, bags and transfers in dollars, widget: number, value_type: int, min: 0 }
+                  - { name: lodging, label: Lodging in dollars, widget: number, value_type: int, min: 0 }
           - { name: depositNote, label: Deposit explanation, widget: text }
       - name: testimonials
         label: Kind words (real client quotes only)

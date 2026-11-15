@@ -27,7 +27,7 @@ export class Booking {
       this.date.min = min;
       this.date.addEventListener("input", () => this.check());
     }
-    if (this.date && (info.slots?.length || info.travelNote)) this.addExtras();
+    if (this.date && (info.slots?.length || info.travelNote || info.travel)) this.addExtras();
     if (info.payments) this.addPayButton();
     else this.form.querySelector('button[type="submit"]').after(this.msg);
     form.addEventListener("submit", (e) => this.send(e));
@@ -56,7 +56,48 @@ export class Booking {
       n.className = "light-note";
       n.textContent = this.info.travelNote;
       (this.slot || anchor).after(n);
+      this.travelAnchor = n;
     }
+    if (this.info.travel) this.addLocation(this.travelAnchor || this.slot || anchor);
+  }
+
+  // Where the session will be: a live travel estimate appears as the visitor types (the server works it out).
+  addLocation(anchor) {
+    const label = document.createElement("label");
+    label.htmlFor = "place";
+    label.textContent = "Session location ";
+    const opt = document.createElement("span");
+    opt.className = "optional";
+    opt.textContent = "(city or address, optional)";
+    label.append(opt);
+    const input = document.createElement("input");
+    input.id = "place";
+    input.name = "place";
+    input.type = "text";
+    input.maxLength = 120;
+    input.autocomplete = "off";
+    const out = document.createElement("p");
+    out.className = "light-note";
+    out.setAttribute("role", "status");
+    out.setAttribute("aria-live", "polite");
+    anchor.after(label, input, out);
+    this.place = input;
+    let timer = 0, seq = 0;
+    input.addEventListener("input", () => {
+      clearTimeout(timer);
+      const q = input.value.trim();
+      if (q.length < 3) { out.textContent = ""; return; }
+      timer = setTimeout(async () => {
+        const mine = ++seq;
+        out.textContent = "Working out the distance…";
+        try {
+          const res = await fetch(`/api/travel-quote?to=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
+          const j = await res.json();
+          if (mine !== seq) return;
+          out.textContent = res.ok ? j.summary : res.status === 429 ? "Too many lookups. Please try again later." : "We could not find that place. Try a city and state, and we will confirm the travel fee by email.";
+        } catch { if (mine === seq) out.textContent = ""; }
+      }, 700);
+    });
   }
 
   // Sends the plain request through the site's own email function. If that
@@ -72,7 +113,7 @@ export class Booking {
       const res = await fetch("/api/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: f.name.value, email: f.email.value, session: f.session.value, date: f.date.value, slot: f.slot?.value || "", message: f.message.value, "bot-field": f["bot-field"]?.value || "" }),
+        body: JSON.stringify({ name: f.name.value, email: f.email.value, session: f.session.value, date: f.date.value, slot: f.slot?.value || "", location: this.place?.value || "", message: f.message.value, "bot-field": f["bot-field"]?.value || "" }),
       });
       if (res.ok) { location.assign(this.form.getAttribute("action")); return; }
       // Function missing (404/405): use the normal form post. Any other failure: say so, do not lose the visitor on a 404 page.
@@ -132,7 +173,7 @@ export class Booking {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "session", name: f.name.value, email: f.email.value, package: f.session.value, date: f.date.value, slot: f.slot?.value || "", message: f.message.value }),
+        body: JSON.stringify({ kind: "session", name: f.name.value, email: f.email.value, package: f.session.value, date: f.date.value, slot: f.slot?.value || "", location: this.place?.value || "", message: f.message.value }),
       });
       const data = await res.json();
       if (!res.ok) {
