@@ -204,7 +204,13 @@ export async function cloudflareEmailRouting({ token, zoneName, address, forward
   if (same) log(`ok ${local} already forwards to the owner`);
   else {
     log(`${dry ? "would " : ""}${rule ? "update" : "create"} rule ${local} -> owner inbox`);
-    if (!dry) await call(`/zones/${zone.id}/email/routing/rules${rule ? `/${rule.tag || rule.id}` : ""}`, { method: rule ? "PUT" : "POST", body: JSON.stringify(want) });
+    if (!dry) {
+      try { await call(`/zones/${zone.id}/email/routing/rules${rule ? `/${rule.tag || rule.id}` : ""}`, { method: rule ? "PUT" : "POST", body: JSON.stringify(want) }); }
+      catch (e) {
+        if (!/not verified/i.test(e.message)) throw e;
+        log("ACTION The forwarding rule is created once your inbox confirms the Cloudflare email. Click its link, then run Configure services again.");
+      }
+    }
   }
 }
 
