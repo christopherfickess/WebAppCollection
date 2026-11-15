@@ -33,3 +33,4 @@ if (env.RESEND_API_KEY && env.EMAIL_FROM) {
   say(r.ok, r.ok ? `test message sent to ${to} (id ${j.id}); check the owner inbox` : `Resend refused the test message: ${j.message || r.status}. From address in use: ${env.EMAIL_FROM.replace(/.*</, "").replace(/>.*/, "")}`);
 }
 process.exit(bad ? 1 : 0);
+// rerun 1794755846
