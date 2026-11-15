@@ -168,6 +168,43 @@ export async function cloudflareDns({ token, zoneName, records, dry, fetchFn, lo
   return true;
 }
 
+// ---- Cloudflare Email Routing (optional) -----------------------------------
+// Forwards hello@<domain> to the owner's inbox. The token also needs "Zone > Email Routing Rules > Edit" and
+// "Account > Email Routing Addresses > Edit". The destination inbox must confirm once by clicking a link Cloudflare emails.
+export async function cloudflareEmailRouting({ token, zoneName, address, forwardTo, dry, fetchFn, log }) {
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const call = async (path, init) => {
+    const r = await fetchFn(`${CF}${path}`, { headers, ...init });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.success === false) throw new Error(`Cloudflare ${path.split("?")[0]}: HTTP ${r.status} ${(j.errors || []).map((e) => e.message).join("; ")}`.trim());
+    return j.result;
+  };
+  const zone = (await call(`/zones?name=${encodeURIComponent(zoneName)}`))?.[0];
+  if (!zone) throw new Error(`Cloudflare token cannot see a zone named ${zoneName}`);
+  const local = address.includes("@") ? address : `${address}@${zoneName}`;
+  const dests = (await call(`/accounts/${zone.account.id}/email/routing/addresses`)) || [];
+  let dest = dests.find((d) => d.email?.toLowerCase() === forwardTo.toLowerCase());
+  if (!dest) {
+    log(`${dry ? "would add" : "adding"} forwarding destination ${forwardTo.replace(/^(.).*(@.*)$/, "$1***$2")}`);
+    if (!dry) dest = await call(`/accounts/${zone.account.id}/email/routing/addresses`, { method: "POST", body: JSON.stringify({ email: forwardTo }) });
+  }
+  if (dest && !dest.verified) log(`ACTION Cloudflare emailed ${forwardTo.replace(/^(.).*(@.*)$/, "$1***$2")} a confirmation link. Click it once; mail forwards after that.`);
+  const status = await call(`/zones/${zone.id}/email/routing`);
+  if (!status?.enabled) {
+    log(`${dry ? "would enable" : "enabling"} Email Routing on ${zoneName}`);
+    if (!dry) await call(`/zones/${zone.id}/email/routing/enable`, { method: "POST", body: "{}" });
+  } else log(`ok Email Routing already enabled on ${zoneName}`);
+  const rules = (await call(`/zones/${zone.id}/email/routing/rules`)) || [];
+  const rule = rules.find((r) => (r.matchers || []).some((m) => m.field === "to" && String(m.value).toLowerCase() === local.toLowerCase()));
+  const want = { name: `Forward ${local}`, enabled: true, matchers: [{ type: "literal", field: "to", value: local }], actions: [{ type: "forward", value: [forwardTo] }] };
+  const same = rule && rule.enabled && (rule.actions || []).some((a) => a.type === "forward" && (a.value || []).map((v) => v.toLowerCase()).includes(forwardTo.toLowerCase()));
+  if (same) log(`ok ${local} already forwards to the owner`);
+  else {
+    log(`${dry ? "would " : ""}${rule ? "update" : "create"} rule ${local} -> owner inbox`);
+    if (!dry) await call(`/zones/${zone.id}/email/routing/rules${rule ? `/${rule.tag || rule.id}` : ""}`, { method: rule ? "PUT" : "POST", body: JSON.stringify(want) });
+  }
+}
+
 // Places records at the first DNS host that manages the zone: Cloudflare, then Netlify. False means do it by hand.
 export async function placeDns({ env, zoneName, records, dry, fetchFn, log }) {
   if (await cloudflareDns({ token: env.CLOUDFLARE_API_TOKEN, zoneName, records, dry, fetchFn, log })) return true;
@@ -215,6 +252,10 @@ export async function configure(env, cfg, { fetchFn = fetch, log = console.log, 
       }
     });
   } else log(`skip Resend domain (${domain ? "add a full-access key as the RESEND_ADMIN_API_KEY secret" : "no resend.domain in services.config.json"})`);
+
+  if (cfg.emailRouting?.address && env.CLOUDFLARE_API_TOKEN && env.OWNER_EMAIL) {
+    await step("Cloudflare email forwarding", () => cloudflareEmailRouting({ token: env.CLOUDFLARE_API_TOKEN, zoneName: (cfg.customDomain || "").replace(/^https?:\/\//, "").split(".").slice(-2).join("."), address: cfg.emailRouting.address, forwardTo: env.OWNER_EMAIL.trim(), dry, fetchFn, log }));
+  } else if (cfg.emailRouting?.address) log("skip email forwarding (needs CLOUDFLARE_API_TOKEN and OWNER_EMAIL)");
 
   if (env.NETLIFY_AUTH_TOKEN && env.NETLIFY_SITE_ID) {
     await step("Netlify site settings", async () => {

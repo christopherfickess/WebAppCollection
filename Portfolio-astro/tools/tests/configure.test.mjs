@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { configure } from "../configure-services.mjs";
+import { cloudflareEmailRouting, configure } from "../configure-services.mjs";
 
 const cfg = { siteUrl: "https://s.test", customDomain: "https://studio.example", stripe: { webhookEvents: ["checkout.session.completed", "charge.refunded"], webhookDescription: "d", disablePaymentMethods: ["klarna", "affirm"] }, resend: { domain: "mail.studio.example", region: "us-east-1" }, netlify: { forceHttps: true, manageDnsRecords: true } };
 const base = { NETLIFY_AUTH_TOKEN: "nt", NETLIFY_SITE_ID: "S1", STRIPE_SECRET_KEY: "sk_test_a", RESEND_API_KEY: "re_send", RESEND_ADMIN_API_KEY: "re_admin", STATS_TOKEN: "x" };
@@ -110,3 +110,28 @@ console.log("ok failures are isolated; missing Resend admin key is explained");
   assert.equal(w1.w.cf.length, before, "second run adds nothing");
 }
 console.log("ok Cloudflare DNS");
+
+// Cloudflare Email Routing: destination added, routing enabled, rule created; a second run changes nothing
+{
+  const st = { dests: [], enabled: false, rules: [], calls: [] };
+  const J = (result) => ({ ok: true, status: 200, json: async () => ({ success: true, result }), text: async () => "" });
+  const f = async (url, o = {}) => {
+    const m = o.method || "GET", u = url.replace("https://api.cloudflare.com/client/v4", "");
+    st.calls.push(`${m} ${u}`);
+    if (u.startsWith("/zones?name=")) return J([{ id: "Z", name: "example", account: { id: "A" } }]);
+    if (u === "/accounts/A/email/routing/addresses") { if (m === "POST") { st.dests.push({ ...JSON.parse(o.body), verified: null }); return J(st.dests.at(-1)); } return J(st.dests); }
+    if (u === "/zones/Z/email/routing") return J({ enabled: st.enabled });
+    if (u === "/zones/Z/email/routing/enable") { st.enabled = true; return J({}); }
+    if (u === "/zones/Z/email/routing/rules") { if (m === "POST") { st.rules.push({ tag: "t1", ...JSON.parse(o.body) }); return J({}); } return J(st.rules); }
+    throw new Error("unexpected " + m + " " + u);
+  };
+  const out = [];
+  const args = { token: "cf", zoneName: "example", address: "hello", forwardTo: "me@gmail.test", dry: false, fetchFn: f, log: (m) => out.push(m) };
+  await cloudflareEmailRouting(args);
+  assert.equal(st.rules[0].matchers[0].value, "hello@example"); assert.deepEqual(st.rules[0].actions[0].value, ["me@gmail.test"]);
+  assert.ok(st.enabled && st.dests.length === 1); assert.ok(out.some((m) => /confirmation link/.test(m)), "tells the owner to confirm");
+  assert.ok(!out.some((m) => m.includes("me@gmail.test")), "full address never logged");
+  const n = st.calls.length; await cloudflareEmailRouting(args);
+  assert.ok(st.calls.slice(n).every((c) => c.startsWith("GET")), "second run only reads");
+}
+console.log("ok Cloudflare email forwarding");

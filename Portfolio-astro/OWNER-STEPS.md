@@ -74,3 +74,9 @@ If GitHub says the redirect_uri is not associated with the application, step 4 d
 2. Zone Resources: Include > Specific zone > `starlight-dogfood.me`. Create the token and copy it.
 3. GitHub repo > Settings > Secrets and variables > Actions > New repository secret: name `CLOUDFLARE_API_TOKEN`.
 4. Push any commit that touches `services.config.json` (or run Configure services). It adds `fox-and-fern` as a CNAME to `starlight-dogfood-test-1.netlify.app`, DNS only (grey cloud).
+
+### Email forwarding (hello@starlight-dogfood.me -> your inbox)
+The pipeline can set this up through Cloudflare Email Routing (`emailRouting` in `services.config.json`; the destination is your `OWNER_EMAIL` secret).
+1. Edit the Cloudflare token (My Profile > API Tokens > the token > Edit) and add two permissions: **Zone > Email Routing Rules > Edit** (this zone) and **Account > Email Routing Addresses > Edit**.
+2. Run Configure services. Cloudflare emails your inbox a confirmation link: click it once.
+3. Mail sent to `hello@starlight-dogfood.me` now arrives in your inbox. To reply as that address you would need Gmail's "Send mail as"; replying normally shows your Gmail address.
