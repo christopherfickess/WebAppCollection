@@ -3,6 +3,9 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="description" content="Chris is a software developer specializing in Web Design" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,62 +16,205 @@
   <!--Type of characters to use in website-->
   <meta name="robots" content="index, follow" />
   <!--tells web crawlers to index website on Google-->
-  <link rel="icon" href="../icon/fickess1.PNG" />
+  <link rel="icon" href="../icon/octopus-favicon.png" />
 
   <!--scales website to fit page, this is useful for browsing on a phone-->
   <link rel="stylesheet" href="../styles/styles.css" />
+  <link rel="stylesheet" href="../styles/rails.css?v=30" />
+  <script>
+    (function () {
+      var themePref = localStorage.getItem("portfolio-theme-pref") || localStorage.getItem("portfolio-theme") || "dark";
+      var appliedTheme = themePref === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : themePref;
+      var preset = localStorage.getItem("portfolio-preset") || "verdant";
+      var railExpanded = localStorage.getItem("rail-expanded") === "true";
+      document.documentElement.setAttribute("data-theme", appliedTheme);
+      document.documentElement.setAttribute("data-theme-pref", themePref);
+      document.documentElement.setAttribute("data-preset", preset);
+      document.documentElement.setAttribute("data-rail-expanded", railExpanded ? "true" : "false");
+    })();
+  </script>
   <title>Christopher Fickess | Site Reliability Engineer</title>
 </head>
 
 <body>
+  <canvas id="starfield" class="starfield-canvas" aria-hidden="true"></canvas>
+  <nav class="rail rail-left" aria-label="Primary">
+    <a href="../index.html" title="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        <span class="rail-label">Home</span>
+    </a>
+    <a href="./index.html" title="Projects" class="rail-active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <span class="rail-label">Projects</span>
+    </a>
+    <a href="../resume/" title="Resume">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+        <span class="rail-label">Resume</span>
+    </a>
+    <a href="../contact/" title="Contact">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
+        <span class="rail-label">Contact</span>
+    </a>
+  </nav>
+
+  <nav class="rail rail-right" aria-label="Utility">
+    <span class="rail-spacer"></span>
+    <a href="https://www.linkedin.com/in/christopher-fickess-223a17182/" target="_blank" rel="noopener" title="LinkedIn">
+      <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+    </a>
+    <a href="https://github.com/christopherfickess" target="_blank" rel="noopener" title="GitHub">
+      <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-4.466 19.59c-.405.078-.534-.171-.534-.384v-2.195c0-.747-.262-1.233-.55-1.481 1.782-.198 3.654-.875 3.654-3.947 0-.874-.312-1.588-.823-2.147.082-.202.356-1.016-.079-2.117 0 0-.671-.215-2.198.82-.64-.18-1.324-.267-2.004-.271-.68.003-1.364.091-2.003.269-1.528-1.035-2.2-.82-2.2-.82-.434 1.102-.16 1.915-.077 2.118-.512.56-.824 1.273-.824 2.147 0 3.064 1.867 3.751 3.645 3.954-.229.2-.436.552-.508 1.07-.457.204-1.614.557-2.328-.666 0 0-.423-.768-1.227-.825 0 0-.78-.01-.055.487 0 0 .525.246.889 1.17 0 0 .463 1.428 2.688.944v1.489c0 .211-.129.459-.528.385-3.18-1.057-5.472-4.056-5.472-7.59 0-4.419 3.582-8 8-8s8 3.581 8 8c0 3.533-2.289 6.531-5.466 7.59z"/></svg>
+    </a>
+  </nav>
+
+  <button id="burger-toggle" aria-label="Open menu" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile menu">
+    <a href="../index.html">Home</a>
+    <a href="./index.html">Projects</a>
+    <a href="../resume/">Resume</a>
+    <a href="../contact/">Contact</a>
+    <hr>
+    <a href="https://www.linkedin.com/in/christopher-fickess-223a17182/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://github.com/christopherfickess" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+
   <header class="main-head">
     <nav>
+      <button id="rail-toggle" type="button" aria-label="Expand navigation" aria-pressed="false" title="Expand navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
       <div class="logo">
         <img src="../icon/fickess1.PNG" alt="logo" width="90rem">
         <h1>Chris Fickess</h1>
       </div>
-      <ul>
-        <li><a href="../index.html">Home</a></li>
-        <li><a class="active" href="./index.html">Projects</a></li>
-        <li><a href="../contact/">Contact</a></li>
-      </ul>
+      <span class="topbar-page">Projects</span>
+      <div class="theme-switch" role="radiogroup" aria-label="Color theme">
+        <button type="button" class="theme-opt" data-theme-pref="light" title="Light">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+          <span>Light</span>
+        </button>
+        <button type="button" class="theme-opt" data-theme-pref="system" title="Auto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
+          <span>Auto</span>
+        </button>
+        <button type="button" class="theme-opt" data-theme-pref="dark" title="Dark">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+          <span>Dark</span>
+        </button>
+      </div>
+      <div class="display-menu">
+        <button id="display-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.3" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.7" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="16.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+          <span>Display</span>
+          <svg class="display-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="display-dropdown" id="display-dropdown" role="menu" hidden>
+          <button type="button" class="display-option" data-preset="aurora" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #26beff, #d81dff);"></span>Aurora
+          </button>
+          <button type="button" class="display-option" data-preset="ember" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #ff8a00, #ffd166);"></span>Ember
+          </button>
+          <button type="button" class="display-option" data-preset="verdant" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #1fae63, #7ee8a6);"></span>Verdant
+          </button>
+          <button type="button" class="display-option" data-preset="signal" role="menuitem">
+            <span class="display-swatch" style="background: linear-gradient(135deg, #7b5cf0, #c89bff);"></span>Signal Violet
+          </button>
+        </div>
+      </div>
     </nav>
   </header>
-  <section class="intro">
-    <div class="intro-text">
-      <h2>Christopher Fickess</h2>
-          <h3>Site Reliability Engineer</h3><h4>AWS Cloud Specialist<br>Continuous Integration(CI)<br>Continuous Delivery (CD)</h4><br><br>
+  <section class="projects-page">
+    <header class="projects-head">
+      <p class="kicker">Projects</p>
+      <h2>What I build</h2>
+      <p class="projects-intro">A mix of real infrastructure work and the front-end practice that got me comfortable with the web side of this site. The homelab below is actively maintained; the three sites after it were early learning exercises.</p>
+    </header>
+
+    <div class="featured-project">
+      <div class="featured-project-copy">
+        <span class="featured-label">Featured &middot; actively maintained</span>
+        <h3>Starlight: Personal Kubernetes Homelab</h3>
+        <p>A self-hosted Kubernetes cluster run the way production infrastructure should be: every change goes through Flux and a pull request, nothing gets applied by hand. It's where I test ideas (GitOps workflows, policy enforcement, zero-trust networking) before they go near a real environment, and where a few of my own tools actually run.</p>
+        <ul class="featured-facts">
+          <li><strong>GitOps:</strong> every change through Flux + a PR, nothing applied by hand</li>
+          <li><strong>Zero-trust networking:</strong> admin surfaces are Tailscale-only, never public</li>
+          <li><strong>Policy &amp; runtime security:</strong> Kyverno, Tetragon (eBPF), Trivy scanning</li>
+          <li><strong>Full observability:</strong> Grafana, Prometheus, Loki, Alertmanager</li>
+        </ul>
+        <ul class="skills">
+          <li>#kubernetes</li>
+          <li>#flux</li>
+          <li>#terraform</li>
+          <li>#tailscale</li>
+          <li>#kyverno</li>
+        </ul>
+      </div>
+      <div class="stack-card" aria-hidden="true">
+        <div class="stack-layer">
+          <span class="stack-layer-name">GitOps</span>
+          <span class="stack-layer-detail">Flux &middot; PR-reviewed</span>
+        </div>
+        <div class="stack-layer">
+          <span class="stack-layer-name">Security</span>
+          <span class="stack-layer-detail">Kyverno &middot; Tetragon &middot; Trivy</span>
+        </div>
+        <div class="stack-layer">
+          <span class="stack-layer-name">Observability</span>
+          <span class="stack-layer-detail">Grafana &middot; Prometheus &middot; Loki</span>
+        </div>
+        <div class="stack-layer">
+          <span class="stack-layer-name">Platform</span>
+          <span class="stack-layer-detail">Kubernetes &middot; Tailscale</span>
+        </div>
+      </div>
     </div>
-    <section class="projects">
-      <div class="travelly">
-        <h2>Travelly</h2>
-        <a href="https://6329d6f5314e704950af51c8--fickess-project3.netlify.app/">
-          <img src="../img/Website3.PNG" alt="" >
-        </a>
-      </div>
-      <div class="chris-project">
-        <h2>Web Project</h2>
-        <a href="https://6329d6d3f476dc455dc5d87c--fickess-project2.netlify.app/">
-          <img src="../img/Website2.PNG" alt="" >
-        </a>
-      </div>
-    </section>
+
+    <h3 class="section-divider">Earlier practice builds</h3>
+    <div class="projects-grid">
+      <a class="project-card" href="../../Website1/index.html" target="_blank" rel="noopener">
+        <div class="project-thumb">
+          <img src="../img/Website1.PNG" alt="Website1: Flourish Collective screenshot" loading="lazy" />
+        </div>
+        <div class="project-copy">
+          <h3>Flourish Collective</h3>
+          <p>Early flexbox practice: course-style landing page, starry hero, green CTA.</p>
+        </div>
+      </a>
+      <a class="project-card" href="../../Website2/index.html" target="_blank" rel="noopener">
+        <div class="project-thumb">
+          <img src="../img/Website2.PNG" alt="Website2: Fox Photography screenshot" loading="lazy" />
+        </div>
+        <div class="project-copy">
+          <h3>Fox Photography</h3>
+          <p>Nature/photo one-pager, fox mascot, plum accent, Formspree contact form.</p>
+        </div>
+      </a>
+      <a class="project-card" href="../../Website3/index.html" target="_blank" rel="noopener">
+        <div class="project-thumb">
+          <img src="../img/Website3.PNG" alt="Website3: Travelly screenshot" loading="lazy" />
+        </div>
+        <div class="project-copy">
+          <h3>Travelly</h3>
+          <p>Travel-agency landing page, animated clouds, sky blue, Poppins + Pattaya.</p>
+        </div>
+      </a>
+    </div>
   </section>
   <footer>
-    <!-- <div> -->
-    <h4>Chris Fickess &copy; 2022</h4>
-    <ul>
-      <li>
-        <a class="references" target="_blank" title="Linkedin-Account"
-          href="https://www.linkedin.com/in/christopher-fickess-223a17182/">
-          <img src="../img/linkedin.png" alt="Linkedin-Account" width="20rem"></a>
-      </li>
-      <li>
-        <a class="references" target="_blank" title="Github-Account" href="https://github.com/christopherfickess">
-          <img src="../img/github.png" alt="Github-Account" width="20rem"></a>
-      </li>
-    </ul>
-    <!-- </div> -->
+    <p class="footer-copyright">&copy; <span class="copyright-year">2026</span> Chris Fickess</p>
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="../index.html">Home</a>
+      <a href="./index.html">Projects</a>
+      <a href="../resume/">Resume</a>
+      <a href="../contact/">Contact</a>
+    </nav>
   </footer>
+  <script src="../javascript/starfield.js?v=24"></script>
+  <script src="../javascript/app.js?v=30"></script>
 </body>
 </html>

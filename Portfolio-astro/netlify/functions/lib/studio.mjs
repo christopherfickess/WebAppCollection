@@ -1,0 +1,494 @@
+// Booking, payment, email, and visitor-count logic for the studio site.
+// Every function takes its outside world (store, fetch, env, clock) as
+// arguments, so tests can run them without Stripe, email, or Netlify.
+import { createHmac, createHash, timingSafeEqual } from "node:crypto";
+import { catalog } from "./catalog.mjs";
+import { quoteTravel } from "./travel.mjs";
+
+export const json = (status, body) => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HOLD_MS = 31 * 60 * 1000; // Stripe's shortest checkout lifetime is 30 minutes
+const clip = (v, n) => String(v ?? "").trim().slice(0, n);
+const iso = (d) => d.toISOString().slice(0, 10);
+const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
+
+// ---- availability -------------------------------------------------------
+
+export async function unavailable(store, now, rules = catalog.booking) {
+  const booked = (await store.get("booked", { type: "json" })) || [];
+  const holds = (await store.get("holds", { type: "json" })) || {};
+  const held = Object.entries(holds).filter(([, v]) => v.expires > now).map(([d]) => d);
+  return { booked, held, blocked: rules.blockedDates || [] };
+}
+
+export function dayProblem(date, now, taken, rules = catalog.booking) {
+  if (!DATE.test(date)) return "invalid-date";
+  const d = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(d.getTime()) || iso(d) !== date) return "invalid-date";
+  const earliest = new Date(now + (rules.minLeadDays || 0) * 864e5);
+  if (date < iso(earliest)) return "too-soon";
+  if ((rules.closedWeekdays || []).includes(d.getUTCDay())) return "closed";
+  if (taken.blocked.includes(date)) return "blocked";
+  if (taken.booked.includes(date)) return "booked";
+  if (taken.held.includes(date)) return "held";
+  return null;
+}
+
+export async function availability({ store, env, now }) {
+  const taken = await unavailable(store, now);
+  return {
+    configured: true,
+    payments: Boolean(env.STRIPE_SECRET_KEY),
+    minLeadDays: catalog.booking.minLeadDays || 0,
+    closedWeekdays: catalog.booking.closedWeekdays || [],
+    unavailable: [...new Set([...taken.booked, ...taken.held, ...taken.blocked])].sort(),
+    depositNote: catalog.booking.depositNote || "",
+    slots: catalog.booking.slots || [],
+    travelNote: catalog.booking.travelNote || "",
+    travel: catalog.booking.travel && catalog.booking.travel.enabled !== false ? { homeBase: catalog.booking.travel.homeBase, freeMiles: catalog.booking.travel.freeMiles } : null,
+  };
+}
+
+// ---- checkout -----------------------------------------------------------
+
+async function stripe(env, fetchFn, params) {
+  const res = await fetchFn("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw Object.assign(new Error(data?.error?.message || "stripe error"), { status: 502 });
+  return data;
+}
+
+// The session location a visitor typed, and our own estimate for it (never the figure the browser claims).
+async function travelOf(raw, deps) {
+  const location = clip(raw, 120);
+  const t = catalog.booking.travel;
+  if (!location) return { location: "", travel: "" };
+  if (!t || t.enabled === false) return { location, travel: "" };
+  const q = await quoteTravel(location, deps, t);
+  return { location, travel: q.ok ? q.summary : "Distance could not be worked out automatically; please check the location." };
+}
+const slotOf = (v) => { const x = clip(v, 40); return (catalog.booking.slots || []).includes(x) ? x : ""; };
+
+export const MAX_OPEN_HOLDS = 10; // total unpaid date holds at once, so checkouts cannot be used to lock the calendar
+
+// Requests must come from the site itself. Browsers always send Origin on cross-site POSTs.
+export function sameOrigin(req) {
+  const o = req.headers.get("origin");
+  if (!o) return true; // non-browser callers (Stripe webhook, curl) carry no Origin; they are not the abuse path
+  try { return new URL(o).host === new URL(req.url).host; } catch { return false; }
+}
+
+// Fixed-window counter in the store. Returns true when the caller is over the limit.
+export async function limited(store, key, max, windowMs, now) {
+  const k = `rl:${key}:${Math.floor(now / windowMs)}`;
+  const n = ((await store.get(k, { type: "json" })) || 0) + 1;
+  await store.setJSON(k, n);
+  return n > max;
+}
+
+export async function createCheckout(body, { origin, env, store, fetch: fetchFn, now }) {
+  if (!env.STRIPE_SECRET_KEY) return json(503, { error: "payments-not-configured" });
+  const base = `${origin}/Photography-Studio/`;
+  const p = new URLSearchParams();
+  p.set("mode", "payment");
+  p.set("line_items[0][quantity]", "1");
+  p.set("line_items[0][price_data][currency]", "usd");
+
+  if (body?.kind === "print") {
+    const photo = catalog.photos.find((x) => x.id === body.photo);
+    const size = catalog.printSizes[body.size];
+    if (!photo || !size) return json(400, { error: "unknown-print" });
+    p.set("line_items[0][price_data][unit_amount]", String(size.price * 100));
+    p.set("line_items[0][price_data][product_data][name]", `Print: ${photo.title}, ${body.size}`);
+    p.set("shipping_address_collection[allowed_countries][0]", "US");
+    p.set("success_url", `${base}thanks/?order=1`);
+    p.set("cancel_url", `${base}#wall`);
+    p.set("metadata[kind]", "print");
+    p.set("metadata[photo]", photo.id);
+    p.set("metadata[size]", body.size);
+    const s = await stripe(env, fetchFn, p);
+    return json(200, { url: s.url });
+  }
+
+  const name = clip(body?.name, 100), email = clip(body?.email, 200), message = clip(body?.message, 400), date = clip(body?.date, 10);
+  const pkg = catalog.packages[body?.package];
+  if (!name || !EMAIL.test(email)) return json(400, { error: "invalid-contact" });
+  if (!pkg) return json(400, { error: "unknown-package" });
+  const taken = await unavailable(store, now);
+  const problem = dayProblem(date, now, taken);
+  if (problem) return json(409, { error: problem });
+
+  const holds = (await store.get("holds", { type: "json" })) || {};
+  for (const [d, v] of Object.entries(holds)) if (v.expires <= now) delete holds[d];
+  const open = Object.entries(holds);
+  const mine = email.toLowerCase();
+  if (open.some(([d, v]) => v.email === mine && d !== date)) return json(429, { error: "hold-exists" });
+  if (open.length >= MAX_OPEN_HOLDS && !holds[date]) return json(429, { error: "too-many-holds" });
+
+  const expires = Math.floor((now + HOLD_MS) / 1000);
+  p.set("line_items[0][price_data][unit_amount]", String(pkg.deposit * 100));
+  p.set("line_items[0][price_data][product_data][name]", `${body.package} deposit for ${date}`);
+  p.set("customer_email", email);
+  p.set("expires_at", String(expires));
+  p.set("success_url", `${base}thanks/?paid=1`);
+  p.set("cancel_url", `${base}#contact`);
+  p.set("metadata[kind]", "session");
+  p.set("metadata[package]", body.package);
+  p.set("metadata[date]", date);
+  p.set("metadata[name]", name);
+  p.set("metadata[message]", message);
+  const slot = slotOf(body?.slot);
+  if (slot) p.set("metadata[slot]", slot);
+  const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now });
+  if (tv.location) p.set("metadata[location]", tv.location);
+  if (tv.travel) p.set("metadata[travel]", tv.travel.slice(0, 480));
+  const s = await stripe(env, fetchFn, p);
+  holds[date] = { expires: now + HOLD_MS, session: s.id, email: mine };
+  await store.setJSON("holds", holds);
+  return json(200, { url: s.url });
+}
+
+// ---- email --------------------------------------------------------------
+
+const esc = (v) => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// Turns a plain-text message into a branded HTML email. The plain text still goes along for clients that want it.
+export function emailHtml(text, brand = catalog.business) {
+  const accent = /^#[0-9a-f]{6}$/i.test(brand?.accent || "") ? brand.accent : "#d9622b";
+  const body = esc(text).split(/\n{2,}/).map((para) => `<p style="margin:0 0 16px;line-height:1.55">${para.replace(/(https?:\/\/[^\s<]+)/g, `<a href="$1" style="color:${accent}">$1</a>`).replace(/\n/g, "<br>")}</p>`).join("");
+  return `<!doctype html><html><body style="margin:0;background:#f4f1ea;font-family:Helvetica,Arial,sans-serif;color:#1d2a24"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:6px;overflow:hidden"><tr><td style="background:#112019;border-bottom:4px solid ${accent};padding:18px 28px;color:#efe6d6;font-size:18px;letter-spacing:.04em">${esc(brand?.name || "")}</td></tr><tr><td style="padding:28px;font-size:15px">${body}</td></tr></table></td></tr></table></body></html>`;
+}
+
+// A one-day calendar entry the client can add with one tap.
+export function calendarInvite({ date, title, description, slot, uid }) {
+  const d = date.replace(/-/g, "");
+  const next = new Date(`${date}T12:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
+  const end = next.toISOString().slice(0, 10).replace(/-/g, "");
+  const fold = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${catalog.business.name}//Booking//EN`, "BEGIN:VEVENT", `UID:${uid || `${date}-${catalog.business.name.replace(/\W+/g, "")}`}@booking`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${end}`, `SUMMARY:${fold(title)}`, `DESCRIPTION:${fold(description + (slot ? `\nPreferred time: ${slot}` : ""))}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+}
+
+export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, replyTo, attachments }) {
+  if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !to) return { skipped: true };
+  // Phone keyboards capitalise the first letter and add spaces; providers can treat that as a different address.
+  to = String(to).trim().toLowerCase();
+  // Customers who hit Reply must reach the owner: the sending address has no mailbox.
+  if (!replyTo && env.OWNER_EMAIL && String(to).toLowerCase() !== String(env.OWNER_EMAIL).trim().toLowerCase()) replyTo = env.OWNER_EMAIL;
+  if (replyTo) replyTo = String(replyTo).trim().toLowerCase();
+  const res = await fetchFn("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, text, html: emailHtml(text), ...(replyTo ? { reply_to: replyTo } : {}), ...(attachments ? { attachments } : {}) }),
+  });
+  return { ok: res.ok, status: res.status, detail: res.ok ? "" : String(await res.text().catch(() => "")).slice(0, 200) };
+}
+
+const ics = (d, text, form) => [{ filename: "session.ics", content: Buffer.from(calendarInvite({ date: d, title: `${catalog.business.name}: ${form.package || form.session || "session"}`, description: text, slot: form.slot })).toString("base64") }];
+
+const sign = (n) => `${catalog.business.name}`;
+
+export async function notifyBooking(deps, form, { paid } = {}) {
+  const { env } = deps;
+  const owner = env.OWNER_EMAIL;
+  const lines = [`Name: ${form.name}`, `Email: ${form.email}`, `Session: ${form.session || form.package || "not chosen"}`, `Date: ${form.date || "not chosen"}`, ...(form.slot ? [`Time: ${form.slot}`] : []), ...(form.location ? [`Location: ${form.location}`] : []), ...(form.travel ? [`Travel estimate: ${form.travel}`] : []), `Message: ${form.message || ""}`];
+  const out = [];
+  out.push(await sendEmail(deps, { to: owner, subject: `${paid ? "Deposit paid" : "New request"}: ${form.name}`, text: lines.join("\n"), replyTo: form.email }));
+  const pkg = catalog.packages[form.package || form.session];
+  const text = paid
+    ? `Hi ${form.name},\n\nThank you. Your ${money(pkg?.deposit ?? 0)} deposit for ${form.package} on ${form.date} is received and the date is yours.\n${catalog.booking.depositNote || ""}\n${manageLink(deps, form.date, form.email) ? `\nChange the date, cancel, or pay the balance here:\n${manageLink(deps, form.date, form.email)}\n` : ""}\nReply to this email with any questions.\n\n${sign()}`
+    : `Hi ${form.name},\n\nThanks for your request. I reply within two business days.\n\nWhat you sent:\n${lines.join("\n")}\n\n${sign()}`;
+  out.push(await sendEmail(deps, { to: form.email, subject: paid ? `Your date is booked, ${form.date}` : "We received your request", text, ...(paid ? { attachments: ics(form.date, `Your ${form.package} session.`, form) } : {}) }));
+  return out;
+}
+
+// ---- Stripe webhook -----------------------------------------------------
+
+export function verifySignature(raw, header, secret, nowSec, toleranceSec = 300) {
+  if (!header || !secret) return false;
+  const parts = Object.fromEntries(header.split(",").map((kv) => kv.split("=")));
+  const t = Number(parts.t);
+  if (!t || Math.abs(nowSec - t) > toleranceSec) return false;
+  const expected = createHmac("sha256", secret).update(`${t}.${raw}`).digest("hex");
+  const given = header.split(",").filter((kv) => kv.startsWith("v1=")).map((kv) => kv.slice(3));
+  return given.some((g) => g.length === expected.length && timingSafeEqual(Buffer.from(g), Buffer.from(expected)));
+}
+
+export async function handleStripeEvent(event, deps) {
+  const { store, env, now } = deps;
+  if (await store.get(`event:${event.id}`, { type: "json" })) return { duplicate: true };
+  if (event.type === "checkout.session.completed") {
+    const s = event.data.object;
+    const m = s.metadata || {};
+    if (m.kind === "session") {
+      const booked = (await store.get("booked", { type: "json" })) || [];
+      if (!booked.includes(m.date)) booked.push(m.date);
+      await store.setJSON("booked", booked.sort());
+      const bookings = (await store.get("bookings", { type: "json" })) || {};
+      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi: s.payment_intent || null };
+      await store.setJSON("bookings", bookings);
+      const holds = (await store.get("holds", { type: "json" })) || {};
+      delete holds[m.date];
+      await store.setJSON("holds", holds);
+      await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, slot: m.slot, message: m.message, location: m.location, travel: m.travel }, { paid: true });
+    } else if (m.kind === "balance") {
+      const bookings = (await store.get("bookings", { type: "json" })) || {};
+      if (bookings[m.date]) { bookings[m.date].balancePaidAt = now; await store.setJSON("bookings", bookings); }
+      await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Balance paid: ${m.date}`, text: `The balance for the session on ${m.date} was paid (${money((s.amount_total || 0) / 100)}).` });
+      await sendEmail(deps, { to: s.customer_details?.email || s.customer_email, subject: "Balance received", text: `Thank you. Your balance for ${m.date} is paid.\n\n${sign()}` });
+    } else if (m.kind === "print") {
+      const ship = s.shipping_details || s.collected_information?.shipping_details;
+      const a = ship?.address || {};
+      const to = s.customer_details?.email;
+      const text = `Print order\n${m.photo}, ${m.size}\nTotal: ${money((s.amount_total || 0) / 100)}\nCustomer: ${s.customer_details?.name || ""} <${to || ""}>\nShip to: ${[ship?.name, a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean).join(", ")}`;
+      await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Print order: ${m.photo}, ${m.size}`, text, replyTo: to });
+      await sendEmail(deps, { to, subject: "Your print order", text: `Thank you for your order of ${m.photo}, ${m.size}. I will email tracking details when it ships.\n\n${sign()}` });
+    }
+  }
+  if (event.type === "charge.refunded") await handleRefund(event.data.object, deps);
+  await store.setJSON(`event:${event.id}`, { at: now });
+  return { handled: event.type };
+}
+
+// ---- refunds, cancel, reschedule, balance --------------------------------
+
+// A full refund (made in the Stripe dashboard or by a client cancelling) frees the date.
+export async function handleRefund(charge, { store, env, now, ...rest }) {
+  const deps = { store, env, now, ...rest };
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const date = Object.keys(bookings).find((d) => bookings[d].pi && bookings[d].pi === charge.payment_intent);
+  if (!date) return { ignored: true };
+  const full = charge.amount_refunded >= charge.amount;
+  if (full) await freeDate(store, date);
+  await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `${full ? "Refunded, date freed" : "Partial refund"}: ${date}`, text: `${money(charge.amount_refunded / 100)} was refunded for ${bookings[date].name} (${date}).\n${full ? "The date is open for booking again." : "The date stays booked."}` });
+  return { date, full };
+}
+
+async function freeDate(store, date) {
+  const booked = ((await store.get("booked", { type: "json" })) || []).filter((d) => d !== date);
+  await store.setJSON("booked", booked);
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  delete bookings[date];
+  await store.setJSON("bookings", bookings);
+}
+
+// Links in emails carry an HMAC of date + email, so no login is needed and links cannot be guessed.
+const secretOf = (env) => env.MANAGE_SECRET || env.STATS_TOKEN || "";
+export const manageToken = (env, date, email) => createHmac("sha256", secretOf(env)).update(`${date}|${String(email).toLowerCase()}`).digest("hex").slice(0, 32);
+export const manageLink = ({ env, origin }, date, email) => (secretOf(env) && origin ? `${origin}/Photography-Studio/manage/?d=${date}&t=${manageToken(env, date, email)}` : "");
+function authorised(env, date, t) {
+  return async (bookings) => {
+    const b = bookings[date];
+    if (!b || !t || !secretOf(env)) return null;
+    const want = manageToken(env, date, b.email);
+    return want.length === String(t).length && timingSafeEqual(Buffer.from(want), Buffer.from(String(t))) ? b : null;
+  };
+}
+
+export async function manageView({ date, t }, { store, env, now }) {
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const b = await authorised(env, date, t)(bookings);
+  if (!b) return json(404, { error: "not-found" });
+  const pkg = catalog.packages[b.package];
+  const daysLeft = Math.floor((Date.parse(`${date}T12:00:00Z`) - now) / 864e5);
+  const fullDays = catalog.booking.refundFullDays ?? 14;
+  return json(200, { date, name: b.name, package: b.package, deposit: pkg?.deposit ?? null, balance: pkg ? pkg.amount - pkg.deposit : null, balancePaid: Boolean(b.balancePaidAt), canRefund: daysLeft >= fullDays && Boolean(b.pi), refundFullDays: fullDays, rescheduled: Boolean(b.rescheduledFrom), payments: Boolean(env.STRIPE_SECRET_KEY) });
+}
+
+export async function manageAct(body, deps) {
+  const { store, env, fetch: fetchFn, now, origin } = deps;
+  const date = clip(body?.date, 10), action = clip(body?.action, 12);
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const b = await authorised(env, date, body?.t)(bookings);
+  if (!b) return json(404, { error: "not-found" });
+  const daysLeft = Math.floor((Date.parse(`${date}T12:00:00Z`) - now) / 864e5);
+  if (daysLeft < 0) return json(409, { error: "past" });
+
+  if (action === "cancel") {
+    const refund = daysLeft >= (catalog.booking.refundFullDays ?? 14) && b.pi && env.STRIPE_SECRET_KEY;
+    if (refund) {
+      const res = await fetchFn("https://api.stripe.com/v1/refunds", { method: "POST", headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ payment_intent: b.pi }).toString() });
+      if (!res.ok) { await alertOwner(deps, `Refund failed for ${date}`, new Error(`Stripe ${res.status}`)); return json(502, { error: "refund-failed" }); }
+    }
+    await freeDate(store, date);
+    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Cancelled: ${b.name}, ${date}`, text: `${b.name} cancelled ${date}.\n${refund ? "The deposit was refunded in full." : "Inside the refund window, so the deposit was kept."}`, replyTo: b.email });
+    await sendEmail(deps, { to: b.email, subject: `Your session on ${date} is cancelled`, text: `Hi ${b.name},\n\nYour session on ${date} is cancelled. ${refund ? "Your deposit is being refunded and should reach you in 5 to 10 days." : `Cancellations less than ${catalog.booking.refundFullDays ?? 14} days before the session keep the deposit.`}\n\n${sign()}` });
+    return json(200, { ok: true, refunded: Boolean(refund) });
+  }
+
+  if (action === "reschedule") {
+    if (b.rescheduledFrom) return json(409, { error: "already-rescheduled" });
+    const to = clip(body?.newDate, 10);
+    const problem = dayProblem(to, now, await unavailable(store, now));
+    if (problem) return json(409, { error: problem });
+    const booked = ((await store.get("booked", { type: "json" })) || []).filter((d) => d !== date);
+    booked.push(to);
+    await store.setJSON("booked", booked.sort());
+    delete bookings[date];
+    bookings[to] = { ...b, rescheduledFrom: date, reminded: false };
+    await store.setJSON("bookings", bookings);
+    const link = manageLink({ env, origin }, to, b.email);
+    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Rescheduled: ${b.name}`, text: `${b.name} moved ${date} to ${to}.`, replyTo: b.email });
+    await sendEmail(deps, { to: b.email, subject: `Your session is moved to ${to}`, text: `Hi ${b.name},\n\nYour ${b.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}`, attachments: ics(to, `Your ${b.package} session.`, b) });
+    return json(200, { ok: true, date: to });
+  }
+
+  if (action === "balance") {
+    const pkg = catalog.packages[b.package];
+    if (!env.STRIPE_SECRET_KEY || !pkg) return json(503, { error: "payments-not-configured" });
+    if (b.balancePaidAt) return json(409, { error: "already-paid" });
+    const p = new URLSearchParams();
+    p.set("mode", "payment");
+    p.set("line_items[0][quantity]", "1");
+    p.set("line_items[0][price_data][currency]", "usd");
+    p.set("line_items[0][price_data][unit_amount]", String((pkg.amount - pkg.deposit) * 100));
+    p.set("line_items[0][price_data][product_data][name]", `${b.package} balance for ${date}`);
+    p.set("customer_email", b.email);
+    p.set("success_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}&paid=1`);
+    p.set("cancel_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}`);
+    p.set("metadata[kind]", "balance");
+    p.set("metadata[date]", date);
+    const s = await stripe(env, fetchFn, p);
+    return json(200, { url: s.url });
+  }
+  return json(400, { error: "unknown-action" });
+}
+
+// ---- visitor counts (no cookies, no IP addresses, no user ids) -----------
+
+const BOTS = /bot|crawl|spider|slurp|headless|lighthouse|preview|curl|wget/i;
+
+export async function collect(req, body, { store, now }) {
+  if (req.headers.get("dnt") === "1" || req.headers.get("sec-gpc") === "1") return json(204, null);
+  if (BOTS.test(req.headers.get("user-agent") || "")) return json(204, null);
+  let path = clip(body?.path, 120).split(/[?#]/)[0];
+  if (!path.startsWith("/")) return json(400, { error: "bad-path" });
+  let ref = "";
+  try {
+    const r = new URL(clip(body?.ref, 300));
+    if (r.hostname !== new URL(req.url).hostname) ref = r.hostname;
+  } catch {}
+  const key = `day:${iso(new Date(now))}`;
+  const day = (await store.get(key, { type: "json" })) || { views: 0, paths: {}, refs: {} };
+  day.views += 1;
+  if (Object.keys(day.paths).length < 200 || day.paths[path]) day.paths[path] = (day.paths[path] || 0) + 1;
+  if (ref && (Object.keys(day.refs).length < 100 || day.refs[ref])) day.refs[ref] = (day.refs[ref] || 0) + 1;
+  await store.setJSON(key, day);
+  return json(204, null);
+}
+
+export async function stats(days, { store, now }) {
+  const out = [];
+  for (let i = 0; i < days; i++) {
+    const d = iso(new Date(now - i * 864e5));
+    const v = await store.get(`day:${d}`, { type: "json" });
+    out.push({ date: d, views: v?.views || 0, paths: v?.paths || {}, refs: v?.refs || {} });
+  }
+  const total = (k) => out.reduce((acc, d) => { for (const [n, c] of Object.entries(d[k])) acc[n] = (acc[n] || 0) + c; return acc; }, {});
+  return { days: out, totalViews: out.reduce((a, d) => a + d.views, 0), topPages: total("paths"), topReferrers: total("refs") };
+}
+
+export function tokenOk(req, env) {
+  const given = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const want = env.STATS_TOKEN || "";
+  return want.length >= 16 && given.length === want.length && timingSafeEqual(Buffer.from(given), Buffer.from(want));
+}
+
+// ---- reminders, backup, alerts ------------------------------------------
+
+// Emails each client once, `daysAhead` days before their session. Run daily.
+export async function sendReminders(deps, daysAhead = 2) {
+  const { store, now } = deps;
+  const bookings = (await store.get("bookings", { type: "json" })) || {};
+  const target = iso(new Date(now + daysAhead * 864e5));
+  const sent = [];
+  for (const [date, b] of Object.entries(bookings)) {
+    if (date !== target || b.reminded || !b.email) continue;
+    const pkg = catalog.packages[b.package];
+    const balance = pkg ? pkg.amount - pkg.deposit : null;
+    const text = `Hi ${b.name},\n\nA reminder that your ${b.package} session is on ${date}.\n${balance ? `The remaining balance of ${money(balance)} is due on the day.\n` : ""}\n${manageLink(deps, date, b.email) ? `Change the date, cancel, or pay the balance online:\n${manageLink(deps, date, b.email)}` : "If you need to change the date, reply to this email as soon as you can and we will find a new one."}\n\n${sign()}`;
+    const r = await sendEmail(deps, { to: b.email, subject: `Your session is on ${date}`, text });
+    if (r.ok) { b.reminded = true; sent.push(date); }
+  }
+  if (sent.length) await store.setJSON("bookings", bookings);
+  return { sent };
+}
+
+// Everything the site stores, for a backup. Contains client names and emails.
+export async function exportData({ store }) {
+  return {
+    exportedAt: new Date().toISOString(),
+    booked: (await store.get("booked", { type: "json" })) || [],
+    bookings: (await store.get("bookings", { type: "json" })) || {},
+    holds: (await store.get("holds", { type: "json" })) || {},
+  };
+}
+
+// Tells the owner when something fails behind the scenes.
+export async function alertOwner(deps, what, err) {
+  try {
+    await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `Site problem: ${what}`, text: `${what}\n\n${String(err?.message || err).slice(0, 500)}\n\nStripe retries failed payment notices for up to three days, so the booking will usually fix itself. If it does not, check the Netlify function logs.` });
+  } catch {}
+}
+
+// ---- browser error reports ---------------------------------------------------
+// Visitors' browsers report JavaScript errors here. Nothing personal is kept: the message, the script file,
+// the line and the page path. The owner is emailed the first time each distinct error appears on a day,
+// at most MAX_ERROR_EMAILS a day, so one broken page cannot flood an inbox.
+const MAX_ERROR_EMAILS = 5, MAX_ERROR_KINDS = 50;
+export async function reportError(req, body, deps) {
+  const { store, now } = deps;
+  if (req.headers.get("dnt") === "1" || req.headers.get("sec-gpc") === "1") return json(204, null);
+  if (BOTS.test(req.headers.get("user-agent") || "")) return json(204, null);
+  const message = clip(body?.message, 200);
+  if (!message) return json(400, { error: "no-message" });
+  let source = clip(body?.source, 200);
+  try { source = new URL(source).pathname; } catch {}
+  const line = Math.max(0, Math.min(1e6, parseInt(body?.line, 10) || 0));
+  const path = clip(body?.path, 120).split(/[?#]/)[0];
+  const sig = createHash("sha1").update(`${message}|${source}|${line}`).digest("hex").slice(0, 12);
+  const key = `errs:${iso(new Date(now))}`;
+  const day = (await store.get(key, { type: "json" })) || { emails: 0, errors: {} };
+  const known = day.errors[sig];
+  if (known) known.count += 1;
+  else if (Object.keys(day.errors).length < MAX_ERROR_KINDS) day.errors[sig] = { message, source, line, path, count: 1 };
+  else return json(204, null);
+  let mail = false;
+  if (!known && day.emails < MAX_ERROR_EMAILS) { day.emails += 1; mail = true; }
+  await store.setJSON(key, day);
+  if (mail) await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `Browser error on the site: ${message.slice(0, 60)}`, text: `A visitor's browser hit a JavaScript error.\n\nMessage: ${message}\nScript: ${source || "unknown"}${line ? `:${line}` : ""}\nPage: ${path || "unknown"}\n\nThis email is sent once per distinct error per day (at most ${MAX_ERROR_EMAILS} a day). Counts are kept in the site's data.` }).catch(() => {});
+  return json(204, null);
+}
+
+// ---- plain request form (no payment) --------------------------------------
+
+const REQUESTS_PER_DAY = 20; // cap on confirmation copies, so the form cannot be used to mail strangers
+
+export async function handleRequest(body, deps) {
+  const { store, now } = deps;
+  if (body?.["bot-field"]) return json(200, { ok: true }); // honeypot: look successful, do nothing
+  const name = clip(body?.name, 100), email = clip(body?.email, 200).toLowerCase(), message = clip(body?.message, 2000);
+  const session = clip(body?.session, 60), date = clip(body?.date, 10), slot = slotOf(body?.slot);
+  if (!name || !EMAIL.test(email) || !message) return json(400, { error: "invalid-contact" });
+  if (date && !DATE.test(date)) return json(400, { error: "invalid-date" });
+  const tv = await travelOf(body?.location, deps);
+  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, ...(slot ? [`Time: ${slot}`] : []), ...(tv.location ? [`Location: ${tv.location}`] : []), ...(tv.travel ? [`Travel estimate: ${tv.travel}`] : []), `Message: ${message}`];
+  const owner = await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `New request: ${name}`, text: lines.join("\n"), replyTo: email });
+  if (owner.skipped) return json(503, { error: "email-not-configured" }); // never tell a visitor "sent" when nothing was
+  if (!owner.ok) {
+    console.error("request email failed", owner.status, owner.detail);
+    return json(502, { error: "email-failed", ...(deps.expose ? { reason: owner.detail } : {}) });
+  }
+  const key = `reqs:${iso(new Date(now))}`;
+  const count = (await store.get(key, { type: "json" })) || 0;
+  if (count < REQUESTS_PER_DAY) {
+    await store.setJSON(key, count + 1);
+    await sendEmail(deps, { to: email, subject: "We received your request", text: `Hi ${name},\n\nThanks for your request. I reply within two business days.\n\nWhat you sent:\n${lines.join("\n")}\n\n${sign()}` });
+  }
+  return json(200, { ok: true });
+}

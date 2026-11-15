@@ -1,0 +1,252 @@
+// Online booking and print orders. Everything here is optional: if /api is
+// not available (no server, no Stripe keys), the page keeps its plain request
+// form and the wall preview, and nothing looks broken.
+export class Booking {
+  static async attach(form) {
+    if (!form) return null;
+    let info;
+    try {
+      const res = await fetch("/api/availability", { headers: { Accept: "application/json" } });
+      if (!res.ok) return null;
+      info = await res.json();
+    } catch { return null; }
+    return new Booking(form, info);
+  }
+
+  constructor(form, info) {
+    this.form = form;
+    this.info = info;
+    this.taken = new Set(info.unavailable);
+    this.date = form.querySelector("#date");
+    this.note = form.querySelector("#light-note");
+    this.msg = document.createElement("p");
+    this.msg.className = "book-msg";
+    this.msg.setAttribute("role", "status");
+    if (this.date) {
+      const min = new Date(Date.now() + info.minLeadDays * 864e5).toISOString().slice(0, 10);
+      this.date.min = min;
+      this.date.addEventListener("input", () => this.check());
+    }
+    if (this.date && (info.slots?.length || info.travelNote || info.travel)) this.addExtras();
+    if (info.payments) this.addPayButton();
+    else this.form.querySelector('button[type="submit"]').after(this.msg);
+    form.addEventListener("submit", (e) => this.send(e));
+  }
+
+  // Optional time window and a travel note, both set in the content editor.
+  addExtras() {
+    const anchor = this.note || this.date;
+    if (this.info.slots?.length) {
+      const label = document.createElement("label");
+      label.htmlFor = "slot";
+      label.textContent = "Preferred time ";
+      const opt = document.createElement("span");
+      opt.className = "optional";
+      opt.textContent = "(optional)";
+      label.append(opt);
+      const sel = document.createElement("select");
+      sel.id = "slot";
+      sel.name = "slot";
+      for (const v of ["", ...this.info.slots]) { const o = document.createElement("option"); o.value = v; o.textContent = v || "No preference"; sel.append(o); }
+      anchor.after(label, sel);
+      this.slot = sel;
+    }
+    if (this.info.travelNote) {
+      const n = document.createElement("p");
+      n.className = "light-note";
+      n.textContent = this.info.travelNote;
+      (this.slot || anchor).after(n);
+      this.travelAnchor = n;
+    }
+    if (this.info.travel) this.addLocation(this.travelAnchor || this.slot || anchor);
+  }
+
+  // Where the session will be: a live travel estimate appears as the visitor types (the server works it out).
+  addLocation(anchor) {
+    const label = document.createElement("label");
+    label.htmlFor = "place";
+    label.textContent = "Session location ";
+    const opt = document.createElement("span");
+    opt.className = "optional";
+    opt.textContent = "(city or address, optional)";
+    label.append(opt);
+    const input = document.createElement("input");
+    input.id = "place";
+    input.name = "place";
+    input.type = "text";
+    input.maxLength = 120;
+    input.autocomplete = "off";
+    const out = document.createElement("p");
+    out.className = "light-note";
+    out.setAttribute("role", "status");
+    out.setAttribute("aria-live", "polite");
+    anchor.after(label, input, out);
+    this.place = input;
+    let timer = 0, seq = 0;
+    input.addEventListener("input", () => {
+      clearTimeout(timer);
+      const q = input.value.trim();
+      if (q.length < 3) { out.textContent = ""; return; }
+      timer = setTimeout(async () => {
+        const mine = ++seq;
+        out.textContent = "Working out the distance…";
+        try {
+          const res = await fetch(`/api/travel-quote?to=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
+          const j = await res.json();
+          if (mine !== seq) return;
+          out.textContent = res.ok ? j.summary : res.status === 429 ? "Too many lookups. Please try again later." : "We could not find that place. Try a city and state, and we will confirm the travel fee by email.";
+        } catch { if (mine === seq) out.textContent = ""; }
+      }, 700);
+    });
+  }
+
+  // Sends the plain request through the site's own email function. If that
+  // fails for any reason, the form is submitted the normal way (Netlify Forms).
+  async send(e) {
+    if (this.fallback) return;
+    e.preventDefault();
+    const f = this.form.elements;
+    const button = this.form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    this.msg.textContent = "Sending…";
+    try {
+      const res = await fetch("/api/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: f.name.value, email: f.email.value, session: f.session.value, date: f.date.value, slot: f.slot?.value || "", location: this.place?.value || "", message: f.message.value, "bot-field": f["bot-field"]?.value || "" }),
+      });
+      if (res.ok) { location.assign(this.form.getAttribute("action")); return; }
+      // Function missing (404/405): use the normal form post. Any other failure: say so, do not lose the visitor on a 404 page.
+      if (res.status === 404 || res.status === 405) throw new Error("no-function");
+      let reason = "";
+      try { const j = await res.json(); reason = j.reason || ""; if (j.error === "slow-down") reason = "too many attempts, please try later"; } catch {}
+      this.msg.textContent = `We could not send your request${reason ? ` (${reason})` : ""}. Please try again in a moment.`;
+      button.disabled = false;
+    } catch (err) {
+      if (err.message !== "no-function" && !(err instanceof TypeError)) { button.disabled = false; return; }
+      this.fallback = true;
+      this.form.requestSubmit();
+    }
+  }
+
+  problem() {
+    const v = this.date?.value;
+    if (!v) return "Choose a date to book online.";
+    if (this.taken.has(v)) return "That date is not available. Please choose another.";
+    if (this.date.validity.rangeUnderflow) return `Dates need at least ${this.info.minLeadDays} days notice.`;
+    const day = new Date(`${v}T12:00:00Z`).getUTCDay();
+    if (this.info.closedWeekdays.includes(day)) return "Sessions are not offered on that day.";
+    return "";
+  }
+
+  check() {
+    const bad = this.date.value && this.problem();
+    this.date.setCustomValidity(bad || "");
+    this.msg.textContent = bad || "";
+  }
+
+  addPayButton() {
+    const submit = this.form.querySelector('button[type="submit"]');
+    const pay = document.createElement("button");
+    pay.type = "button";
+    pay.className = "btn btn-ghost";
+    pay.textContent = "Reserve date with deposit";
+    pay.addEventListener("click", () => this.pay(pay));
+    submit.after(pay);
+    if (this.info.depositNote) {
+      const n = document.createElement("p");
+      n.className = "light-note";
+      n.textContent = this.info.depositNote;
+      pay.after(n);
+    }
+    pay.after(this.msg);
+  }
+
+  async pay(button) {
+    const f = this.form.elements;
+    const bad = this.problem();
+    if (bad || !this.form.reportValidity()) { this.msg.textContent = bad; return; }
+    if (f.session.value === "Not sure yet") { this.msg.textContent = "Choose a session to pay its deposit."; return; }
+    button.disabled = true;
+    this.msg.textContent = "Taking you to the payment page…";
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "session", name: f.name.value, email: f.email.value, package: f.session.value, date: f.date.value, slot: f.slot?.value || "", location: this.place?.value || "", message: f.message.value }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const why = { held: "Someone is paying for that date right now. Try again in half an hour.", booked: "That date was just booked.", "too-soon": "That date is too soon.", "hold-exists": "You already have a date on hold. Finish that payment or wait half an hour.", "too-many-holds": "Several dates are being paid for right now. Try again in half an hour.", "slow-down": "Too many attempts. Please try again later.", "bad-origin": "This request did not come from the site." };
+        throw new Error(why[data.error] || "Payment could not start. Send the request instead and I will follow up.");
+      }
+      location.assign(data.url);
+    } catch (e) {
+      this.msg.textContent = e.message;
+      button.disabled = false;
+    }
+  }
+}
+
+// Adds an "Order this print" button to the wall preview.
+export class PrintOrder {
+  static async attach(wall) {
+    if (!wall) return;
+    try {
+      const info = await (await fetch("/api/availability")).json();
+      if (!info.payments) return;
+    } catch { return; }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn";
+    btn.textContent = "Order this print";
+    const msg = document.createElement("p");
+    msg.className = "wall-note";
+    msg.setAttribute("role", "status");
+    wall.querySelector(".wall-controls").append(btn, msg);
+    btn.addEventListener("click", async () => {
+      const photo = wall.data[wall.state.photo];
+      const size = wall.sizes()[wall.state.size];
+      btn.disabled = true;
+      msg.textContent = "Taking you to the payment page…";
+      try {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind: "print", photo: photo.file.replace("img/photos/", ""), size: size.label }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error();
+        location.assign(data.url);
+      } catch {
+        msg.textContent = "Ordering is unavailable right now. Please use the contact form.";
+        btn.disabled = false;
+      }
+    });
+  }
+}
+
+// Anonymous page counts: no cookies, no IP, nothing stored in the browser.
+// Skipped when the visitor sends Do Not Track or Global Privacy Control.
+export class Beacon {
+  static send() {
+    if (navigator.doNotTrack === "1" || navigator.globalPrivacyControl) return;
+    try {
+      const body = JSON.stringify({ path: location.pathname, ref: document.referrer });
+      if (!navigator.sendBeacon?.("/api/collect", new Blob([body], { type: "text/plain" }))) {
+        fetch("/api/collect", { method: "POST", body, keepalive: true }).catch(() => {});
+      }
+    } catch {}
+  }
+}
+
+// On the thank-you page: say what actually happened.
+export class Thanks {
+  static attach() {
+    const q = new URLSearchParams(location.search);
+    const el = document.querySelector(".thanks p");
+    if (!el) return;
+    if (q.has("paid")) el.textContent = "Your deposit is paid and the date is held for you. A confirmation email is on its way.";
+    else if (q.has("order")) el.textContent = "Your print order is paid. A confirmation email is on its way.";
+  }
+}

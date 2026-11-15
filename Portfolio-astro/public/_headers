@@ -1,0 +1,24 @@
+# Framing: SAMEORIGIN / frame-ancestors 'self' (not DENY / 'none').
+# The Resume page shows the PDF inline via <object>, and browsers treat
+# that as framing the PDF - with DENY/'none' the PDF's own response
+# refused to be embedded even by our own page, so the viewer stayed
+# blank on Netlify (it only worked under `astro dev`, which ignores this
+# file). 'self' still blocks every other site from framing ours.
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=()
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.github.com https://gitlab.com https://github-contributions-api.jogruber.de; object-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+
+# The content editor needs inline styles, 'unsafe-eval' (its schema validator compiles code; without it the
+# editor stops at "Error loading the CMS configuration") and GitHub's API; it is behind a
+# GitHub sign-in. UNVERIFIED on Netlify: if two matching rules each send a
+# Content-Security-Policy, browsers enforce both and the editor will not load.
+# Test after the first deploy (see HANDOVER.md).
+/Photography-Studio/admin/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.githubusercontent.com; font-src 'self' data:; connect-src 'self' https://api.github.com https://api.netlify.com; frame-src 'self' https://api.netlify.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

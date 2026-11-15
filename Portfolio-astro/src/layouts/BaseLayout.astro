@@ -1,0 +1,51 @@
+---
+import Starfield from "../components/Starfield.astro";
+import NavRail from "../components/NavRail.astro";
+import UtilityRail from "../components/UtilityRail.astro";
+import MobileDrawer from "../components/MobileDrawer.astro";
+import Topbar from "../components/Topbar.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/legacy-styles.css";
+import "../styles/rails.css";
+
+const {
+  title,
+  description = "Chris Fickess | Site Reliability Engineer",
+  current,
+  pageTitle,
+  logoSrc,
+  logoAlt,
+  logoIsMark,
+} = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+    <link rel="icon" href="/icon/octopus-favicon.png" />
+    <title>{title}</title>
+
+    <!-- Blocking, same-origin, non-module (classic scripts aren't
+         deferred the way type=module is) - runs before first paint so
+         the right theme/preset/rail-state attributes are already on
+         <html> by the time CSS applies, same anti-flash timing as the
+         old per-page inline script, but as ONE file instead of four,
+         and CSP-friendly (script-src 'self', no unsafe-inline needed). -->
+    <script is:inline src="/theme-boot.js"></script>
+  </head>
+  <body>
+    <Starfield />
+    <NavRail current={current} />
+    <UtilityRail />
+    <MobileDrawer />
+    <Topbar pageTitle={pageTitle} logoSrc={logoSrc} logoAlt={logoAlt} logoIsMark={logoIsMark} />
+    <slot />
+    <Footer />
+    <script>
+      import "../scripts/site.js";
+    </script>
+  </body>
+</html>

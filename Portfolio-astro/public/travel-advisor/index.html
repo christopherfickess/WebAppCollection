@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Gredin Travel Advisor plans your trip day by day, books it, and stays on call while you travel." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#14262E" />
+  <!-- og:start -->
+  
+  <!-- og:end -->
+  <link rel="icon" href="./img/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="./fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="./css/style.css" />
+  <!-- UI components (header, itinerary, steps, destinations, footer) are classes
+       in ./js/components, rendered from the content in ./js/data.js. -->
+  <script type="module" src="./js/main.js"></script>
+  <title>Gredin Travel Advisor | Trips planned by a person</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <gta-header data-from="site"></gta-header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <h1>Trips planned by a person who has been there.</h1>
+        <p class="lede">Tell Gredin where you want to go and how you like to travel. You get a day-by-day plan, every booking handled, and someone to message when a flight gets cancelled.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#contact">Book a free planning call</a>
+          <a class="btn btn-ghost" href="./destinations/">Browse destinations</a>
+        </div>
+        <a class="scroll-cue" href="#how">Scroll to explore <span aria-hidden="true">&darr;</span></a>
+      </div>
+
+      <!-- The signature element: a sample itinerary drawn as a route. -->
+      <gta-itinerary data-from="itinerary"></gta-itinerary>
+    </section>
+
+    <section class="proof" aria-label="At a glance">
+      <gta-proof data-from="proof"></gta-proof>
+    </section>
+
+    <section class="how" id="how" aria-labelledby="how-title">
+      <h2 id="how-title">How it works</h2>
+      <gta-steps data-from="steps"></gta-steps>
+    </section>
+
+    <section class="when" id="when" aria-labelledby="when-title">
+      <div class="section-head">
+        <h2 id="when-title">Where to go in&hellip;</h2>
+        <p>Pick a month to see which guides are in season.</p>
+      </div>
+      <gta-months data-from="destinationOrder"></gta-months>
+    </section>
+
+    <section class="trips" id="destinations" aria-labelledby="dest-title">
+      <div class="section-head">
+        <h2 id="dest-title">Destinations</h2>
+        <p>Eleven places Gredin knows well, each with a full guide: when to go, where to stay, and a sample plan.</p>
+      </div>
+      <gta-pills data-from="destinationOrder"></gta-pills>
+      <gta-destination-grid data-from="destinationOrder"></gta-destination-grid>
+    </section>
+
+    <section class="trips-sample" id="trips" aria-labelledby="trips-title">
+      <div class="section-head">
+        <h2 id="trips-title">Sample trips</h2>
+        <p>Each one starts as a draft like this, taken from the guides.</p>
+      </div>
+      <gta-trips data-from="featuredTrips"></gta-trips>
+    </section>
+
+    <section class="testimonials" id="travellers" aria-labelledby="tm-title">
+      <h2 id="tm-title">What travellers say</h2>
+      <gta-testimonials data-from="testimonials"></gta-testimonials>
+    </section>
+
+    <section class="included" id="included" aria-labelledby="included-title">
+      <h2 id="included-title">What's included</h2>
+      <gta-included data-from="included"></gta-included>
+    </section>
+
+    <section class="faq-section" id="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Questions</h2>
+      <gta-faq data-from="faq"></gta-faq>
+    </section>
+
+    <section class="quote" aria-label="Book a call">
+      <gta-quote data-from="quote"></gta-quote>
+    </section>
+
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <div class="contact-copy">
+        <h2 id="contact-title">Book a free planning call</h2>
+        <p>Share a rough idea of the trip. Gredin replies within two business days to set up a time.</p>
+      </div>
+      <form class="contact-form" name="travel-advisor" method="POST" data-netlify="true" netlify-honeypot="company">
+        <input type="hidden" name="form-name" value="travel-advisor" />
+        <p class="honeypot"><label>Leave this empty <input name="company" tabindex="-1" autocomplete="off" /></label></p>
+        <div class="field-row">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" autocomplete="name" required />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" autocomplete="email" required />
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span>Where to</span>
+            <input type="text" name="destination" placeholder="Paris, or not sure yet" />
+          </label>
+          <label class="field">
+            <span>Roughly when</span>
+            <input type="text" name="dates" placeholder="Late June, about a week" />
+          </label>
+        </div>
+        <label class="field">
+          <span>Anything else</span>
+          <textarea name="message" rows="5" placeholder="Who's travelling, budget, must-sees"></textarea>
+        </label>
+        <button class="btn" type="submit">Request a planning call</button>
+      </form>
+    </section>
+  </main>
+
+  <gta-footer data-from="site"></gta-footer>
+</body>
+</html>
