@@ -8,7 +8,7 @@ catalog.printSizes = { "12x18": 95, "16x20": 140, "24x36": 260, "30x40": 380 };
 Object.assign(catalog.booking, { minLeadDays: 7, closedWeekdays: [], blockedDates: [], refundFullDays: 14, slots: ["Morning", "Afternoon", "Golden hour"] });
 catalog.business = { ...catalog.business, name: "Test Studio" };
 import { createHmac } from "node:crypto";
-import { reportError, emailHtml, calendarInvite, manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+import { reportError, sendEmail, emailHtml, calendarInvite, manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
 
 const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
 const NOW = Date.parse("2026-11-06T12:00:00Z");
@@ -190,3 +190,13 @@ assert.equal(sent[0].to[0], "owner@example.com"); assert.equal(sent[0].reply_to,
   assert.equal((await reportError(rq({ dnt: "1" }), { ...e1, message: "dnt" }, dps)).status, 204); assert.equal(sent.length, 5);
   assert.equal((await reportError(rq(), { message: "" }, dps)).status, 400); ok("empty and Do Not Track reports ignored");
 }
+
+// customer emails carry the owner's address as Reply-To (the sending address has no mailbox); owner emails do not
+{
+  const sent = []; const f = async (u, o) => (u.includes("resend.com") ? (sent.push(JSON.parse(o.body)), { ok: true, status: 200, json: async () => ({}), text: async () => "" }) : { ok: true, status: 200, json: async () => ({}), text: async () => "" });
+  const env = { RESEND_API_KEY: "re_x", EMAIL_FROM: "Studio <hello@mail.example>", OWNER_EMAIL: "owner@example.com" };
+  await sendEmail({ env, fetch: f }, { to: "client@example.com", subject: "s", text: "t" });
+  await sendEmail({ env, fetch: f }, { to: "owner@example.com", subject: "s", text: "t" });
+  assert.equal(sent[0].reply_to, "owner@example.com"); assert.equal(sent[1].reply_to, undefined);
+}
+console.log("ok customer emails reply to the owner");

@@ -164,6 +164,8 @@ export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, re
   if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !to) return { skipped: true };
   // Phone keyboards capitalise the first letter and add spaces; providers can treat that as a different address.
   to = String(to).trim().toLowerCase();
+  // Customers who hit Reply must reach the owner: the sending address has no mailbox.
+  if (!replyTo && env.OWNER_EMAIL && String(to).toLowerCase() !== String(env.OWNER_EMAIL).trim().toLowerCase()) replyTo = env.OWNER_EMAIL;
   if (replyTo) replyTo = String(replyTo).trim().toLowerCase();
   const res = await fetchFn("https://api.resend.com/emails", {
     method: "POST",
