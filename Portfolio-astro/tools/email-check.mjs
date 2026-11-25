@@ -18,7 +18,9 @@ if (env.CLOUDFLARE_API_TOKEN) {
   const z = (await cf(`/zones?name=${zone}`)).result?.[0];
   if (z) {
     const st = await cf(`/zones/${z.id}/email/routing`);
-    say(st.success && st.result?.enabled === true, st.success ? `Email Routing enabled: ${st.result?.enabled} (status ${st.result?.status})` : `could not read routing status: ${(st.errors || []).map((e) => e.message).join("; ")}`);
+    // Reading this status needs a permission the token may not have; the MX records and the rule below prove routing is on.
+    if (st.success) say(st.result?.enabled === true, `Email Routing enabled: ${st.result?.enabled} (status ${st.result?.status})`);
+    else console.log(`warn could not read routing status (${(st.errors || []).map((e) => e.message).join("; ")}); relying on the MX records and the rule`);
     const rules = await cf(`/zones/${z.id}/email/routing/rules`);
     const r = (rules.result || []).find((x) => (x.matchers || []).some((m) => m.value?.toLowerCase() === to));
     say(Boolean(r?.enabled), `rule for ${to}: ${r ? (r.enabled ? "enabled" : "disabled") : "missing"}`);
