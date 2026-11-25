@@ -17,8 +17,9 @@ const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
 // Read-modify-write with compare-and-swap, so two requests at the same moment cannot overwrite each other's change.
 // fn gets a copy of the stored value and returns the new value, or undefined to leave it alone. Retries when
 // another request wrote first. Stores without conditional writes (the test fakes) fall back to a plain write.
-export async function update(store, key, fn, init = {}, tries = 8) {
+export async function update(store, key, fn, init = {}, tries = 12) {
   for (let i = 0; i < tries; i++) {
+    if (i) await new Promise((r) => setTimeout(r, Math.random() * 10 * i)); // a little random wait, so contenders stop colliding in lockstep
     const cas = typeof store.getWithMetadata === "function";
     const r = cas ? await store.getWithMetadata(key, { type: "json" }) : null;
     const cur = cas ? (r ? r.data : null) : await store.get(key, { type: "json" });

@@ -559,6 +559,7 @@ internal links return 200, autoplay advances and pauses.
 - Travel: only OSRM's `NoRoute` code means "no road" (cached one day); any other empty reply is a failure and is not cached. The booking form tells visitors when the distance lookup is down instead of "place not found".
 - Verify deploy: a commit that changes no site content (Netlify cancels with "no content change") checks the branch's latest finished deploy instead of failing. Logic is in `tools/lib/deploy-state.mjs`, tested in `deploy-state.test.mjs`.
 - Pipeline coverage: `pipeline.test.mjs` checks workflows run existing scripts, every test file is in `npm test`, CI runs unit and e2e tests, and every `tools/*.mjs` is tested or listed in `tools/tests/coverage-gaps.json` with what is not covered. Quality checks now also run `npm run test:e2e`.
+- `update()` now waits a random moment between retries and tries 12 times (was 8, no wait): CI once hit "busy" when ten simultaneous writers collided in lockstep.
 - Still not covered by any pipeline: live Stripe, Cloudflare, Resend delivery, geocoding and routing services, real inbound mail to `hello@`. Email check stays red until `EMAIL_FROM` is a `mail.` address.
 
 ## Known gaps / things to watch
