@@ -36,10 +36,34 @@ if (env.CLOUDFLARE_API_TOKEN) {
   } else say(false, `token cannot see zone ${zone}`);
 }
 
-if (env.RESEND_API_KEY && env.EMAIL_FROM) {
-  const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject: `Forwarding test ${new Date().toISOString()}`, text: "If you can read this in your inbox, hello@ forwarding works." }) });
+// Sends one test message and then asks Resend what happened to it (delivered, bounced, delayed).
+// Two messages: one straight to the owner inbox (proves Resend -> inbox) and one to hello@ (proves Resend -> Cloudflare -> inbox).
+async function sendTest(label, recipient) {
+  const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: env.EMAIL_FROM, to: [recipient], subject: `Email test (${label}) ${new Date().toISOString()}`, text: `If you can read this, ${label} works.` }) });
   const j = await r.json().catch(() => ({}));
-  say(r.ok, r.ok ? `test message sent to ${to} (id ${j.id}); check the owner inbox` : `Resend refused the test message: ${j.message || r.status}. Sending domain in EMAIL_FROM: ${(env.EMAIL_FROM.match(/@([^>\s]+)/) || [])[1] || "none found"}`);
+  say(r.ok, r.ok ? `test message (${label}) accepted by Resend (id ${j.id})` : `Resend refused the test message (${label}): ${j.message || r.status}. Sending domain in EMAIL_FROM: ${(env.EMAIL_FROM.match(/@([^>\s]+)/) || [])[1] || "none found"}`);
+  return r.ok ? j.id : null;
+}
+async function delivery(label, id) {
+  const key = env.RESEND_ADMIN_API_KEY || env.RESEND_API_KEY;
+  let last = "";
+  for (let i = 0; i < 8; i++) {
+    await new Promise((r) => setTimeout(r, 4000));
+    const r = await fetch(`https://api.resend.com/emails/${id}`, { headers: { Authorization: `Bearer ${key}` } });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { console.log(`warn cannot read delivery status for ${label} (${j.message || r.status}); open https://resend.com/emails to see it`); return; }
+    last = j.last_event || "";
+    if (["delivered", "bounced", "complained", "failed", "suppressed"].includes(last)) break;
+  }
+  const good = last === "delivered";
+  say(good || last === "sent" || last === "delivery_delayed" || last === "queued", `${label}: Resend says "${last || "unknown"}"${good ? " (the receiving server accepted it)" : last === "bounced" ? " (the receiving server REFUSED it, see the Resend log for the reason)" : " (not final yet, check https://resend.com/emails)"}`);
+}
+if (env.RESEND_API_KEY && env.EMAIL_FROM) {
+  const owner = String(env.OWNER_EMAIL || "").trim();
+  const direct = owner ? await sendTest("direct to the owner inbox", owner) : null;
+  const viaFwd = await sendTest(`forwarding through ${to}`, to);
+  if (direct) await delivery("direct to the owner inbox", direct);
+  if (viaFwd) await delivery(`forwarding through ${to}`, viaFwd);
 }
 process.exit(bad ? 1 : 0);
 // rerun 1794755846
