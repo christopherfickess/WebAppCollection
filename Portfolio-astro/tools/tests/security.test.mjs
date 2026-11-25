@@ -50,7 +50,7 @@ for (const f of files) {
 assert.deepEqual(found, [], "secrets found in tracked files:\n" + found.join("\n"));
 ok(`no keys or tokens in ${files.length} tracked files`);
 // the scanner itself still catches what it should
-assert.ok(findSecrets("x = 'sk_live_" + "a".repeat(24) + "'").length && findSecrets("-----BEGIN PRIVATE KEY-----").length && findSecrets("ghp_" + "a".repeat(36)).length && findSecrets("re_" + "b".repeat(26)).length);
+assert.ok(findSecrets("x = 'sk_live_" + "a".repeat(24) + "'").length && findSecrets("-----BEGIN " + "PRIVATE KEY-----").length && findSecrets("ghp_" + "a".repeat(36)).length && findSecrets("re_" + "b".repeat(26)).length);
 assert.deepEqual(findSecrets("sk_test"), [], "short placeholder values are not flagged");
 assert.ok(SECRET_PATTERNS.length >= 10);
 ok("secret scanner catches sample keys and ignores placeholders");
