@@ -44,3 +44,4 @@ if (env.RESEND_API_KEY && env.EMAIL_FROM) {
 process.exit(bad ? 1 : 0);
 // rerun 1794755846
 // rerun 1794757036
+// Re-run 2026-11-25T02:37:13Z: EMAIL_FROM secret updated to a mail. address.
