@@ -13,6 +13,9 @@ concurrency:
   group: verify-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Least privilege: these jobs only read the repository (any extra access they need comes from named secrets).
+permissions: { contents: read }
+
 jobs:
   verify:
     runs-on: ubuntu-latest

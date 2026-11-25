@@ -9,10 +9,13 @@ import { createServer } from "node:http";
 import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { join, extname, resolve } from "node:path";
 import { chromium } from "playwright-core";
+import { allPages, SITES, pagesOf } from "./sites.mjs";
 
-const ROOT = resolve("public");
+// Check what Netlify actually publishes: the built site in dist/ (run `npm run build` first). SITE_ROOT=public checks the raw folder.
+const ROOT = resolve(process.env.SITE_ROOT || "dist");
+if (!existsSync(join(ROOT, "index.html"))) { console.error(`${ROOT} has no built site. Run "npm run build" first.`); process.exit(2); }
 const PORT = 4488;
-const PAGES = (process.env.PAGES || "/Photography-Studio/,/Photography-Studio/privacy/,/Photography-Studio/terms/,/Photography-Studio/thanks/,/Photography-Studio/manage/,/travel-advisor/,/showcase/").split(",");
+const PAGES = process.env.PAGES ? process.env.PAGES.split(",") : allPages(ROOT);
 const WIDTHS = [390, 820, 1440];
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".woff2": "font/woff2", ".json": "application/json", ".xml": "application/xml", ".txt": "text/plain" };
 
@@ -52,6 +55,8 @@ for (const path of PAGES) {
   const row = { path, problems: [], notes: [] };
   for (const width of WIDTHS) {
     const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+    // Third-party calls (GitHub, contribution graphs) are answered locally so a slow or rate-limited service cannot fail the check.
+    await ctx.route((u) => u.hostname !== "localhost", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
     const page = await ctx.newPage();
     const errors = [];
     let bytes = 0;
@@ -84,7 +89,7 @@ for (const path of PAGES) {
       row.notes.push(`${(bytes / 1024).toFixed(0)} KB loaded`);
       await page.evaluate(axeSource);
       const axe = await page.evaluate(() => axe.run(document, { runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] }));
-      for (const v of axe.violations) row.problems.push(`accessibility (${v.impact}): ${v.id}, ${v.nodes.length} element(s). ${v.help}. First: ${v.nodes[0].target.join(" ")} ${(v.nodes[0].any[0]?.message || "").slice(0, 160)}`);
+      for (const v of axe.violations) row.problems.push(`accessibility (${v.impact}): ${v.id}, ${v.nodes.length} element(s). ${v.help}. Elements: ${v.nodes.slice(0, 4).map((n) => n.target.join(" ")).join(" ; ")}. ${(v.nodes[0].any[0]?.message || "").slice(0, 160)}`);
       row.notes.push(`${axe.passes.length} accessibility checks passed`);
     }
     await ctx.close();
@@ -95,8 +100,9 @@ for (const path of PAGES) {
 
 await browser.close();
 server.close();
-const out = [`# Quality report`, ``, `Checked ${new Date().toISOString().slice(0, 10)} at widths ${WIDTHS.join(", ")} px, behind the site's real security headers.`, ``,
-  ...rows.flatMap((r) => [`## ${r.path}  ${r.problems.length ? "FAIL" : "PASS"}`, ...(r.problems.length ? r.problems.map((p) => `- ${p}`) : ["- No problems found."]), `- ${r.notes.join("; ")}`, ``])];
+const siteOf = (path) => SITES.find((x) => pagesOf(x, ROOT).includes(path))?.name || "Other pages";
+const out = [`# Quality report`, ``, `Checked ${new Date().toISOString().slice(0, 10)} at widths ${WIDTHS.join(", ")} px, behind the site's real security headers.`, `${rows.length} pages across ${SITES.length} sites.`, ``,
+  ...rows.flatMap((r) => [`## ${r.path}  ${r.problems.length ? "FAIL" : "PASS"}  (${siteOf(r.path)})`, ...(r.problems.length ? r.problems.map((p) => `- ${p}`) : ["- No problems found."]), `- ${r.notes.join("; ")}`, ``])];
 writeFileSync("quality-report.md", out.join("\n"));
 console.log(out.join("\n"));
 process.exit(failed ? 1 : 0);

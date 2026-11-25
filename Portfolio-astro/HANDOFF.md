@@ -563,6 +563,15 @@ internal links return 200, autoplay advances and pauses.
 - `update()` now waits a random moment between retries and tries 12 times (was 8, no wait): CI once hit "busy" when ten simultaneous writers collided in lockstep.
 - Still not covered by any pipeline: live Stripe, Cloudflare, Resend delivery, geocoding and routing services, real inbound mail to `hello@`. Email check stays red until `EMAIL_FROM` is a `mail.` address.
 
+## Checks for all three sites (2026-11-24)
+
+- `tools/quality/sites.mjs` is the one list of the three sites (main portfolio, Fox & Fern, Travel Advisor) and their pages. The browser checks, Lighthouse and the built-page scan all read it; `pipeline.test.mjs` fails if a page in `src/pages` is not listed.
+- Browser checks and Lighthouse now run against the built `dist/` (what Netlify publishes), 29 pages in all. Run `npm run check:all` for everything: build, unit and security tests, e2e, built-page scan, browser checks, Lighthouse.
+- New: `security.test.mjs` (headers and CSP rules, secrets in tracked files, workflow permissions), `site-security.mjs` (inline code, unsafe links, source maps, secrets in built pages; proven by `site-security.test.mjs`), a CodeQL workflow, a check that generated files in `public/` match the build, and per-site Lighthouse.
+- Real problems found on the main portfolio and fixed: theme buttons used `aria-checked` without `role="radio"`, the default (verdant light) accent failed contrast (3.9:1, now 4.8:1), and the resume `<object>` had no label. The regenerated Valencia page (stale `theme-color`) is committed.
+- Workflows now all declare read-only `permissions`. Portfolio Lighthouse performance floor is 80 (scores 86-87 locally).
+- `tools/tests/coverage-gaps.json` `_sites` says what each site's checks cover and what they don't. Not done: secret scanning and push protection are still off in GitHub settings (needs the owner), and the top-level `Portfolio/`, `Website1-3/` folders are unchecked.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

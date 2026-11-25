@@ -7,6 +7,9 @@ on:
   push:
   pull_request:
 
+# Least privilege: these jobs only read the repository (any extra access they need comes from named secrets).
+permissions: { contents: read }
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -24,27 +27,20 @@ jobs:
       - name: Dependency audit (fails on high or critical, including build tools)
         run: npm audit --audit-level=high
       - run: npx playwright-core install --with-deps chromium
-      - run: node tools/build-content.mjs
-      - run: node tools/build-seo.mjs
-      - name: Booking and payment logic
+      - name: Build the site (what Netlify publishes)
+        run: npm run build
+      - name: Generated pages in the repo are up to date
+        run: git diff --exit-code -- public || (echo "::error::Generated files in public/ differ from what the build produces. Run npm run build and commit the result." && exit 1)
+      - name: Unit tests, security tests and pipeline tests
         run: npm test
       - name: Booking flow in a real browser (fake Stripe and email)
         run: npm run test:e2e
-      - name: Browser checks
+      - name: Built pages scan (inline code, unsafe links, source maps, secrets), all three sites
+        run: node tools/tests/site-security.mjs
+      - name: Browser checks, every page of the three sites (errors, images, sideways scroll, accessibility)
         run: node tools/quality/check.mjs
-      - name: Lighthouse (mobile, over HTTP/2)
-        run: |
-          H2=1 PORT=4490 node tools/quality/serve.mjs &
-          sleep 3
-          CHROME_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
-            npx lighthouse https://localhost:4490/Photography-Studio/ \
-            --chrome-flags="--headless=new --no-sandbox --ignore-certificate-errors" \
-            --only-categories=performance,accessibility,best-practices,seo \
-            --output=json --output-path=lighthouse.json --quiet
-          node -e "
-            const r=require('./lighthouse.json').categories, min={performance:.85,accessibility:.95,'best-practices':.95,seo:.95};
-            let bad=0; for(const k in min){const s=r[k].score; console.log(k,Math.round(s*100)); if(s<min[k]) bad=1;}
-            process.exit(bad)"
+      - name: Lighthouse (mobile, over HTTP/2), front page of each site
+        run: node tools/quality/lighthouse.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

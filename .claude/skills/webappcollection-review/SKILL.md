@@ -5,7 +5,7 @@ description: Review changes in the WebAppCollection repo (Portfolio-astro): logi
 
 # WebAppCollection review
 
-Review a branch or PR in `christopherfickess/WebAppCollection` (site code in `Portfolio-astro/`). Phases run in order. Stop at the report and wait for approval before changing anything.
+Review a branch or PR in `christopherfickess/WebAppCollection` (site code in `Portfolio-astro/`). The repo is a mono repo for now with three sites that all get reviewed: the **main portfolio** (`src/pages`: home, projects, contact, observability, resume), **Fox & Fern** (`public/Photography-Studio`, with the Netlify functions) and **Gredin Travel Advisor** (`public/travel-advisor`). They will be split into separate repos later; `tools/quality/sites.mjs` is the one list of sites and pages. The top-level `Portfolio/` and `Website1-3/` folders look like older copies of what ships from `public/`; they are not covered by the checks, so flag any change to them. Phases run in order. Stop at the report and wait for approval before changing anything.
 
 ## Ground rules
 
@@ -20,7 +20,8 @@ Review a branch or PR in `christopherfickess/WebAppCollection` (site code in `Po
 
 - Identify base and head, then read the full diff and the files around it, not just the hunks.
 - List open PR comments and review threads (REST: pulls/{n}/comments, pulls/{n}/reviews, issues/{n}/comments). Note which are resolved.
-- Run the checks yourself from `Portfolio-astro/`: `npm test`, `npm run test:e2e`, `node tools/quality/check.mjs`. A green CI badge is necessary, not sufficient. Check CI with `gh run list --branch <branch>`. If something cannot run here (no secrets, network, browser), say what was not run and why.
+- Run the checks yourself from `Portfolio-astro/`. `npm run check:all` runs the whole set: build, `npm test` (unit, security and pipeline tests), `npm run test:e2e`, `npm run security:site` (built pages of all three sites), `npm run quality` (every page in a real browser: console and CSP errors, broken images, sideways scroll, axe accessibility) and `npm run lighthouse` (front page of each site). A green CI badge is necessary, not sufficient. Check CI with `gh run list --branch <branch>`. If something cannot run here (no secrets, network, browser), say what was not run and why.
+- Check the PR touches only what it should: if a page was added to `src/pages`, it must be listed in `tools/quality/sites.mjs` (`tools/tests/pipeline.test.mjs` fails otherwise).
 
 ## Phase 2: Review (deepest blast radius first)
 
@@ -46,9 +47,15 @@ Tests: new behavior has a test that fails without the change; concurrency and fa
 
 Strain on the site: external calls on the request path (timeouts, caching, fallbacks), blob read/write counts per request, page weight and image sizes, rate limiting.
 
+Per-site checklists (review every site the diff touches, and say which of the three were not touched):
+
+- Main portfolio: theme and preset switching keep AA contrast in every preset and in dark mode (axe only checks the default); the resume PDF viewer and its fallback; the GitHub activity widget handles a slow or failing third-party call; no inline scripts or styles (the CSP forbids them); every new page has one `<h1>`, a title and a description.
+- Fox & Fern: everything in the logic, security and strain checklists above, plus the editor config against the content schema, the manage-link flows, and the emails sent.
+- Travel Advisor: client scripts and images (weight, `alt`, lazy loading), outbound links (`rel="noopener"`, https), content accuracy of destinations and field notes, and no secrets or third-party scripts.
+
 ## Phase 3: Coverage gaps
 
-Separately from findings, list behavior this change touches that no test or pipeline job exercises (live Stripe, Cloudflare, Resend delivery, geocoding and routing services, real payment in a browser, Netlify deploy previews). For each gap say how to check it manually or what test or CI job would close it. Never present "CI is green" as proof of an uncovered area.
+Separately from findings, list behavior this change touches that no test or pipeline job exercises. `Portfolio-astro/tools/tests/coverage-gaps.json` is the register: its `_sites` entry says what each site's checks cover and what they don't, and each untested pipeline script has an entry. Update it when you close or add a gap. Examples: (live Stripe, Cloudflare, Resend delivery, geocoding and routing services, real payment in a browser, Netlify deploy previews). For each gap say how to check it manually or what test or CI job would close it. Never present "CI is green" as proof of an uncovered area.
 
 ## Phase 4: REPORT (stop here)
 

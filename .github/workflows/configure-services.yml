@@ -23,6 +23,9 @@ on:
     branches: [redesign/rails-nav-theme]
     paths: [".github/workflows/configure-services.yml", "Portfolio-astro/services.config.json"]
 
+# Least privilege: these jobs only read the repository (any extra access they need comes from named secrets).
+permissions: { contents: read }
+
 jobs:
   configure-test:
     if: ${{ vars.GO_LIVE != 'true' }}

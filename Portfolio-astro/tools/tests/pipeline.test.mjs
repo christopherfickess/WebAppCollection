@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SITES, EXTRA_PAGES } from "../quality/sites.mjs";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));          // Portfolio-astro/
 const WORKFLOWS = join(ROOT, "..", ".github", "workflows");
@@ -42,3 +43,18 @@ for (const s of readdirSync(join(ROOT, "tools")).filter((f) => f.endsWith(".mjs"
 }
 for (const k of Object.keys(gaps).filter((k) => !k.startsWith("_"))) assert.ok(existsSync(join(ROOT, k)), `coverage-gaps.json lists ${k}, which no longer exists`);
 ok("every pipeline script is tested or has a stated gap");
+
+// 5. the three sites in this repo are all covered by the page, security and Lighthouse checks
+assert.deepEqual(SITES.map((s) => s.id), ["portfolio", "fox-and-fern", "travel-advisor"], "the three sites are listed in tools/quality/sites.mjs");
+const portfolio = SITES.find((s) => s.id === "portfolio");
+const srcPages = readdirSync(join(ROOT, "src", "pages")).map((e) => (e === "index.astro" ? "/" : `/${e}/`)).sort();
+assert.deepEqual([...portfolio.pages].sort(), srcPages, "every page in src/pages is in the portfolio page list (add new pages to tools/quality/sites.mjs)");
+for (const s of SITES.filter((x) => x.prefix)) assert.ok(existsSync(join(ROOT, "public", s.prefix, "index.html")), `${s.name} has a front page at ${s.prefix}`);
+for (const s of SITES) assert.ok(s.lighthouse, `${s.name} has a Lighthouse page`);
+assert.ok(EXTRA_PAGES.length >= 0);
+for (const step of ["npm run build", "node tools/tests/site-security.mjs", "node tools/quality/check.mjs", "node tools/quality/lighthouse.mjs", "npm run test:e2e"]) assert.ok(quality.includes(step), `quality.yml runs: ${step}`);
+const codeql = workflows.find((w) => w.f === "codeql.yml")?.text || "";
+assert.match(codeql, /javascript-typescript/); assert.match(codeql, /^\s*pull_request:/m);
+const sitesGap = JSON.parse(read("tools", "tests", "coverage-gaps.json"))._sites;
+for (const s of SITES) assert.ok(sitesGap[s.id]?.covered && sitesGap[s.id]?.gaps, `coverage-gaps.json says what is and is not covered for ${s.name}`);
+ok("all three sites are covered by page, security, Lighthouse and CodeQL checks, and their gaps are written down");

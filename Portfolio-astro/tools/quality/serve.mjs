@@ -4,7 +4,7 @@ import { createSecureServer } from "node:http2";
 import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join, extname, resolve } from "node:path";
-const ROOT = resolve("public");
+const ROOT = resolve(process.env.SITE_ROOT || "dist"); // the built site, like Netlify publishes
 const PORT = Number(process.env.PORT || 4489);
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".woff2": "font/woff2", ".json": "application/json", ".xml": "application/xml", ".txt": "text/plain" };
 const headers = {};

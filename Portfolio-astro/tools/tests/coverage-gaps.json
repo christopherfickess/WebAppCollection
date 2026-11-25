@@ -1,11 +1,49 @@
 {
   "_about": "Pipeline scripts in tools/ with no unit test of their own. Each one says how it IS checked and what is still not covered. Add a test and delete the entry, or add an entry when you add a script. tools/tests/pipeline.test.mjs enforces this.",
-  "tools/build-admin.mjs": { "how": "Output is loaded by the browser checks in tools/quality/check.mjs.", "gap": "No test that every field in admin/config.yml round-trips through the editor." },
-  "tools/build-content.mjs": { "how": "Runs in Quality checks before the browser checks; invalid content stops the build.", "gap": "Schema rules are only exercised by the content that is in the repo, not by bad samples." },
-  "tools/build-guides.mjs": { "how": "Output pages are crawled by the browser checks.", "gap": "No unit test." },
-  "tools/build-seo.mjs": { "how": "Runs in Quality checks; Lighthouse SEO score must stay at or above 95.", "gap": "Sitemap and meta contents are not compared to expected values." },
-  "tools/email-check.mjs": { "how": "The Email check workflow runs it against the real DNS, Cloudflare and Resend.", "gap": "Needs live secrets, so it cannot run in pull request CI; a real inbound message to the forwarding address is sent by hand." },
-  "tools/launch-check.mjs": { "how": "Runs in Verify deploy against the deployed site.", "gap": "Only checks the deployed address; no test of its own checks against a mock site." },
-  "tools/new-client.mjs": { "how": "Run by hand when starting a client site.", "gap": "No test; the copy it makes is not built or browser-checked." },
-  "tools/verify-deploy.mjs": { "how": "State handling is unit tested in deploy-state.test.mjs; the script runs on every push in Verify deploy.", "gap": "Polling, probing addresses and redirects need the live Netlify API." }
+  "tools/build-admin.mjs": {
+    "how": "Output is loaded by the browser checks in tools/quality/check.mjs.",
+    "gap": "No test that every field in admin/config.yml round-trips through the editor."
+  },
+  "tools/build-content.mjs": {
+    "how": "Runs in Quality checks before the browser checks; invalid content stops the build.",
+    "gap": "Schema rules are only exercised by the content that is in the repo, not by bad samples."
+  },
+  "tools/build-guides.mjs": {
+    "how": "Output pages are crawled by the browser checks.",
+    "gap": "No unit test."
+  },
+  "tools/build-seo.mjs": {
+    "how": "Runs in Quality checks; Lighthouse SEO score must stay at or above 95.",
+    "gap": "Sitemap and meta contents are not compared to expected values."
+  },
+  "tools/email-check.mjs": {
+    "how": "The Email check workflow runs it against the real DNS, Cloudflare and Resend.",
+    "gap": "Needs live secrets, so it cannot run in pull request CI; a real inbound message to the forwarding address is sent by hand."
+  },
+  "tools/launch-check.mjs": {
+    "how": "Runs in Verify deploy against the deployed site.",
+    "gap": "Only checks the deployed address; no test of its own checks against a mock site."
+  },
+  "tools/new-client.mjs": {
+    "how": "Run by hand when starting a client site.",
+    "gap": "No test; the copy it makes is not built or browser-checked."
+  },
+  "tools/verify-deploy.mjs": {
+    "how": "State handling is unit tested in deploy-state.test.mjs; the script runs on every push in Verify deploy.",
+    "gap": "Polling, probing addresses and redirects need the live Netlify API."
+  },
+  "_sites": {
+    "portfolio": {
+      "covered": "Every page in a real browser at 3 widths (console and CSP errors, broken images, sideways scroll, axe WCAG 2 A/AA), Lighthouse on the front page, built-page security scan, headers test, npm audit, CodeQL.",
+      "gaps": "No tests of its own scripts (theme and preset switching, the GitHub activity widget); third-party calls are answered with empty data in CI. Contrast is checked only for the default theme and preset, not the other presets or dark mode. Lighthouse covers only the front page. The contact page has no form test."
+    },
+    "fox-and-fern": {
+      "covered": "Everything above, plus booking, payment, refund, webhook, concurrency and travel unit tests, the end-to-end booking test, the live smoke test against Stripe test mode, Email check and Verify deploy.",
+      "gaps": "Live Stripe live mode, real card payments, Resend delivery to customers, geocoding and routing services, and real inbound mail are not exercised by any pipeline. The editor (admin) pages are excluded from browser checks."
+    },
+    "travel-advisor": {
+      "covered": "All 18 pages in a real browser at 3 widths, Lighthouse on the front page, built-page security scan, headers test.",
+      "gaps": "No tests of its client scripts beyond loading without errors; no check of outbound links or image licences; Lighthouse covers only the front page."
+    }
+  }
 }

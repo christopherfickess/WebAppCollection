@@ -30,6 +30,9 @@ on:
     branches: [redesign/rails-nav-theme]
     paths: [".github/workflows/netlify-env.yml"]
 
+# Least privilege: these jobs only read the repository (any extra access they need comes from named secrets).
+permissions: { contents: read }
+
 jobs:
   sync-test:
     if: ${{ vars.GO_LIVE != 'true' && (github.event_name == 'push' || inputs.mode != 'live') }}
