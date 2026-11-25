@@ -58,9 +58,14 @@ Report most severe first: file and line, what is wrong, a concrete failing scena
 
 Fix only what was approved. Add or update tests. Re-run the Phase 1 checks. Commit to the working branch and push.
 
-## Phase 6: Re-check PR comments
+## Phase 6: Reply to and resolve PR threads
 
-After pushing, re-read PR comments and review threads, including new bot reviews. For each new or still-open comment, report the issue and discuss the fix with the user before acting. Do not resolve threads yourself unless asked.
+After pushing, re-read PR comments and review threads, including new bot reviews, and handle each one:
+
+1. Open comment that was fixed and verified: reply on the thread with the commit short sha, what changed, and which test now covers it (REST: `gh api -X POST repos/christopherfickess/WebAppCollection/pulls/{n}/comments/{comment_id}/replies -f body=...`). Then resolve the thread, only once the fix is pushed and the Phase 5 checks passed. Resolve with GraphQL `resolveReviewThread` if it works; if GraphQL is blocked, use the session's review-thread endpoint (see `~/.ccr/README.md`). If neither can resolve it, say so in the report and list the threads for the user to resolve.
+2. Comment that is wrong, already handled, or a judgment call: reply with the reason and leave it open for the user (or the author) to close. Never resolve a thread whose fix was not applied.
+3. New comment that appears after the push: report the issue and discuss the fix with the user before acting. Do not auto-fix new findings.
+4. Re-read the thread list at the end and confirm which are resolved and which remain.
 
 ## Phase 7: Report back
 

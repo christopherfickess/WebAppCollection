@@ -552,6 +552,15 @@ internal links return 200, autoplay advances and pauses.
 - **Netlify domain**: the certificate is requested after the DNS record exists and only if none covers the domain (the site-level `ssl` flag is true for the .netlify.app name and says nothing about the custom domain). Proxied (orange cloud) Cloudflare CNAMEs are switched to DNS only.
 - **Email check** looks only at the owner's destination (`OWNER_EMAIL`), not every address on the Cloudflare account.
 
+## Second review round and pipeline coverage (2026-11-24)
+
+- Repo skill `.claude/skills/webappcollection-review/SKILL.md`: report first, fix after approval, reply to and resolve PR threads when done. Use it for reviews.
+- Webhook: the same payment arriving again under a new event id is a no-op (bookings carry `notified`; a retry only finishes work an earlier attempt skipped). Reschedule refuses a date that already has a booking and puts the old date back. The travel lookup now runs before the hold is claimed.
+- Travel: only OSRM's `NoRoute` code means "no road" (cached one day); any other empty reply is a failure and is not cached. The booking form tells visitors when the distance lookup is down instead of "place not found".
+- Verify deploy: a commit that changes no site content (Netlify cancels with "no content change") checks the branch's latest finished deploy instead of failing. Logic is in `tools/lib/deploy-state.mjs`, tested in `deploy-state.test.mjs`.
+- Pipeline coverage: `pipeline.test.mjs` checks workflows run existing scripts, every test file is in `npm test`, CI runs unit and e2e tests, and every `tools/*.mjs` is tested or listed in `tools/tests/coverage-gaps.json` with what is not covered. Quality checks now also run `npm run test:e2e`.
+- Still not covered by any pipeline: live Stripe, Cloudflare, Resend delivery, geocoding and routing services, real inbound mail to `hello@`. Email check stays red until `EMAIL_FROM` is a `mail.` address.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

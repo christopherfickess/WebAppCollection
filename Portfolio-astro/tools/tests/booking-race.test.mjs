@@ -103,3 +103,65 @@ const body = (email, date = "2026-12-12") => ({ name: "Pat", email, package: "Ha
   assert.equal(res.status, 200);
   ok("already-refunded payment does not block a cancel");
 }
+
+const paidEvent = (id, pi, date, email = "a@x.co") => ({ id, type: "checkout.session.completed", data: { object: { payment_intent: pi, customer_details: { email }, metadata: { kind: "session", package: "Half day", date, name: "Pat", message: "" } } } });
+
+// the same payment delivered again under a NEW event id changes nothing and sends no second email
+{
+  const store = blobs(); mails.length = 0;
+  const d = "2026-12-26";
+  await handleStripeEvent(paidEvent("r1", "pi_r", d), deps(store));
+  await handleStripeEvent({ id: "r2", type: "checkout.session.completed", data: { object: { payment_intent: "pi_bal2", amount_total: 45000, customer_details: { email: "a@x.co" }, metadata: { kind: "balance", date: d } } } }, deps(store));
+  await update(store, "bookings", (bk) => { bk[d].reminded = true; return bk; });
+  const before = await store.get("bookings"); mails.length = 0;
+  const again = await handleStripeEvent(paidEvent("r3", "pi_r", d), deps(store));
+  assert.equal(again.duplicate, true);
+  assert.deepEqual(await store.get("bookings"), before, "stored booking (balance, reminder) is untouched");
+  assert.equal(mails.length, 0, "no second confirmation email");
+  ok("same payment replayed under a new event id is a no-op");
+}
+
+// a first attempt that died before the confirmation email is finished by the retry, once
+{
+  const store = blobs(); mails.length = 0;
+  const d = "2026-12-27";
+  await update(store, "bookings", (bk) => ({ ...bk, [d]: { name: "Pat", email: "a@x.co", package: "Half day", slot: "", location: "", paidAt: NOW, reminded: false, pi: "pi_half", notified: false } }), {});
+  await handleStripeEvent(paidEvent("h1", "pi_half", d), deps(store));
+  assert.ok((await store.get("booked")).includes(d), "date is blocked after the retry");
+  assert.ok(mails.length >= 1, "confirmation sent by the retry");
+  assert.equal((await store.get("bookings"))[d].notified, true);
+  const n = mails.length;
+  await handleStripeEvent(paidEvent("h2", "pi_half", d), deps(store));
+  assert.equal(mails.length, n, "and only once");
+  ok("interrupted booking is finished by a retry, once");
+}
+
+// reschedule onto a date where a payment has just landed must not overwrite that booking
+{
+  const store = blobs(); mails.length = 0;
+  const from = "2026-12-28", to = "2026-12-29";
+  await handleStripeEvent(paidEvent("s1", "pi_from", from), deps(store));
+  // the webhook for another client has written "bookings" but not yet "booked"
+  await update(store, "bookings", (bk) => ({ ...bk, [to]: { name: "Sam", email: "s@x.co", package: "Half day", paidAt: NOW, reminded: false, pi: "pi_sam", notified: false } }), {});
+  const res = await manageAct({ date: from, t: manageToken(env, from, "a@x.co"), action: "reschedule", newDate: to }, deps(store));
+  assert.equal(res.status, 409);
+  const bk = await store.get("bookings");
+  assert.equal(bk[to].pi, "pi_sam", "the paying client's booking is intact");
+  assert.equal(bk[from].pi, "pi_from", "the original booking stays where it was");
+  assert.ok((await store.get("booked")).includes(from), "the original date is still blocked");
+  ok("reschedule cannot overwrite a booking that is being paid");
+}
+
+// the travel lookup runs before the date is held, so a timeout or crash during it cannot lock the date
+{
+  const store = blobs();
+  let heldDuringLookup = null;
+  const spy = async (u, o) => {
+    if (/nominatim|osrm/.test(u)) { heldDuringLookup = Object.keys((await store.get("holds")) || {}).length; throw new Error("slow service"); }
+    return fetchMock(u, o);
+  };
+  const res = await createCheckout({ ...body("a@x.co", "2026-12-30"), location: "Tulsa, OK" }, { ...deps(store), fetch: spy });
+  assert.equal(res.status, 200);
+  assert.equal(heldDuringLookup, 0, "no hold exists while the lookup is running");
+  ok("travel lookup happens before the hold");
+}

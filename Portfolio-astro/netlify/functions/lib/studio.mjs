@@ -143,6 +143,9 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   const problem = dayProblem(date, now, taken);
   if (problem) return json(409, { error: problem });
 
+  // Look the travel estimate up BEFORE claiming the date: it can take seconds, and a crash or timeout during it must not leave a hold behind.
+  const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now, origin });
+
   // Claim the date first, atomically, so two overlapping checkouts cannot both get it.
   const mine = email.toLowerCase();
   let refused = null;
@@ -172,7 +175,6 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   p.set("metadata[message]", message);
   const slot = slotOf(body?.slot);
   if (slot) p.set("metadata[slot]", slot);
-  const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now, origin });
   if (tv.location) p.set("metadata[location]", tv.location);
   if (tv.travel) p.set("metadata[travel]", tv.travel.slice(0, 480));
   let s;
@@ -255,11 +257,15 @@ export async function handleStripeEvent(event, deps) {
     if (m.kind === "session") {
       const email = s.customer_details?.email || s.customer_email;
       // Never overwrite another client's paid booking for the same date: refund this payment and tell both people.
-      let clash = false;
+      let clash = false, replay = false, finish = false;
+      const pi = s.payment_intent || null;
       await update(store, "bookings", (bk) => {
         const ex = bk[m.date];
-        if (ex && ex.pi !== (s.payment_intent || null)) { clash = true; return undefined; }
-        bk[m.date] = { name: m.name, email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi: s.payment_intent || null };
+        if (ex && ex.pi !== pi) { clash = true; return undefined; }
+        // The same payment again (Stripe sends a fresh event id for some retries): never overwrite the stored booking,
+        // which may already hold a paid balance, a reschedule or a sent reminder. Only finish work an earlier attempt did not.
+        if (ex) { replay = true; finish = ex.notified === false; return undefined; }
+        bk[m.date] = { name: m.name, email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi, notified: false };
         return bk;
       });
       if (clash) {
@@ -269,9 +275,14 @@ export async function handleStripeEvent(event, deps) {
         await store.setJSON(`event:${event.id}`, { at: now });
         return { handled: event.type, clash: true };
       }
+      if (replay && !finish) {
+        await store.setJSON(`event:${event.id}`, { at: now });
+        return { handled: event.type, duplicate: true };
+      }
       await update(store, "booked", (arr) => (arr.includes(m.date) ? undefined : [...arr, m.date].sort()), []);
       await update(store, "holds", (h) => { if (h[m.date]) { delete h[m.date]; return h; } return undefined; });
       await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, slot: m.slot, message: m.message, location: m.location, travel: m.travel }, { paid: true });
+      await update(store, "bookings", (bk) => { if (bk[m.date]?.pi === pi && bk[m.date].notified === false) { bk[m.date].notified = true; return bk; } return undefined; });
     } else if (m.kind === "balance") {
       await update(store, "bookings", (bk) => { if (!bk[m.date]) return undefined; bk[m.date].balancePaidAt = now; bk[m.date].balancePi = s.payment_intent || null; return bk; });
       await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Balance paid: ${m.date}`, text: `The balance for the session on ${m.date} was paid (${money((s.amount_total || 0) / 100)}).` });
@@ -374,7 +385,17 @@ export async function manageAct(body, deps) {
     let taken = false;
     await update(store, "booked", (arr) => { if (arr.includes(to)) { taken = true; return undefined; } return [...arr.filter((d) => d !== date), to].sort(); }, []);
     if (taken) return json(409, { error: "booked" });
-    await update(store, "bookings", (bk) => { delete bk[date]; bk[to] = { ...b, rescheduledFrom: date, reminded: false }; return bk; });
+    // A payment can land on `to` between our "booked" check and now (the webhook writes "bookings" first). Never overwrite it:
+    // put the old date back and refuse, so the paying client keeps their booking.
+    let paidThere = false;
+    await update(store, "bookings", (bk) => {
+      if (bk[to]) { paidThere = true; return undefined; }
+      delete bk[date]; bk[to] = { ...b, rescheduledFrom: date, reminded: false }; return bk;
+    });
+    if (paidThere) {
+      await update(store, "booked", (arr) => (arr.includes(date) ? undefined : [...arr, date].sort()), []);
+      return json(409, { error: "booked" });
+    }
     const link = manageLink({ env, origin }, to, b.email);
     await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Rescheduled: ${b.name}`, text: `${b.name} moved ${date} to ${to}.`, replyTo: b.email });
     await sendEmail(deps, { to: b.email, subject: `Your session is moved to ${to}`, text: `Hi ${b.name},\n\nYour ${b.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}`, attachments: ics(to, `Your ${b.package} session.`, b) });

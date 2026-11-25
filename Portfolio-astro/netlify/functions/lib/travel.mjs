@@ -50,11 +50,12 @@ export function priceTravel({ road, straight, noRoute = !road }, travel) {
 const ua = (deps) => `FoxAndFern-booking/1.0 (travel estimates${deps.origin ? `; +${deps.origin}` : ""})`;
 const wait = () => ({ signal: AbortSignal.timeout(4000) }); // a slow public service must not hang a request
 const key = (prefix, s) => `${prefix}:${createHash("sha1").update(String(s).trim().toLowerCase()).digest("hex").slice(0, 24)}`;
-const MONTH = 30 * 864e5;
+const MONTH = 30 * 864e5, DAY = 864e5;
 
 async function cached(store, k, now, make) {
   const hit = await store.get(k, { type: "json" }).catch(() => null);
-  if (hit && now - hit.at < MONTH) return hit.v;
+  // "No road route" is remembered for a day only, so one odd answer from the router cannot price flights for a month.
+  if (hit && now - hit.at < (hit.v?.none ? DAY : MONTH)) return hit.v;
   const v = await make();
   if (v) await store.setJSON(k, { at: now, v }).catch(() => {});
   return v;
@@ -78,7 +79,10 @@ async function route(a, b, deps) {
     if (!r.ok) throw new Error(`router HTTP ${r.status}`);
     const j = await r.json();
     const x = j?.routes?.[0];
-    return x ? { miles: x.distance / 1609.344, hours: x.duration / 3600 } : { none: true };
+    if (x) return { miles: x.distance / 1609.344, hours: x.duration / 3600 };
+    // Only the router's own "NoRoute" answer means there is no road. Anything else (an empty or odd reply) is a failure: not cached.
+    if (j?.code === "NoRoute") return { none: true };
+    throw new Error(`router answered ${j?.code || "without a route"}`);
   });
 }
 

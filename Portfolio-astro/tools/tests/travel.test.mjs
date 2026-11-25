@@ -30,7 +30,7 @@ const f = async (url) => {
   calls.push(url);
   const j = (b) => ({ ok: true, status: 200, json: async () => b });
   if (url.includes("nominatim")) { const q = decodeURIComponent(url.split("q=")[1]).toLowerCase(); return j(places[q] ? [places[q]] : []); }
-  if (url.includes("osrm")) return url.includes("2.3522") ? j({ routes: [] }) : j({ routes: [{ distance: 105 * 1609.344, duration: 1.7 * 3600 }] });
+  if (url.includes("osrm")) return url.includes("2.3522") ? j({ code: "NoRoute", routes: [] }) : j({ routes: [{ distance: 105 * 1609.344, duration: 1.7 * 3600 }] });
   throw new Error("unexpected " + url);
 };
 const deps = { fetch: f, store, now: Date.UTC(2026, 10, 15) };
@@ -55,8 +55,21 @@ console.log("ok travel lookup, cache and failures");
   };
   const down = await quoteTravel("Tulsa", { store: mk(), now: 1, fetch: base(async () => ({ ok: false, status: 503, json: async () => ({}) })) });
   assert.equal(down.ok, true); assert.equal(down.mode, "drive", "routing outage must not turn Tulsa into a flight");
-  const none = await quoteTravel("Tulsa", { store: mk(), now: 1, fetch: base(async () => ({ ok: true, status: 200, json: async () => ({ routes: [] }) })) });
+  const none = await quoteTravel("Tulsa", { store: mk(), now: 1, fetch: base(async () => ({ ok: true, status: 200, json: async () => ({ code: "NoRoute", routes: [] }) })) });
   assert.equal(none.mode, "flight", "no road route means a flight");
+  // an empty reply WITHOUT the router's NoRoute code is a failure, not "no road": drive estimate, and nothing cached
+  const written = [];
+  const spy = { get: async () => null, setJSON: async (k) => { written.push(k); } };
+  const odd = await quoteTravel("Tulsa", { store: spy, now: 1, fetch: base(async () => ({ ok: true, status: 200, json: async () => ({ routes: [] }) })) });
+  assert.equal(odd.mode, "drive", "an odd router reply must not price a flight");
+  assert.ok(!written.some((k) => k.startsWith("rt:")), "odd reply is not cached");
+  // a remembered "no road" is trusted for a day, not a month
+  const keep = new Map();
+  const mem = { get: async (k) => keep.get(k) ?? null, setJSON: async (k, v) => { keep.set(k, v); } };
+  const t0 = 1_000_000;
+  await quoteTravel("Tulsa", { store: mem, now: t0, fetch: base(async () => ({ ok: true, status: 200, json: async () => ({ code: "NoRoute", routes: [] }) })) });
+  const later = await quoteTravel("Tulsa", { store: mem, now: t0 + 2 * 864e5, fetch: base(async () => ({ ok: true, status: 200, json: async () => ({ routes: [{ distance: 105 * 1609.344, duration: 1.7 * 3600 }] }) })) });
+  assert.equal(later.mode, "drive", "after a day the router is asked again");
   const geoDown = await quoteTravel("Tulsa", { store: mk(), now: 1, fetch: async () => ({ ok: false, status: 503, json: async () => ({}) }) });
   assert.equal(geoDown.error, "lookup-failed", "a geocoder outage is not 'place not found'");
 }

@@ -28,6 +28,8 @@ jobs:
       - run: node tools/build-seo.mjs
       - name: Booking and payment logic
         run: npm test
+      - name: Booking flow in a real browser (fake Stripe and email)
+        run: npm run test:e2e
       - name: Browser checks
         run: node tools/quality/check.mjs
       - name: Lighthouse (mobile, over HTTP/2)

@@ -94,7 +94,7 @@ export class Booking {
           const res = await fetch(`/api/travel-quote?to=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
           const j = await res.json();
           if (mine !== seq) return;
-          out.textContent = res.ok ? j.summary : res.status === 429 ? "Too many lookups. Please try again later." : "We could not find that place. Try a city and state, and we will confirm the travel fee by email.";
+          out.textContent = res.ok ? j.summary : res.status === 429 ? "Too many lookups. Please try again later." : (j.error === "lookup-failed" || j.error === "home-not-found") ? "The distance lookup is not available right now. You can still send your request and we will confirm the travel fee by email." : "We could not find that place. Try a city and state, and we will confirm the travel fee by email.";
         } catch { if (mine === seq) out.textContent = ""; }
       }, 700);
     });
