@@ -165,3 +165,64 @@ const paidEvent = (id, pi, date, email = "a@x.co") => ({ id, type: "checkout.ses
   assert.equal(heldDuringLookup, 0, "no hold exists while the lookup is running");
   ok("travel lookup happens before the hold");
 }
+
+// a late repeat of a payment whose booking was MOVED by a reschedule must not create a second booking
+{
+  const store = blobs(); mails.length = 0;
+  const from = "2026-12-14", to = "2026-12-15";
+  await handleStripeEvent(paidEvent("m1", "pi_move", from), deps(store));
+  const res = await manageAct({ date: from, t: manageToken(env, from, "a@x.co"), action: "reschedule", newDate: to }, deps(store));
+  assert.equal(res.status, 200);
+  mails.length = 0;
+  const again = await handleStripeEvent(paidEvent("m2", "pi_move", from), deps(store));
+  assert.equal(again.duplicate, true);
+  const bk = await store.get("bookings");
+  assert.deepEqual(Object.keys(bk), [to], "one booking, on the new date");
+  assert.ok(!(await store.get("booked")).includes(from), "the old date stays free");
+  assert.equal(mails.length, 0);
+  ok("repeat of a payment after a reschedule is a no-op");
+}
+
+// ...and after a cancel and refund, a late repeat must not bring the booking back
+{
+  const store = blobs(); mails.length = 0; refunds.length = 0;
+  const d = "2026-12-16";
+  await handleStripeEvent(paidEvent("c1", "pi_gone", d), deps(store));
+  const res = await manageAct({ date: d, t: manageToken(env, d, "a@x.co"), action: "cancel" }, deps(store));
+  assert.equal(res.status, 200); mails.length = 0;
+  const again = await handleStripeEvent(paidEvent("c2", "pi_gone", d), deps(store));
+  assert.equal(again.duplicate, true);
+  assert.deepEqual((await store.get("bookings")) || {}, {}, "cancelled booking stays cancelled");
+  assert.ok(!((await store.get("booked")) || []).includes(d));
+  assert.equal(mails.length, 0);
+  ok("repeat of a payment after a cancel is a no-op");
+}
+
+// a refunded double payment replayed under a new event id is not refunded and emailed again
+{
+  const store = blobs(); mails.length = 0; refunds.length = 0;
+  const d = "2026-12-17";
+  await handleStripeEvent(paidEvent("d1", "pi_one", d, "a@x.co"), deps(store));
+  await handleStripeEvent(paidEvent("d2", "pi_two", d, "b@x.co"), deps(store));
+  assert.deepEqual(refunds, ["pi_two"]); mails.length = 0;
+  const again = await handleStripeEvent(paidEvent("d3", "pi_two", d, "b@x.co"), deps(store));
+  assert.equal(again.duplicate, true);
+  assert.deepEqual(refunds, ["pi_two"], "no second refund call"); assert.equal(mails.length, 0);
+  ok("repeat of a refunded double payment is a no-op");
+}
+
+// someone books the date while our travel lookup is running: this visitor is told, and gets no Stripe link
+{
+  const store = blobs(); let stripeCalls = 0;
+  const d = "2026-12-18";
+  const slow = async (u, o) => {
+    if (/nominatim|osrm/.test(u)) { await update(store, "booked", (a) => [...a, d].sort(), []); throw new Error("slow"); }
+    if (u.includes("checkout/sessions")) stripeCalls++;
+    return fetchMock(u, o);
+  };
+  const res = await createCheckout({ ...body("a@x.co", d), location: "Tulsa, OK" }, { ...deps(store), fetch: slow });
+  assert.equal(res.status, 409);
+  assert.equal(stripeCalls, 0, "no Stripe session for a date that was just taken");
+  assert.deepEqual((await store.get("holds")) || {}, {}, "and no hold");
+  ok("date taken during the travel lookup is refused before Stripe");
+}

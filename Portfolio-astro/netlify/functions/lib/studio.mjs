@@ -145,7 +145,10 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   if (problem) return json(409, { error: problem });
 
   // Look the travel estimate up BEFORE claiming the date: it can take seconds, and a crash or timeout during it must not leave a hold behind.
+  // Then check the date again, because someone may have booked it while we waited; the claim below follows immediately.
   const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now, origin });
+  const problemNow = dayProblem(date, now, await unavailable(store, now));
+  if (problemNow) return json(409, { error: problemNow });
 
   // Claim the date first, atomically, so two overlapping checkouts cannot both get it.
   const mine = email.toLowerCase();
@@ -260,19 +263,28 @@ export async function handleStripeEvent(event, deps) {
       // Never overwrite another client's paid booking for the same date: refund this payment and tell both people.
       let clash = false, replay = false, finish = false;
       const pi = s.payment_intent || null;
-      await update(store, "bookings", (bk) => {
-        const ex = bk[m.date];
-        if (ex && ex.pi !== pi) { clash = true; return undefined; }
-        // The same payment again (Stripe sends a fresh event id for some retries): never overwrite the stored booking,
-        // which may already hold a paid balance, a reschedule or a sent reminder. Only finish work an earlier attempt did not.
-        if (ex) { replay = true; finish = ex.notified === false; return undefined; }
-        bk[m.date] = { name: m.name, email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi, notified: false };
-        return bk;
-      });
+      // Each payment is recorded once (pay:<pi>), wherever its booking has gone since: moved by a reschedule, cancelled or refunded.
+      // A later delivery of the same payment under a new event id must not write a booking again or send mail again.
+      const seen = pi ? await store.get(`pay:${pi}`, { type: "json" }) : null;
+      if (seen) {
+        const ex = ((await store.get("bookings", { type: "json" })) || {})[m.date];
+        replay = true; finish = Boolean(ex && ex.pi === pi && ex.notified === false); // an earlier attempt died before the confirmation: finish it
+      } else {
+        await update(store, "bookings", (bk) => {
+          const ex = bk[m.date];
+          if (ex && ex.pi !== pi) { clash = true; return undefined; }
+          // Two deliveries of the same payment at once: the second finds the first's booking and leaves it alone.
+          if (ex) { replay = true; finish = ex.notified === false; return undefined; }
+          bk[m.date] = { name: m.name, email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi, notified: false };
+          return bk;
+        });
+        if (pi && !clash) await store.setJSON(`pay:${pi}`, { date: m.date, at: now }).catch(() => {}); // a clash is recorded only once its refund and emails are done
+      }
       if (clash) {
         const ok = s.payment_intent && env.STRIPE_SECRET_KEY ? await refundIntent(fetchOf(deps), env, s.payment_intent) : false;
         await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Double booking prevented: ${m.date}`, text: `${m.name} <${email}> paid a deposit for ${m.date}, but another client already holds that date.\n${ok ? "Their payment was refunded automatically." : "REFUND THEM in the Stripe dashboard: the automatic refund did not go through."}` });
         await sendEmail(deps, { to: email, subject: "Your date was just taken", text: `Hi ${m.name},\n\nSomeone else booked ${m.date} at the same moment, so your deposit is being refunded in full. Please pick another date.\n\n${sign()}` });
+        if (pi) await store.setJSON(`pay:${pi}`, { date: m.date, at: now, clash: true }).catch(() => {});
         await store.setJSON(`event:${event.id}`, { at: now });
         return { handled: event.type, clash: true };
       }
