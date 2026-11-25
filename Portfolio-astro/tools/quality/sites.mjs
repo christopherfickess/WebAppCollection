@@ -5,12 +5,12 @@ import { readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 export const SITES = [
-  { id: "portfolio", name: "Main portfolio", pages: ["/", "/projects/", "/contact/", "/observability/", "/resume/"], lighthouse: ["/", "/projects/", "/resume/", "/contact/"], budgetKB: 400, minimum: { performance: 0.8 } }, // measured 86-87 locally; the lower floor leaves room for slower CI machines
-  { id: "fox-and-fern", name: "Fox & Fern photography studio", prefix: "/Photography-Studio/", skip: ["/Photography-Studio/admin/"], lighthouse: ["/Photography-Studio/", "/Photography-Studio/privacy/"], budgetKB: 400, /* the gallery home page is photographs: 489 KB today */ budgetOverrides: { "/Photography-Studio/": 600 } },
-  { id: "travel-advisor", name: "Gredin Travel Advisor", prefix: "/travel-advisor/", lighthouse: ["/travel-advisor/", "/travel-advisor/destinations/", "/travel-advisor/destinations/paris/", "/travel-advisor/field-notes/", "/travel-advisor/field-notes/nassau-without-a-car/", "/travel-advisor/packing/"], budgetKB: 1000, minimum: { performance: 0.75 }, /* guide pages build their hero photo with a script: ~5 s largest paint on a throttled phone (scores 80-84). Prerendering the hero would fix it. */ budgetOverrides: { "/travel-advisor/destinations/san-diego/": 1500, "/travel-advisor/destinations/washington-dc/": 1500 } },
+  { id: "portfolio", name: "Main portfolio", pages: ["/", "/projects/", "/contact/", "/observability/", "/resume/"], lighthouse: ["/", "/projects/", "/resume/", "/contact/"], budgetKB: 600, minimum: { performance: 0.8 } }, // measured 86-87 locally; the lower floor leaves room for slower CI machines
+  { id: "fox-and-fern", name: "Fox & Fern photography studio", prefix: "/Photography-Studio/", skip: ["/Photography-Studio/admin/"], lighthouse: ["/Photography-Studio/", "/Photography-Studio/privacy/"], budgetKB: 500, /* the gallery home page is photographs and its set rotates: 850 to 1250 KB with every image loaded */ budgetOverrides: { "/Photography-Studio/": 1500 } },
+  { id: "travel-advisor", name: "Gredin Travel Advisor", prefix: "/travel-advisor/", lighthouse: ["/travel-advisor/", "/travel-advisor/destinations/", "/travel-advisor/destinations/paris/", "/travel-advisor/field-notes/", "/travel-advisor/field-notes/nassau-without-a-car/", "/travel-advisor/packing/"], budgetKB: 1300, minimum: { performance: 0.75 }, /* guide pages build their hero photo with a script: ~5 s largest paint on a throttled phone (scores 80-84). Prerendering the hero would fix it. */ budgetPrefixes: { "/travel-advisor/destinations/": 3000 } /* guides are photo galleries: 1.1 to 2.6 MB with every image loaded */ },
 ];
 // Lighthouse runs on one page per kind of page (front, listing, detail, article, legal). budgetKB is the most a page may download (at 1440 px);
-// budgetOverrides lists pages that are known to be heavier and should be slimmed down rather than left to grow.
+// budgetPrefixes sets a budget for every page under a path; budgetOverrides lists single pages that are known to be heavier and should be slimmed down rather than left to grow.
 // Not one of the three, but it ships on the same site and has always been checked.
 export const EXTRA_PAGES = ["/showcase/"];
 

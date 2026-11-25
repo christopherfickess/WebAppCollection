@@ -62,10 +62,12 @@ for (const path of PAGES) {
     let bytes = 0;
     page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
     page.on("pageerror", (e) => errors.push(String(e)));
-    page.on("response", async (r) => { try { bytes += (await r.body()).length; } catch {} });
     const res = await page.goto(`http://localhost:${PORT}${path}`, { waitUntil: "networkidle" }).catch(() => null);
     if (!res || res.status() >= 400) { row.problems.push(`${width}px: page did not load`); await ctx.close(); continue; }
     await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 40)); } scrollTo(0, 0); });
+    await page.waitForLoadState("networkidle").catch(() => {}); // every lazy image has arrived, so the weight does not depend on machine speed
+    // Weight comes from the browser's own resource timing, so it does not depend on how fast this machine is.
+    bytes = await page.evaluate(() => [...performance.getEntriesByType("navigation"), ...performance.getEntriesByType("resource")].reduce((n, e) => n + (e.encodedBodySize || e.decodedBodySize || 0), 0));
     await page.waitForTimeout(500);
     // Scroll-in fades take over a second; audit the finished page, not a frame mid-fade.
     await page.evaluate(async () => { await Promise.all(document.getAnimations().filter((a) => a.effect?.getComputedTiming().endTime !== Infinity).map((a) => a.finished.catch(() => {}))); });
@@ -88,7 +90,8 @@ for (const path of PAGES) {
       if (m.h1 !== 1) row.problems.push(`${m.h1} <h1> elements (want 1)`);
       row.notes.push(`${(bytes / 1024).toFixed(0)} KB loaded`);
       const site = SITES.find((x) => pagesOf(x, ROOT).includes(path));
-      const budget = site?.budgetOverrides?.[path] ?? site?.budgetKB;
+      const prefix = Object.entries(site?.budgetPrefixes || {}).find(([k]) => path.startsWith(k));
+      const budget = site?.budgetOverrides?.[path] ?? prefix?.[1] ?? site?.budgetKB;
       if (budget && bytes / 1024 > budget) row.problems.push(`page weight ${(bytes / 1024).toFixed(0)} KB is over the ${budget} KB budget for ${site.name}`);
       await page.evaluate(axeSource);
       const axe = await page.evaluate(() => axe.run(document, { runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] }));

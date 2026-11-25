@@ -42,8 +42,8 @@
       "gaps": "Live-mode Stripe, real card payments, Resend delivery to customers, live geocoding and routing, and real inbound mail are not exercised by any pipeline (they need live accounts). The print order screens are covered by the e2e and unit tests but not by a browser test of the screens. Admin pages are excluded from the browser checks."
     },
     "travel-advisor": {
-      "covered": "All pages in a real browser at 3 widths, contrast in light and dark, link and anchor check, page-weight budgets (1000 KB, 1500 KB for two photo-heavy guides), Lighthouse on 6 page types, viewer (open, arrow keys, wrap, Escape, close), slideshow (reduced motion, wrap-around, one slide exposed), seasons ranges and bad input.",
-      "gaps": "Guide pages score about 80 to 84 on mobile Lighthouse because the hero photo is built by a script (floor set at 75); prerendering the hero would fix it. Guide pages are photo-heavy: the budget is 1000 KB, with 1500 KB stated for San Diego and Washington DC (about 1320 KB each) until their photos are slimmed. Outbound links and image licences are not checked."
+      "covered": "All pages in a real browser at 3 widths, contrast in light and dark, link and anchor check, page-weight budgets (1300 KB, 3000 KB for guides), Lighthouse on 6 page types, viewer (open, arrow keys, wrap, Escape, close), slideshow (reduced motion, wrap-around, one slide exposed), seasons ranges and bad input.",
+      "gaps": "Guide pages score about 80 to 84 on mobile Lighthouse because the hero photo is built by a script (floor set at 75); prerendering the hero would fix it. Guide pages are photo galleries and weigh 1.1 to 2.6 MB with every image loaded (budget 3000 KB), so the budget only catches a large regression; slimming the photos would allow a tighter one. Outbound links and image licences are not checked."
     }
   }
 }
