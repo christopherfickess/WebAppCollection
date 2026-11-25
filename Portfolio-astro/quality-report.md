@@ -69,7 +69,7 @@ Checked 2026-11-25 at widths 390, 820, 1440 px, behind the site's real security 
 
 ## /travel-advisor/destinations/nassau/  PASS  (Gredin Travel Advisor)
 - No problems found.
-- 2522 KB loaded; 28 accessibility checks passed
+- 2645 KB loaded; 28 accessibility checks passed
 
 ## /travel-advisor/destinations/new-york/  PASS  (Gredin Travel Advisor)
 - No problems found.
