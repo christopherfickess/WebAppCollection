@@ -23,7 +23,9 @@ const usd = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
 const cfgOf = (t = {}) => ({ ...DEFAULTS, ...t, flight: { ...DEFAULTS.flight, ...(t.flight || {}) } });
 
 // Pure pricing. road = { miles, hours } or null when there is no driving route; straight = straight-line miles.
-export function priceTravel({ road, straight }, travel) {
+// noRoute is true only when routing answered "no road route" (an ocean, say); when routing is merely unavailable the drive
+// is estimated from the straight line instead of being quoted as a flight.
+export function priceTravel({ road, straight, noRoute = !road }, travel) {
   const t = cfgOf(travel);
   const miles = road ? road.miles : straight * 1.25;
   const hours = road ? road.hours : miles / 55;
@@ -31,7 +33,7 @@ export function priceTravel({ road, straight }, travel) {
   const flightFee = t.flight.base + t.flight.perMile * straight + t.flight.ground + t.flight.lodging;
   let mode = "none", fee = 0;
   if (miles > t.freeMiles) {
-    const fly = !road || hours > t.maxDriveHours || driveFee > flightFee;
+    const fly = (!road && noRoute) || hours > t.maxDriveHours || driveFee > flightFee;
     mode = fly ? "flight" : "drive";
     fee = fly ? flightFee : driveFee;
   }
@@ -45,7 +47,8 @@ export function priceTravel({ road, straight }, travel) {
   return { mode, fee, miles: mi, hours: Math.round(hours * 10) / 10, straightMiles: Math.round(straight), driveFee: Math.round(driveFee), flightFee: Math.round(flightFee), summary: `${summary} Final amount confirmed before the session.` };
 }
 
-const UA = "FoxAndFern-booking/1.0 (travel estimates)";
+const ua = (deps) => `FoxAndFern-booking/1.0 (travel estimates${deps.origin ? `; +${deps.origin}` : ""})`;
+const wait = () => ({ signal: AbortSignal.timeout(4000) }); // a slow public service must not hang a request
 const key = (prefix, s) => `${prefix}:${createHash("sha1").update(String(s).trim().toLowerCase()).digest("hex").slice(0, 24)}`;
 const MONTH = 30 * 864e5;
 
@@ -57,22 +60,25 @@ async function cached(store, k, now, make) {
   return v;
 }
 
-export async function geocode(q, { fetch: f, store, now }) {
+export async function geocode(q, deps) {
+  const { fetch: f, store, now } = deps;
   return cached(store, key("geo", q), now, async () => {
-    const r = await f(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`, { headers: { "User-Agent": UA, Accept: "application/json" } });
-    if (!r.ok) return null;
+    const r = await f(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`, { headers: { "User-Agent": ua(deps), Accept: "application/json" }, ...wait() });
+    if (!r.ok) throw new Error(`geocoder HTTP ${r.status}`); // an outage is not "place not found"
     const j = await r.json();
     return j?.[0] ? { lat: Number(j[0].lat), lon: Number(j[0].lon), label: String(j[0].display_name || q).split(",").slice(0, 3).join(",") } : null;
   });
 }
 
-async function route(a, b, { fetch: f, store, now }) {
+// Resolves to { miles, hours }, or { none: true } when routing says there is no road route, and throws if routing is down.
+async function route(a, b, deps) {
+  const { fetch: f, store, now } = deps;
   return cached(store, key("rt", `${a.lat},${a.lon}>${b.lat},${b.lon}`), now, async () => {
-    const r = await f(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`, { headers: { "User-Agent": UA } });
-    if (!r.ok) return null;
+    const r = await f(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`, { headers: { "User-Agent": ua(deps) }, ...wait() });
+    if (!r.ok) throw new Error(`router HTTP ${r.status}`);
     const j = await r.json();
     const x = j?.routes?.[0];
-    return x ? { miles: x.distance / 1609.344, hours: x.duration / 3600 } : null;
+    return x ? { miles: x.distance / 1609.344, hours: x.duration / 3600 } : { none: true };
   });
 }
 
@@ -86,7 +92,11 @@ export async function quoteTravel(destination, deps, travel) {
     if (!home) return { ok: false, error: "home-not-found" };
     if (!to) return { ok: false, error: "not-found" };
     const straight = haversineMiles(home, to);
-    const road = straight > 4000 ? null : await route(home, to, deps).catch(() => null);
-    return { ok: true, destination: to.label, ...priceTravel({ road, straight }, t) };
+    let road = null, noRoute = straight > 4000; // across an ocean there is no drive
+    if (!noRoute) {
+      const r = await route(home, to, deps).catch(() => undefined); // undefined: routing is down, so estimate from the straight line
+      if (r?.none) noRoute = true; else if (r) road = r;
+    }
+    return { ok: true, destination: to.label, ...priceTravel({ road, straight, noRoute }, t) };
   } catch { return { ok: false, error: "lookup-failed" }; }
 }

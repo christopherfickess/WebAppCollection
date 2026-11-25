@@ -543,6 +543,15 @@ internal links return 200, autoplay advances and pauses.
 - **Resend domain** needs a full-access key in the `RESEND_ADMIN_API_KEY` secret (the everyday `RESEND_API_KEY` can stay send-only). Configure services now isolates each service so one failure does not stop the rest.
 - Content: UK Level 2 (terrorism, issued 9 Sep 2026); Spain Level 2 with Ceuta at Level 3 (1 Aug 2026); Valencia band colour darkened for contrast; "Hedge walk" photo removed (no consent from the person shown).
 
+## PR review fixes and corrections (2026-11-24)
+- **Hedge walk photo is back on purpose**: the person shown is a family member and the owner confirmed she is happy to be in it (this corrects the 2026-11-14 entry above that said it was removed). When a client template is made with new-client, replace this demo photo with the client's own.
+- **Booking races**: `update()` in studio.mjs does compare-and-swap writes (Netlify Blobs `onlyIfMatch`/`onlyIfNew`). A checkout now claims its date (a hold) atomically before calling Stripe and releases it if Stripe fails. If two paid sessions ever land on one date, the second is refunded automatically and both people and the owner are emailed.
+- **Refunds**: a client who paid the balance early and then cancels gets both payments refunded (`balancePi` is saved on the booking). A refund of the balance alone does not free the date.
+- **Editor colours**: `theme.sky` in the editor now matches the real data (four stages, each a name plus two red/green/blue triples); the content build and `Light.attach` both reject a malformed sky instead of breaking the page.
+- **Travel estimate**: lookups time out (4 s each, 3.5 s overall on a form) so a slow public service cannot stop a payment; a routing outage estimates a drive from the straight line instead of quoting a flight; a geocoder outage is reported as a lookup failure, not "place not found". The smoke test only warns if those free services are down.
+- **Netlify domain**: the certificate is requested after the DNS record exists and only if none covers the domain (the site-level `ssl` flag is true for the .netlify.app name and says nothing about the custom domain). Proxied (orange cloud) Cloudflare CNAMEs are switched to DNS only.
+- **Email check** looks only at the owner's destination (`OWNER_EMAIL`), not every address on the Cloudflare account.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

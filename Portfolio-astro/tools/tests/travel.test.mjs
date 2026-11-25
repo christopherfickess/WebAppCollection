@@ -44,3 +44,20 @@ assert.deepEqual(await quoteTravel("zz", deps), { ok: false, error: "too-short" 
 assert.equal((await quoteTravel("Nowhereville", deps)).error, "not-found");
 assert.equal((await quoteTravel("Tulsa", { ...deps, fetch: async () => { throw new Error("down"); }, store: { get: async () => null, setJSON: async () => {} } })).error, "lookup-failed");
 console.log("ok travel lookup, cache and failures");
+
+// routing down: estimate from the straight line as a drive instead of jumping to a flight; no road at all: flight
+{
+  const mk = () => ({ get: async () => null, setJSON: async () => {} });
+  const base = (routing) => async (url) => {
+    const j = (b) => ({ ok: true, status: 200, json: async () => b });
+    if (url.includes("nominatim")) { const q = decodeURIComponent(url.split("q=")[1]).toLowerCase(); return j([q.startsWith("oklahoma") ? { lat: "35.4676", lon: "-97.5164", display_name: "OKC" } : { lat: "36.154", lon: "-95.9928", display_name: "Tulsa" }]); }
+    return routing(url);
+  };
+  const down = await quoteTravel("Tulsa", { store: mk(), now: 1, fetch: base(async () => ({ ok: false, status: 503, json: async () => ({}) })) });
+  assert.equal(down.ok, true); assert.equal(down.mode, "drive", "routing outage must not turn Tulsa into a flight");
+  const none = await quoteTravel("Tulsa", { store: mk(), now: 1, fetch: base(async () => ({ ok: true, status: 200, json: async () => ({ routes: [] }) })) });
+  assert.equal(none.mode, "flight", "no road route means a flight");
+  const geoDown = await quoteTravel("Tulsa", { store: mk(), now: 1, fetch: async () => ({ ok: false, status: 503, json: async () => ({}) }) });
+  assert.equal(geoDown.error, "lookup-failed", "a geocoder outage is not 'place not found'");
+}
+console.log("ok routing outage, no road, geocoder outage");

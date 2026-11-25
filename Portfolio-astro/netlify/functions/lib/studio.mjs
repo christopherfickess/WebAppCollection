@@ -14,6 +14,24 @@ const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const iso = (d) => d.toISOString().slice(0, 10);
 const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
 
+// Read-modify-write with compare-and-swap, so two requests at the same moment cannot overwrite each other's change.
+// fn gets a copy of the stored value and returns the new value, or undefined to leave it alone. Retries when
+// another request wrote first. Stores without conditional writes (the test fakes) fall back to a plain write.
+export async function update(store, key, fn, init = {}, tries = 8) {
+  for (let i = 0; i < tries; i++) {
+    const cas = typeof store.getWithMetadata === "function";
+    const r = cas ? await store.getWithMetadata(key, { type: "json" }) : null;
+    const cur = cas ? (r ? r.data : null) : await store.get(key, { type: "json" });
+    const next = fn(structuredClone(cur ?? init));
+    if (next === undefined) return cur ?? init;
+    // A key that does not exist yet must be created only if still absent; one that exists only if unchanged.
+    const opts = cas ? (r?.etag ? { onlyIfMatch: r.etag } : { onlyIfNew: true }) : undefined;
+    const res = await store.setJSON(key, next, opts);
+    if (!res || res.modified !== false) return next;
+  }
+  throw Object.assign(new Error("busy"), { status: 503 });
+}
+
 // ---- availability -------------------------------------------------------
 
 export async function unavailable(store, now, rules = catalog.booking) {
@@ -70,7 +88,8 @@ async function travelOf(raw, deps) {
   const t = catalog.booking.travel;
   if (!location) return { location: "", travel: "" };
   if (!t || t.enabled === false) return { location, travel: "" };
-  const q = await quoteTravel(location, deps, t);
+  // The estimate is a courtesy: never let a slow public service hold up a payment or the form.
+  const q = await Promise.race([quoteTravel(location, deps, t), new Promise((r) => setTimeout(() => r({ ok: false }), 3500))]);
   return { location, travel: q.ok ? q.summary : "Distance could not be worked out automatically; please check the location." };
 }
 const slotOf = (v) => { const x = clip(v, 40); return (catalog.booking.slots || []).includes(x) ? x : ""; };
@@ -124,12 +143,20 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   const problem = dayProblem(date, now, taken);
   if (problem) return json(409, { error: problem });
 
-  const holds = (await store.get("holds", { type: "json" })) || {};
-  for (const [d, v] of Object.entries(holds)) if (v.expires <= now) delete holds[d];
-  const open = Object.entries(holds);
+  // Claim the date first, atomically, so two overlapping checkouts cannot both get it.
   const mine = email.toLowerCase();
-  if (open.some(([d, v]) => v.email === mine && d !== date)) return json(429, { error: "hold-exists" });
-  if (open.length >= MAX_OPEN_HOLDS && !holds[date]) return json(429, { error: "too-many-holds" });
+  let refused = null;
+  await update(store, "holds", (holds) => {
+    for (const [d, v] of Object.entries(holds)) if (v.expires <= now) delete holds[d];
+    const open = Object.entries(holds);
+    if (open.some(([d, v]) => v.email === mine && d !== date)) { refused = json(429, { error: "hold-exists" }); return undefined; }
+    if (open.length >= MAX_OPEN_HOLDS && !holds[date]) { refused = json(429, { error: "too-many-holds" }); return undefined; }
+    if (holds[date] && holds[date].email !== mine) { refused = json(409, { error: "held" }); return undefined; }
+    holds[date] = { expires: now + HOLD_MS, session: null, email: mine };
+    return holds;
+  });
+  if (refused) return refused;
+  const release = () => update(store, "holds", (h) => { if (h[date] && h[date].email === mine && !h[date].session) { delete h[date]; return h; } return undefined; }).catch(() => {});
 
   const expires = Math.floor((now + HOLD_MS) / 1000);
   p.set("line_items[0][price_data][unit_amount]", String(pkg.deposit * 100));
@@ -145,12 +172,12 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   p.set("metadata[message]", message);
   const slot = slotOf(body?.slot);
   if (slot) p.set("metadata[slot]", slot);
-  const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now });
+  const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now, origin });
   if (tv.location) p.set("metadata[location]", tv.location);
   if (tv.travel) p.set("metadata[travel]", tv.travel.slice(0, 480));
-  const s = await stripe(env, fetchFn, p);
-  holds[date] = { expires: now + HOLD_MS, session: s.id, email: mine };
-  await store.setJSON("holds", holds);
+  let s;
+  try { s = await stripe(env, fetchFn, p); } catch (e) { await release(); throw e; }
+  await update(store, "holds", (h) => { if (h[date] && h[date].email === mine) { h[date].session = s.id; return h; } return undefined; }).catch(() => {});
   return json(200, { url: s.url });
 }
 
@@ -226,19 +253,27 @@ export async function handleStripeEvent(event, deps) {
     const s = event.data.object;
     const m = s.metadata || {};
     if (m.kind === "session") {
-      const booked = (await store.get("booked", { type: "json" })) || [];
-      if (!booked.includes(m.date)) booked.push(m.date);
-      await store.setJSON("booked", booked.sort());
-      const bookings = (await store.get("bookings", { type: "json" })) || {};
-      bookings[m.date] = { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi: s.payment_intent || null };
-      await store.setJSON("bookings", bookings);
-      const holds = (await store.get("holds", { type: "json" })) || {};
-      delete holds[m.date];
-      await store.setJSON("holds", holds);
+      const email = s.customer_details?.email || s.customer_email;
+      // Never overwrite another client's paid booking for the same date: refund this payment and tell both people.
+      let clash = false;
+      await update(store, "bookings", (bk) => {
+        const ex = bk[m.date];
+        if (ex && ex.pi !== (s.payment_intent || null)) { clash = true; return undefined; }
+        bk[m.date] = { name: m.name, email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi: s.payment_intent || null };
+        return bk;
+      });
+      if (clash) {
+        const ok = s.payment_intent && env.STRIPE_SECRET_KEY ? await refundIntent(fetchOf(deps), env, s.payment_intent) : false;
+        await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Double booking prevented: ${m.date}`, text: `${m.name} <${email}> paid a deposit for ${m.date}, but another client already holds that date.\n${ok ? "Their payment was refunded automatically." : "REFUND THEM in the Stripe dashboard: the automatic refund did not go through."}` });
+        await sendEmail(deps, { to: email, subject: "Your date was just taken", text: `Hi ${m.name},\n\nSomeone else booked ${m.date} at the same moment, so your deposit is being refunded in full. Please pick another date.\n\n${sign()}` });
+        await store.setJSON(`event:${event.id}`, { at: now });
+        return { handled: event.type, clash: true };
+      }
+      await update(store, "booked", (arr) => (arr.includes(m.date) ? undefined : [...arr, m.date].sort()), []);
+      await update(store, "holds", (h) => { if (h[m.date]) { delete h[m.date]; return h; } return undefined; });
       await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, slot: m.slot, message: m.message, location: m.location, travel: m.travel }, { paid: true });
     } else if (m.kind === "balance") {
-      const bookings = (await store.get("bookings", { type: "json" })) || {};
-      if (bookings[m.date]) { bookings[m.date].balancePaidAt = now; await store.setJSON("bookings", bookings); }
+      await update(store, "bookings", (bk) => { if (!bk[m.date]) return undefined; bk[m.date].balancePaidAt = now; bk[m.date].balancePi = s.payment_intent || null; return bk; });
       await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Balance paid: ${m.date}`, text: `The balance for the session on ${m.date} was paid (${money((s.amount_total || 0) / 100)}).` });
       await sendEmail(deps, { to: s.customer_details?.email || s.customer_email, subject: "Balance received", text: `Thank you. Your balance for ${m.date} is paid.\n\n${sign()}` });
     } else if (m.kind === "print") {
@@ -261,20 +296,27 @@ export async function handleStripeEvent(event, deps) {
 export async function handleRefund(charge, { store, env, now, ...rest }) {
   const deps = { store, env, now, ...rest };
   const bookings = (await store.get("bookings", { type: "json" })) || {};
-  const date = Object.keys(bookings).find((d) => bookings[d].pi && bookings[d].pi === charge.payment_intent);
+  const date = Object.keys(bookings).find((d) => charge.payment_intent && (bookings[d].pi === charge.payment_intent || bookings[d].balancePi === charge.payment_intent));
   if (!date) return { ignored: true };
-  const full = charge.amount_refunded >= charge.amount;
+  // Only a full refund of the deposit frees the date; a refunded balance does not.
+  const full = charge.amount_refunded >= charge.amount && bookings[date].pi === charge.payment_intent;
   if (full) await freeDate(store, date);
   await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `${full ? "Refunded, date freed" : "Partial refund"}: ${date}`, text: `${money(charge.amount_refunded / 100)} was refunded for ${bookings[date].name} (${date}).\n${full ? "The date is open for booking again." : "The date stays booked."}` });
   return { date, full };
 }
 
 async function freeDate(store, date) {
-  const booked = ((await store.get("booked", { type: "json" })) || []).filter((d) => d !== date);
-  await store.setJSON("booked", booked);
-  const bookings = (await store.get("bookings", { type: "json" })) || {};
-  delete bookings[date];
-  await store.setJSON("bookings", bookings);
+  await update(store, "booked", (arr) => (arr.includes(date) ? arr.filter((d) => d !== date) : undefined), []);
+  await update(store, "bookings", (bk) => { if (!bk[date]) return undefined; delete bk[date]; return bk; });
+}
+
+const fetchOf = (deps) => deps.fetch;
+// One refund for one payment. A payment that is already fully refunded counts as success, so a retry is safe.
+async function refundIntent(fetchFn, env, pi) {
+  const res = await fetchFn("https://api.stripe.com/v1/refunds", { method: "POST", headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ payment_intent: pi }).toString() });
+  if (res.ok) return true;
+  const j = await res.json().catch(() => ({}));
+  return j?.error?.code === "charge_already_refunded";
 }
 
 // Links in emails carry an HMAC of date + email, so no login is needed and links cannot be guessed.
@@ -312,12 +354,15 @@ export async function manageAct(body, deps) {
   if (action === "cancel") {
     const refund = daysLeft >= (catalog.booking.refundFullDays ?? 14) && b.pi && env.STRIPE_SECRET_KEY;
     if (refund) {
-      const res = await fetchFn("https://api.stripe.com/v1/refunds", { method: "POST", headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ payment_intent: b.pi }).toString() });
-      if (!res.ok) { await alertOwner(deps, `Refund failed for ${date}`, new Error(`Stripe ${res.status}`)); return json(502, { error: "refund-failed" }); }
+      // The deposit and, if the client paid it early, the balance are separate payments: refund both.
+      for (const pi of [b.pi, b.balancePi].filter(Boolean)) {
+        if (!(await refundIntent(fetchFn, env, pi))) { await alertOwner(deps, `Refund failed for ${date}`, new Error(`Stripe refused the refund for ${pi}`)); return json(502, { error: "refund-failed" }); }
+      }
+      if (b.balancePaidAt && !b.balancePi) await alertOwner(deps, `Balance refund needed: ${date}`, new Error("The client paid the balance before payment references were saved; refund that payment in the Stripe dashboard."));
     }
     await freeDate(store, date);
-    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Cancelled: ${b.name}, ${date}`, text: `${b.name} cancelled ${date}.\n${refund ? "The deposit was refunded in full." : "Inside the refund window, so the deposit was kept."}`, replyTo: b.email });
-    await sendEmail(deps, { to: b.email, subject: `Your session on ${date} is cancelled`, text: `Hi ${b.name},\n\nYour session on ${date} is cancelled. ${refund ? "Your deposit is being refunded and should reach you in 5 to 10 days." : `Cancellations less than ${catalog.booking.refundFullDays ?? 14} days before the session keep the deposit.`}\n\n${sign()}` });
+    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Cancelled: ${b.name}, ${date}`, text: `${b.name} cancelled ${date}.\n${refund ? (b.balancePi ? "The deposit and the balance were refunded in full." : "The deposit was refunded in full.") : "Inside the refund window, so the deposit was kept."}`, replyTo: b.email });
+    await sendEmail(deps, { to: b.email, subject: `Your session on ${date} is cancelled`, text: `Hi ${b.name},\n\nYour session on ${date} is cancelled. ${refund ? `${b.balancePi ? "Your deposit and balance are" : "Your deposit is"} being refunded and should reach you in 5 to 10 days.` : `Cancellations less than ${catalog.booking.refundFullDays ?? 14} days before the session keep the deposit.`}\n\n${sign()}` });
     return json(200, { ok: true, refunded: Boolean(refund) });
   }
 
@@ -326,12 +371,10 @@ export async function manageAct(body, deps) {
     const to = clip(body?.newDate, 10);
     const problem = dayProblem(to, now, await unavailable(store, now));
     if (problem) return json(409, { error: problem });
-    const booked = ((await store.get("booked", { type: "json" })) || []).filter((d) => d !== date);
-    booked.push(to);
-    await store.setJSON("booked", booked.sort());
-    delete bookings[date];
-    bookings[to] = { ...b, rescheduledFrom: date, reminded: false };
-    await store.setJSON("bookings", bookings);
+    let taken = false;
+    await update(store, "booked", (arr) => { if (arr.includes(to)) { taken = true; return undefined; } return [...arr.filter((d) => d !== date), to].sort(); }, []);
+    if (taken) return json(409, { error: "booked" });
+    await update(store, "bookings", (bk) => { delete bk[date]; bk[to] = { ...b, rescheduledFrom: date, reminded: false }; return bk; });
     const link = manageLink({ env, origin }, to, b.email);
     await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Rescheduled: ${b.name}`, text: `${b.name} moved ${date} to ${to}.`, replyTo: b.email });
     await sendEmail(deps, { to: b.email, subject: `Your session is moved to ${to}`, text: `Hi ${b.name},\n\nYour ${b.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}`, attachments: ics(to, `Your ${b.package} session.`, b) });
@@ -410,12 +453,12 @@ export async function sendReminders(deps, daysAhead = 2) {
   for (const [date, b] of Object.entries(bookings)) {
     if (date !== target || b.reminded || !b.email) continue;
     const pkg = catalog.packages[b.package];
-    const balance = pkg ? pkg.amount - pkg.deposit : null;
+    const balance = pkg && !b.balancePaidAt ? pkg.amount - pkg.deposit : null;
     const text = `Hi ${b.name},\n\nA reminder that your ${b.package} session is on ${date}.\n${balance ? `The remaining balance of ${money(balance)} is due on the day.\n` : ""}\n${manageLink(deps, date, b.email) ? `Change the date, cancel, or pay the balance online:\n${manageLink(deps, date, b.email)}` : "If you need to change the date, reply to this email as soon as you can and we will find a new one."}\n\n${sign()}`;
     const r = await sendEmail(deps, { to: b.email, subject: `Your session is on ${date}`, text });
-    if (r.ok) { b.reminded = true; sent.push(date); }
+    if (r.ok) sent.push(date);
   }
-  if (sent.length) await store.setJSON("bookings", bookings);
+  if (sent.length) await update(store, "bookings", (bk) => { for (const d of sent) if (bk[d]) bk[d].reminded = true; return bk; });
   return { sent };
 }
 

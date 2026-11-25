@@ -86,7 +86,7 @@ export class Booking {
     input.addEventListener("input", () => {
       clearTimeout(timer);
       const q = input.value.trim();
-      if (q.length < 3) { out.textContent = ""; return; }
+      if (q.length < 3) { seq++; out.textContent = ""; return; } // seq++ makes any lookup already under way discard its answer
       timer = setTimeout(async () => {
         const mine = ++seq;
         out.textContent = "Working out the distance…";

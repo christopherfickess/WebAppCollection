@@ -18,7 +18,9 @@ const rgb = (c) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 
 export class Light {
   static attach(skyOverride) {
-    const SKY = skyOverride?.length === 4 ? skyOverride : DEFAULT_SKY;
+    // Use the saved sky only when it is well formed (four stages with two RGB triples each); a bad edit must not break the page.
+    const ok = (c) => Array.isArray(c) && c.length === 3 && c.every((n) => Number.isFinite(n));
+    const SKY = Array.isArray(skyOverride) && skyOverride.length === 4 && skyOverride.every((x) => x && ok(x.a) && ok(x.b)) ? skyOverride : DEFAULT_SKY;
     const root = document.documentElement;
     const bar = document.createElement("div");
     bar.className = "walker";

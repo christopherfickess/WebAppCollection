@@ -80,7 +80,7 @@ export async function resendDomain({ key, name, region, dry, fetchFn, log }) {
 }
 
 // ---- Netlify ----------------------------------------------------------
-export async function netlifySite({ token, siteId, domain, forceHttps, dry, fetchFn, log }) {
+export async function netlifySite({ token, siteId, domain, dry, fetchFn, log }) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   const r = await fetchFn(`${NETLIFY}/sites/${siteId}`, { headers });
   if (!r.ok) throw new Error(`Netlify site read failed (HTTP ${r.status})`);
@@ -95,14 +95,35 @@ export async function netlifySite({ token, siteId, domain, forceHttps, dry, fetc
   };
   let changed = false;
   if (domain && site.custom_domain !== domain) { changed = true; if (await patch("custom_domain", { custom_domain: domain })) site.custom_domain = domain; }
-  // A custom domain needs a certificate before HTTPS can be forced (and the DNS record must exist first).
-  if (domain && site.custom_domain === domain && !dry && !site.ssl) {
-    const c = await fetchFn(`${NETLIFY}/sites/${siteId}/ssl`, { method: "POST", headers }).catch(() => null);
-    log(c?.ok ? "requested an HTTPS certificate for the custom domain" : `note certificate not issued yet${c ? ` (HTTP ${c.status})` : ""}: it needs the DNS record to resolve; run this again later`);
-  }
-  if (forceHttps && site.custom_domain && site.custom_domain === domain && site.force_ssl !== true) { changed = true; await patch("force_ssl", { force_ssl: true }, true); }
   if (!changed) log("ok Netlify site settings already match");
   return site;
+}
+
+// Run this AFTER the DNS record exists: Netlify only issues a certificate for a name that already resolves to it.
+// Asks for a certificate unless one already covers the domain, then forces HTTPS.
+export async function netlifyHttps({ token, siteId, domain, forceHttps, dry, fetchFn, log }) {
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const r = await fetchFn(`${NETLIFY}/sites/${siteId}`, { headers });
+  if (!r.ok) throw new Error(`Netlify site read failed (HTTP ${r.status})`);
+  const site = await r.json();
+  if (!domain || site.custom_domain !== domain) { log("skip HTTPS (custom domain not attached yet)"); return; }
+  // site.ssl is true for the *.netlify.app address, so it says nothing about the custom domain: ask for the certificate itself.
+  const cr = await fetchFn(`${NETLIFY}/sites/${siteId}/ssl`, { headers }).catch(() => null);
+  const cert = cr?.ok ? await cr.json().catch(() => null) : null;
+  const covered = (cert?.domains || []).includes(domain) && !/error|fail/i.test(String(cert?.state || ""));
+  if (covered) log(`ok HTTPS certificate already covers ${domain}`);
+  else if (dry) log(`would request an HTTPS certificate for ${domain}`);
+  else {
+    const c = await fetchFn(`${NETLIFY}/sites/${siteId}/ssl`, { method: "POST", headers }).catch(() => null);
+    log(c?.ok ? `requested an HTTPS certificate for ${domain}` : `note certificate not issued yet${c ? ` (HTTP ${c.status})` : ""}: the DNS record must resolve first; run this again in a few minutes`);
+  }
+  if (forceHttps && site.force_ssl !== true) {
+    log(`${dry ? "would force" : "forcing"} HTTPS`);
+    if (!dry) {
+      const u = await fetchFn(`${NETLIFY}/sites/${siteId}`, { method: "PATCH", headers, body: JSON.stringify({ force_ssl: true }) });
+      if (!u.ok) log(`note force HTTPS not set yet (HTTP ${u.status}). It needs the certificate; run this again in a few minutes.`);
+    }
+  } else if (forceHttps) log("ok HTTPS already forced");
 }
 
 // Adds DNS records at Netlify, only when Netlify hosts the zone. Records already there are left alone.
@@ -158,8 +179,9 @@ export async function cloudflareDns({ token, zoneName, records, dry, fetchFn, lo
     const q = await (await fetchFn(`${CF}/zones/${zone.id}/dns_records?type=${rec.type}&name=${encodeURIComponent(name)}`, { headers })).json();
     const have = (q.result || [])[0];
     const content = String(rec.value).replace(/\.$/, "");
-    if (have && String(have.content).replace(/\.$/, "") === content) { log(`ok Cloudflare ${rec.type} ${name} already set`); continue; }
-    log(`${dry ? "would " : ""}${have ? "update" : "add"} Cloudflare ${rec.type} ${name} -> ${content}`);
+    // An orange-cloud (proxied) record answers with Cloudflare's address, so Netlify cannot issue a certificate: it must be switched to DNS only.
+    if (have && String(have.content).replace(/\.$/, "") === content && have.proxied !== true) { log(`ok Cloudflare ${rec.type} ${name} already set`); continue; }
+    log(`${dry ? "would " : ""}${have ? (have.proxied === true && String(have.content).replace(/\.$/, "") === content ? "switch to DNS only" : "update") : "add"} Cloudflare ${rec.type} ${name} -> ${content}`);
     if (dry) continue;
     const body = { type: rec.type, name, content, ttl: 1, proxied: false, ...(rec.priority != null ? { priority: Number(rec.priority) } : {}) };
     const res = await fetchFn(`${CF}/zones/${zone.id}/dns_records${have ? `/${have.id}` : ""}`, { method: have ? "PUT" : "POST", headers, body: JSON.stringify(body) });
@@ -269,12 +291,14 @@ export async function configure(env, cfg, { fetchFn = fetch, log = console.log, 
   if (env.NETLIFY_AUTH_TOKEN && env.NETLIFY_SITE_ID) {
     await step("Netlify site settings", async () => {
       const host = cfg.customDomain?.replace(/^https?:\/\//, "");
-      const site = await netlifySite({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: host, forceHttps: cfg.netlify?.forceHttps, dry, fetchFn, log });
+      const site = await netlifySite({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: host, dry, fetchFn, log });
       if (host && cfg.netlify?.manageDnsRecords) {
         const target = `${site.name}.netlify.app`;
         const placed = host.split(".").length >= 3 && await cloudflareDns({ token: env.CLOUDFLARE_API_TOKEN, zoneName: host.split(".").slice(-2).join("."), records: [{ type: "CNAME", name: host, value: target }], dry, fetchFn, log });
         if (!placed) await netlifyCname({ token: env.NETLIFY_AUTH_TOKEN, host, target, dry, fetchFn, log });
       } else if (host) log(`DNS record to add at your DNS host:  CNAME ${host} -> ${site.name}.netlify.app`);
+      // Certificate and HTTPS come last, once the record above exists.
+      if (host) await netlifyHttps({ token: env.NETLIFY_AUTH_TOKEN, siteId: env.NETLIFY_SITE_ID, domain: host, forceHttps: cfg.netlify?.forceHttps, dry, fetchFn, log });
     });
   } else log("skip Netlify site settings (no NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID)");
 

@@ -24,8 +24,11 @@ function world(over = {}) {
     if (url.startsWith("https://api.cloudflare.com/client/v4/zones?")) return J({ result: w.cfZones || [] });
     if (url.includes("api.cloudflare.com") && url.includes("/dns_records")) {
       if (m === "GET") { const nm = decodeURIComponent(url.split("name=")[1]), ty = url.match(/type=(\w+)/)[1]; return J({ result: (w.cf = w.cf || []).filter((r) => r.name === nm && r.type === ty) }); }
-      const b = JSON.parse(o.body); (w.cf = w.cf || []).push({ id: "r" + w.cf.length, ...b }); return J({ success: true });
+      const b = JSON.parse(o.body); w.cf = w.cf || [];
+      if (m === "PUT") { const i = w.cf.findIndex((r) => r.id === url.split("/").pop()); w.cf[i] = { id: w.cf[i].id, ...b }; return J({ success: true }); }
+      w.cf.push({ id: "r" + w.cf.length, ...b }); return J({ success: true });
     }
+    if (url.endsWith("/sites/S1/ssl")) { if (m === "POST") { w.certRequested = (w.certRequested || 0) + 1; w.certAt = calls.length; return J({}); } return w.cert ? J(w.cert) : J({}, 404); }
     if (url.endsWith("/dns_zones")) return J(w.zones);
     if (url.includes("/dns_records")) return m === "GET" ? J(w.dns) : (w.dns.push(JSON.parse(o.body)), J({}, 201));
     if (url.endsWith("/sites/S1")) return m === "PATCH" ? (Object.assign(w.site, JSON.parse(o.body)), J({})) : J(w.site);
@@ -135,3 +138,31 @@ console.log("ok Cloudflare DNS");
   assert.ok(st.calls.slice(n).every((c) => c.startsWith("GET")), "second run only reads");
 }
 console.log("ok Cloudflare email forwarding");
+
+// the certificate is requested after the DNS record exists, and not again once one covers the domain
+{
+  const cfEnv = { ...base, CLOUDFLARE_API_TOKEN: "cf" };
+  const c2 = { ...cfg, customDomain: "https://fox.studio.example" };
+  const w1 = world({ cfZones: [{ id: "CZ", name: "example" }], zones: [] });
+  await configure(cfEnv, c2, { fetchFn: w1.f, log: () => {}, setSecret: () => {} });
+  const order = w1.calls.map((c) => `${c.m} ${c.url}`);
+  const dnsAt = order.findIndex((c) => c.startsWith("POST https://api.cloudflare.com") && c.includes("/dns_records"));
+  const certAt = order.findIndex((c) => c === "POST https://api.netlify.com/api/v1/sites/S1/ssl");
+  assert.ok(dnsAt >= 0 && certAt > dnsAt, "certificate requested after the DNS record");
+  w1.w.cert = { domains: ["fox.studio.example"], state: "issued" };
+  const before = w1.w.certRequested;
+  await configure(cfEnv, c2, { fetchFn: w1.f, log: () => {}, setSecret: () => {} });
+  assert.equal(w1.w.certRequested, before, "no new request when a certificate already covers the domain");
+}
+console.log("ok certificate comes after DNS and is not repeated");
+
+// an orange-cloud (proxied) CNAME is switched to DNS only
+{
+  const w2 = world({ cfZones: [{ id: "CZ", name: "example" }], zones: [] });
+  w2.w.cf = [{ id: "r0", type: "CNAME", name: "fox.studio.example", content: "n.netlify.app", proxied: true }];
+  const out = [];
+  await configure({ ...base, CLOUDFLARE_API_TOKEN: "cf" }, { ...cfg, customDomain: "https://fox.studio.example" }, { fetchFn: w2.f, log: (m) => out.push(m), setSecret: () => {} });
+  assert.equal(w2.w.cf.find((r) => r.name === "fox.studio.example").proxied, false);
+  assert.ok(out.some((m) => /switch to DNS only/.test(m)));
+}
+console.log("ok proxied CNAME switched to DNS only");

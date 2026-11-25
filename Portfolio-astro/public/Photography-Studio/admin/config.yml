@@ -49,7 +49,15 @@ collections:
               - { name: text, label: Text, widget: color }
               - { name: muted, label: Muted text, widget: color }
               - { name: soft, label: Soft, widget: color }
-              - { name: sky, label: Sky colours (exactly 4), widget: list, min: 4, max: 4, field: { name: colour, label: Colour, widget: color } }
+              - name: sky
+                label: Sky stages (exactly 4, from dawn to night; each is a top and bottom colour as red, green, blue numbers 0 to 255)
+                widget: list
+                min: 4
+                max: 4
+                fields:
+                  - { name: name, label: Stage name, widget: string }
+                  - { name: a, label: Top colour (red, green, blue), widget: list, min: 3, max: 3, field: { name: value, label: Value, widget: number, value_type: int, min: 0, max: 255 } }
+                  - { name: b, label: Bottom colour (red, green, blue), widget: list, min: 3, max: 3, field: { name: value, label: Value, widget: number, value_type: int, min: 0, max: 255 } }
           - name: business
             label: Search-engine details
             widget: object

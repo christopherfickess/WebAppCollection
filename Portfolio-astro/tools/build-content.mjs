@@ -31,7 +31,8 @@ for (const d of day.items) need(LIGHTS.includes(d.light), `day "${d.title}": lig
 for (const s of printSizes.items) need(s.label && s.w > 0 && s.h > 0 && s.price > 0, `print size "${s.label}": needs label, width, height, and price`);
 need(Array.isArray(booking.blockedDates) && booking.blockedDates.every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)), "booking: blockedDates must be YYYY-MM-DD dates");
 need(booking.slots === undefined || (Array.isArray(booking.slots) && booking.slots.every((x) => typeof x === "string" && x.length < 40)), "booking: slots must be a list of short names");
-need((site.theme?.sky || []).length === 4, "site: theme.sky needs exactly four colour pairs");
+const rgb3 = (c) => Array.isArray(c) && c.length === 3 && c.every((n) => Number.isInteger(n) && n >= 0 && n <= 255);
+need((site.theme?.sky || []).length === 4 && site.theme.sky.every((x) => x && typeof x.name === "string" && rgb3(x.a) && rgb3(x.b)), "site: theme.sky needs exactly four stages, each with a name and two colours of three numbers from 0 to 255");
 for (const t of testimonials.items) need(t.quote && t.name, `testimonial from "${t.name}": needs a quote and a name`);
 if (errors.length) {
   console.error("Content problems:\n- " + errors.join("\n- "));

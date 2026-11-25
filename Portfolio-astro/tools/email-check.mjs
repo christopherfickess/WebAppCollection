@@ -22,8 +22,15 @@ if (env.CLOUDFLARE_API_TOKEN) {
     const rules = await cf(`/zones/${z.id}/email/routing/rules`);
     const r = (rules.result || []).find((x) => (x.matchers || []).some((m) => m.value?.toLowerCase() === to));
     say(Boolean(r?.enabled), `rule for ${to}: ${r ? (r.enabled ? "enabled" : "disabled") : "missing"}`);
-    const d = await cf(`/accounts/${z.account.id}/email/routing/addresses`);
-    for (const a of d.result || []) say(Boolean(a.verified), `destination ${a.email.replace(/^(.).*(@.*)$/, "$1***$2")} verified: ${a.verified ? "yes" : "NO, click the Cloudflare email link"}`);
+    // Only the owner's own forwarding destination matters; other addresses on the account are none of our business.
+    const owner = String(env.OWNER_EMAIL || "").trim().toLowerCase();
+    if (!owner) say(false, "OWNER_EMAIL is not set, so the forwarding destination cannot be checked");
+    else {
+      const d = await cf(`/accounts/${z.account.id}/email/routing/addresses`);
+      const dest = (d.result || []).find((a) => a.email?.toLowerCase() === owner);
+      say(Boolean(dest?.verified), dest ? `destination ${owner.replace(/^(.).*(@.*)$/, "$1***$2")} verified: ${dest.verified ? "yes" : "NO, click the Cloudflare email link"}` : `destination ${owner.replace(/^(.).*(@.*)$/, "$1***$2")} is not on the Cloudflare account${d.success === false ? " (could not read the list: " + (d.errors || []).map((e) => e.message).join("; ") + ")" : ""}`);
+      say(Boolean(r?.actions?.some((a) => a.type === "forward" && (a.value || []).map((v) => v.toLowerCase()).includes(owner))), `rule for ${to} forwards to the owner inbox`);
+    }
   } else say(false, `token cannot see zone ${zone}`);
 }
 
