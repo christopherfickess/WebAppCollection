@@ -1,6 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://example.com/</loc></url>
   <url><loc>https://example.com/Photography-Studio/</loc></url>
   <url><loc>https://example.com/Photography-Studio/privacy/</loc></url>
   <url><loc>https://example.com/Photography-Studio/terms/</loc></url>
+  <url><loc>https://example.com/contact/</loc></url>
+  <url><loc>https://example.com/observability/</loc></url>
+  <url><loc>https://example.com/projects/</loc></url>
+  <url><loc>https://example.com/resume/</loc></url>
+  <url><loc>https://example.com/showcase/</loc></url>
+  <url><loc>https://example.com/travel-advisor/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/antigua/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/barcelona/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/curacao/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/london/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/nassau/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/new-york/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/paris/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/san-diego/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/seattle/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/valencia/</loc></url>
+  <url><loc>https://example.com/travel-advisor/destinations/washington-dc/</loc></url>
+  <url><loc>https://example.com/travel-advisor/field-notes/</loc></url>
+  <url><loc>https://example.com/travel-advisor/field-notes/nassau-without-a-car/</loc></url>
+  <url><loc>https://example.com/travel-advisor/field-notes/seattle-by-light-rail/</loc></url>
+  <url><loc>https://example.com/travel-advisor/field-notes/washington-monument-and-fords-theatre/</loc></url>
+  <url><loc>https://example.com/travel-advisor/packing/</loc></url>
 </urlset>

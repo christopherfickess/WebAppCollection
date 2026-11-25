@@ -23,7 +23,7 @@
   function applyThemePreference(pref) {
     root.setAttribute("data-theme", computeTheme(pref));
     root.setAttribute("data-theme-pref", pref);
-    localStorage.setItem("portfolio-theme-pref", pref);
+    try { localStorage.setItem("portfolio-theme-pref", pref); } catch (e) {}
     themeOpts.forEach(function (btn) {
       var active = btn.dataset.themePref === pref;
       btn.setAttribute("data-active", active);
@@ -107,7 +107,7 @@
     opt.addEventListener("click", function () {
       var preset = opt.dataset.preset;
       root.setAttribute("data-preset", preset);
-      localStorage.setItem("portfolio-preset", preset);
+      try { localStorage.setItem("portfolio-preset", preset); } catch (e) {}
       markActivePreset(preset);
       if (displayDropdown && !displayDropdown.hidden) {
         displayDropdown.hidden = true;
@@ -122,7 +122,7 @@
       var expanded = root.getAttribute("data-rail-expanded") === "true";
       var next = !expanded;
       root.setAttribute("data-rail-expanded", next ? "true" : "false");
-      localStorage.setItem("rail-expanded", next ? "true" : "false");
+      try { localStorage.setItem("rail-expanded", next ? "true" : "false"); } catch (e) {}
       railToggle.setAttribute("aria-pressed", next ? "true" : "false");
     });
   }

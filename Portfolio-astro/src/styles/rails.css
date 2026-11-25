@@ -78,6 +78,7 @@
   --gh2: #006d32;
   --gh3: #26a641;
   --gh4: #39d353;
+  --on-accent: #0b1216;
 }
 
 :root[data-theme="light"] {
@@ -144,8 +145,8 @@
   --bg-soft: #ffffff;
   --border: #ecdfc8;
   --text: #2a2015;
-  --text-muted: #8a7556;
-  --accent: #b5700a;
+  --text-muted: #7a6648; /* 4.7:1 on the chip background (was #8a7556 at 3.8:1) */
+  --accent: #965808; /* 4.9:1 on the chip background (was #b5700a at 3.4:1) */
   --chip-bg: #f6ecd9;
   --surface: var(--chip-bg);
   --icon-gradient: linear-gradient(135deg, #ff8a00, #ffd166);
@@ -1176,7 +1177,7 @@ footer .footer-nav a:hover {
 
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent, #fff); /* dark text on the bright dark-theme accents: white was 1.8:1 to 3.2:1 on them */
 }
 
 .btn-primary:hover {
@@ -1663,6 +1664,10 @@ footer .footer-nav a:hover {
 }
 
 /* ---------- contact form ---------- */
+
+.contact-form form[hidden] {
+  display: none;
+}
 
 .contact-form form {
   background: var(--bg-soft);

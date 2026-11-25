@@ -572,6 +572,14 @@ internal links return 200, autoplay advances and pauses.
 - Workflows now all declare read-only `permissions`. Portfolio Lighthouse performance floor is 80 (scores 86-87 locally).
 - `tools/tests/coverage-gaps.json` `_sites` says what each site's checks cover and what they don't. Not done: secret scanning and push protection are still off in GitHub settings (needs the owner), and the top-level `Portfolio/`, `Website1-3/` folders are unchecked.
 
+## Coverage gaps closed (2026-11-25)
+
+- New tests: `tools/tests/handlers.test.mjs` (every Netlify function: method, origin, size, rate limit, token and signature checks), `content.test.mjs` (15 kinds of bad content refused by `build-content`, editor config matches content files), `behavior.mjs` (real browser, run with `npm run behavior` after a build), `site-integrity.mjs` (links, anchors, sitemap, canonicals, robots) and `tools/quality/theme-matrix.mjs` (axe in 3 presets x light/dark). All run in `quality.yml`.
+- The behaviour tests found two real bugs, both fixed: the contact form stayed visible after a successful send (its CSS overrode `hidden`), and a junk saved theme or preset in localStorage was applied as-is (`public/theme-boot.js` now validates and survives blocked storage).
+- Lighthouse now covers several page types per site with per-site floors. Travel guide pages score about 80 to 84 (floor 75) because the hero photo is built by a script; prerendering it would fix that. Page-weight budgets: portfolio 400 KB, Fox & Fern 400 KB (600 KB for the gallery home page), travel 1000 KB (1500 KB for San Diego and Washington DC).
+- Canonicals are now absolute everywhere (relative ones lowered the SEO score).
+- Still not covered, on purpose (see `coverage-gaps.json`): live Stripe, real Resend delivery to customers, real inbound mail, live geocoding, GitHub secret scanning / push protection / Dependabot security updates (repository settings), real devices, and a browser test of the print order screens.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

@@ -2504,6 +2504,22 @@ gta-header.is-open .menu-icon i:last-child {
   color: var(--ink-soft);
 }
 
+/* Space for the blocks a script fills in, so the page does not jump when they appear (a layout shift of 0.66 on phones). */
+.pills-row {
+  min-height: 64px;
+}
+
+gta-months {
+  display: block;
+  min-height: 491px;
+}
+
+@media (min-width: 700px) {
+  gta-months {
+    min-height: 293px;
+  }
+}
+
 .when .months,
 .when .month-results {
   max-width: 46rem;

@@ -17,6 +17,10 @@ const {
   logoAlt,
   logoIsMark,
 } = Astro.props;
+
+// Same site address logic as tools/build-seo.mjs, so the canonical link, the sitemap and the other sites agree.
+const origin = (process.env.SITE_URL || process.env.URL || process.env.DEPLOY_PRIME_URL || Astro.site?.origin || "https://example.com").replace(/\/$/, "");
+const canonical = origin + Astro.url.pathname;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -27,6 +31,7 @@ const {
     <meta name="robots" content="index, follow" />
     <link rel="icon" href="/icon/octopus-favicon.png" />
     <title>{title}</title>
+    <link rel="canonical" href={canonical} />
 
     <!-- Blocking, same-origin, non-module (classic scripts aren't
          deferred the way type=module is) - runs before first paint so

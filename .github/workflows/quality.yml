@@ -37,9 +37,15 @@ jobs:
         run: npm run test:e2e
       - name: Built pages scan (inline code, unsafe links, source maps, secrets), all three sites
         run: node tools/tests/site-security.mjs
+      - name: Links, anchors, sitemap, canonicals and robots, all three sites
+        run: node tools/tests/site-integrity.mjs
+      - name: Contrast in every colour preset, light and dark
+        run: node tools/quality/theme-matrix.mjs
+      - name: Behaviour in a real browser (theme, uptime widget, contact form, lightbox, slideshow, manage page)
+        run: node tools/tests/behavior.mjs
       - name: Browser checks, every page of the three sites (errors, images, sideways scroll, accessibility)
         run: node tools/quality/check.mjs
-      - name: Lighthouse (mobile, over HTTP/2), front page of each site
+      - name: Lighthouse (mobile, over HTTP/2), page types of each site
         run: node tools/quality/lighthouse.mjs
       - uses: actions/upload-artifact@v4
         if: always()

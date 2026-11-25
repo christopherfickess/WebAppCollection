@@ -1,4 +1,4 @@
-// Lighthouse (mobile) for the front page of each of the three sites, served from the built dist/ over HTTP/2 with the real
+// Lighthouse (mobile) for one page of each kind on the three sites (see tools/quality/sites.mjs), served from the built dist/ over HTTP/2 with the real
 // security headers. Fails if a score drops under its minimum. Writes lighthouse.json (all sites) for the report artifact.
 //   node tools/quality/lighthouse.mjs            (needs `npm run build` first)
 import { spawn, execFileSync } from "node:child_process";
@@ -15,16 +15,18 @@ const chrome = process.env.CHROME_PATH || require("playwright-core").chromium.ex
 const results = {}; let bad = false;
 try {
   for (const site of SITES) {
-    const url = `https://localhost:${PORT}${site.lighthouse}`;
-    const out = `lighthouse-${site.id}.json`;
-    execFileSync("npx", ["lighthouse", url, "--chrome-flags=--headless=new --no-sandbox --ignore-certificate-errors", "--only-categories=performance,accessibility,best-practices,seo", "--output=json", `--output-path=${out}`, "--quiet"], { env: { ...process.env, CHROME_PATH: chrome }, stdio: "inherit" });
-    const cats = JSON.parse(readFileSync(out, "utf8")).categories;
-    rmSync(out);
-    results[site.id] = Object.fromEntries(Object.keys(MIN).map((k) => [k, Math.round(cats[k].score * 100)]));
     const floor = { ...MIN, ...(site.minimum || {}) };
-    const line = Object.entries(results[site.id]).map(([k, v]) => `${k} ${v}${v < floor[k] * 100 ? " (BELOW " + floor[k] * 100 + ")" : ""}`).join(", ");
-    console.log(`${site.name} ${site.lighthouse}: ${line}`);
-    if (Object.keys(MIN).some((k) => results[site.id][k] < floor[k] * 100)) bad = true;
+    for (const path of site.lighthouse) {
+      const url = `https://localhost:${PORT}${path}`;
+      const out = `lighthouse-${site.id}.json`;
+      execFileSync("npx", ["lighthouse", url, "--chrome-flags=--headless=new --no-sandbox --ignore-certificate-errors", "--only-categories=performance,accessibility,best-practices,seo", "--output=json", `--output-path=${out}`, "--quiet"], { env: { ...process.env, CHROME_PATH: chrome }, stdio: "inherit" });
+      const cats = JSON.parse(readFileSync(out, "utf8")).categories;
+      rmSync(out);
+      const scores = Object.fromEntries(Object.keys(MIN).map((k) => [k, Math.round(cats[k].score * 100)]));
+      (results[site.id] ||= {})[path] = scores;
+      console.log(`${site.name} ${path}: ${Object.entries(scores).map(([k, v]) => `${k} ${v}${v < floor[k] * 100 ? " (BELOW " + floor[k] * 100 + ")" : ""}`).join(", ")}`);
+      if (Object.keys(MIN).some((k) => scores[k] < floor[k] * 100)) bad = true;
+    }
   }
 } finally { server.kill(); }
 writeFileSync("lighthouse.json", JSON.stringify(results, null, 2));

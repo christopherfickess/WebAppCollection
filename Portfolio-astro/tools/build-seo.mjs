@@ -5,6 +5,8 @@
 // DEPLOY_PRIME_URL); set SITE_URL to override. Without one it uses example.com.
 import { readFileSync, writeFileSync } from "node:fs";
 import { content } from "../public/Photography-Studio/js/data.js";
+import { readFileSync as readSrc, existsSync } from "node:fs";
+import { SITES, EXTRA_PAGES, pagesOf } from "./quality/sites.mjs";
 
 const origin = (process.env.SITE_URL || process.env.URL || process.env.DEPLOY_PRIME_URL || "https://example.com").replace(/\/$/, "");
 const base = `${origin}/Photography-Studio/`;
@@ -58,7 +60,17 @@ html = /<!-- seo:start[\s\S]*?seo:end -->/.test(html)
 html = prerender(prerender(html, "fx-header", SiteHeader, content.site), "fx-hero", Hero, content.hero);
 writeFileSync(file, html);
 
-const pages = ["", "privacy/", "terms/"].map((p) => `  <url><loc>${base}${p}</loc></url>`).join("\n");
+// The other hand-written pages carry a canonical link too; keep them on the real site address.
+for (const path of ["/Photography-Studio/privacy/", "/Photography-Studio/terms/", "/showcase/"]) {
+  const f = new URL(`../public${path}index.html`, import.meta.url);
+  writeFileSync(f, readFileSync(f, "utf8").replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${origin}${path}$2`));
+}
+
+// One sitemap for all three sites: every page that is meant to be found (pages marked noindex are left out).
+const publicDir = new URL("../public", import.meta.url).pathname;
+const indexable = (path) => { const f = `${publicDir}${path}index.html`; return !existsSync(f) || !/<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(readSrc(f, "utf8")); };
+const urls = [...new Set([...SITES.flatMap((x) => pagesOf(x, publicDir)), ...EXTRA_PAGES])].filter(indexable).sort();
+const pages = urls.map((p) => `  <url><loc>${origin}${p}</loc></url>`).join("\n");
 writeFileSync(new URL("../public/sitemap.xml", import.meta.url), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages}\n</urlset>\n`);
 writeFileSync(new URL("../public/robots.txt", import.meta.url), `User-agent: *\nAllow: /\nDisallow: /Photography-Studio/admin/\n\nSitemap: ${origin}/sitemap.xml\n`);
 console.log("SEO files written for", base);

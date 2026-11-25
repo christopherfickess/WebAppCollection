@@ -50,9 +50,9 @@ const portfolio = SITES.find((s) => s.id === "portfolio");
 const srcPages = readdirSync(join(ROOT, "src", "pages")).map((e) => (e === "index.astro" ? "/" : `/${e}/`)).sort();
 assert.deepEqual([...portfolio.pages].sort(), srcPages, "every page in src/pages is in the portfolio page list (add new pages to tools/quality/sites.mjs)");
 for (const s of SITES.filter((x) => x.prefix)) assert.ok(existsSync(join(ROOT, "public", s.prefix, "index.html")), `${s.name} has a front page at ${s.prefix}`);
-for (const s of SITES) assert.ok(s.lighthouse, `${s.name} has a Lighthouse page`);
+for (const s of SITES) { assert.ok(Array.isArray(s.lighthouse) && s.lighthouse.length >= 2, `${s.name} has Lighthouse pages of more than one kind`); assert.ok(s.budgetKB > 0, `${s.name} has a page-weight budget`); }
 assert.ok(EXTRA_PAGES.length >= 0);
-for (const step of ["npm run build", "node tools/tests/site-security.mjs", "node tools/quality/check.mjs", "node tools/quality/lighthouse.mjs", "npm run test:e2e"]) assert.ok(quality.includes(step), `quality.yml runs: ${step}`);
+for (const step of ["npm run build", "node tools/tests/site-security.mjs", "node tools/quality/check.mjs", "node tools/quality/lighthouse.mjs", "npm run test:e2e", "node tools/tests/site-integrity.mjs", "node tools/quality/theme-matrix.mjs", "node tools/tests/behavior.mjs"]) assert.ok(quality.includes(step), `quality.yml runs: ${step}`);
 const codeql = workflows.find((w) => w.f === "codeql.yml")?.text || "";
 assert.match(codeql, /javascript-typescript/); assert.match(codeql, /^\s*pull_request:/m);
 const sitesGap = JSON.parse(read("tools", "tests", "coverage-gaps.json"))._sites;

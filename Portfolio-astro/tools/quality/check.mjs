@@ -87,6 +87,9 @@ for (const path of PAGES) {
       if (!m.desc) row.problems.push("no meta description");
       if (m.h1 !== 1) row.problems.push(`${m.h1} <h1> elements (want 1)`);
       row.notes.push(`${(bytes / 1024).toFixed(0)} KB loaded`);
+      const site = SITES.find((x) => pagesOf(x, ROOT).includes(path));
+      const budget = site?.budgetOverrides?.[path] ?? site?.budgetKB;
+      if (budget && bytes / 1024 > budget) row.problems.push(`page weight ${(bytes / 1024).toFixed(0)} KB is over the ${budget} KB budget for ${site.name}`);
       await page.evaluate(axeSource);
       const axe = await page.evaluate(() => axe.run(document, { runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] }));
       for (const v of axe.violations) row.problems.push(`accessibility (${v.impact}): ${v.id}, ${v.nodes.length} element(s). ${v.help}. Elements: ${v.nodes.slice(0, 4).map((n) => n.target.join(" ")).join(" ; ")}. ${(v.nodes[0].any[0]?.message || "").slice(0, 160)}`);
