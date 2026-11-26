@@ -554,7 +554,7 @@ internal links return 200, autoplay advances and pauses.
 
 ## Second review round and pipeline coverage (2026-11-24)
 
-- Repo skill `.claude/skills/pr-review/SKILL.md`: report first, fix after approval, reply to and resolve PR threads when done. Use it for reviews.
+- Repo skill `.claude/skills/pr-security-review/SKILL.md`: report first, fix after approval, reply to and resolve PR threads when done. Use it for reviews.
 - Webhook: the same payment arriving again under a new event id is a no-op (bookings carry `notified`; a retry only finishes work an earlier attempt skipped). Reschedule refuses a date that already has a booking and puts the old date back. The travel lookup now runs before the hold is claimed.
 - Webhook replays are now caught per payment, not per date: the first handling of a payment writes `pay:<pi>`, and any later delivery of it (new event id, after a reschedule or cancel) is a no-op. A clash is recorded only after its refund and emails finish. Checkout re-checks the date after the travel lookup, just before claiming the hold.
 - Travel: only OSRM's `NoRoute` code means "no road" (cached one day); any other empty reply is a failure and is not cached. The booking form tells visitors when the distance lookup is down instead of "place not found".

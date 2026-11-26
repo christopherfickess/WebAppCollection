@@ -1,9 +1,9 @@
 ---
-name: pr-review
+name: pr-security-review
 description: Review changes in the WebAppCollection repo (Portfolio-astro): logic, security, tests, site load. Report first, fix after approval, then re-check PR comments.
 ---
 
-# PR review (WebAppCollection)
+# PR security review (WebAppCollection)
 
 Review a branch or PR in `christopherfickess/WebAppCollection` (site code in `Portfolio-astro/`). The repo is a mono repo for now with three sites that all get reviewed: the **main portfolio** (`src/pages`: home, projects, contact, observability, resume), **Fox & Fern** (`public/Photography-Studio`, with the Netlify functions) and **Gredin Travel Advisor** (`public/travel-advisor`). They will be split into separate repos later; `tools/quality/sites.mjs` is the one list of sites and pages. The top-level `Portfolio/` and `Website1-3/` folders look like older copies of what ships from `public/`; they are not covered by the checks, so flag any change to them. Phases run in order. Stop at the report and wait for approval before changing anything.
 

@@ -8,6 +8,7 @@ on:
   pull_request:
   schedule:
     - cron: "17 6 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,3 +30,45 @@ jobs:
       - uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript-typescript"
+
+  # CodeQL itself only records alerts under Security > Code scanning. This job turns the open alerts on main into one GitHub issue
+  # (created when there are alerts, updated when they change, closed when none are left), so a finding gets noticed.
+  issue:
+    needs: analyze
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      TITLE: "CodeQL: open code scanning alerts"
+    steps:
+      - name: Open, update or close the alerts issue
+        run: |
+          set -euo pipefail
+          alerts=$(gh api "repos/$REPO/code-scanning/alerts?state=open&ref=refs/heads/main&per_page=100")
+          count=$(echo "$alerts" | jq length)
+          existing=$(gh api "repos/$REPO/issues?state=open&per_page=100" --jq "[.[] | select(.pull_request == null and .title == \"$TITLE\")][0].number // empty")
+          if [ "$count" -eq 0 ]; then
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --repo "$REPO" --body "No open CodeQL alerts on main any more. Closing."
+              gh issue close "$existing" --repo "$REPO"
+            fi
+            echo "No open alerts."
+            exit 0
+          fi
+          {
+            echo "CodeQL found **$count** open alert(s) on \`main\`. Details: https://github.com/$REPO/security/code-scanning"
+            echo
+            echo "$alerts" | jq -r '.[] | "- [\(.rule.security_severity_level // .rule.severity)] \(.rule.description) in \`\(.most_recent_instance.location.path):\(.most_recent_instance.location.start_line)\` ([alert \(.number)](\(.html_url)))"'
+            echo
+            echo "This issue is kept up to date by the CodeQL workflow and closes itself when no alerts are left."
+          } > body.md
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$REPO" --body-file body.md
+          else
+            gh issue create --repo "$REPO" --title "$TITLE" --body-file body.md
+          fi
