@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import HeroIllustration from "../components/HeroIllustration.astro";
+---
+<BaseLayout
+  title="Christopher Fickess | Site Reliability Engineer"
+  description="Chris Fickess | Site Reliability Engineer"
+  current="home"
+  pageTitle="Home"
+>
+  <section class="intro">
+    <div class="intro-text">
+      <h2>Christopher Fickess</h2>
+      <h3>Site Reliability Engineer</h3>
+      <p class="credential-line">B.S. Engineering Physics, University of Central Oklahoma</p>
+      <ul class="company-history">
+        <li>Tinker Air Force Base</li>
+        <li>Boeing</li>
+        <li>Mattermost</li>
+      </ul>
+      <ul class="skills">
+        <li>AWS Cloud Specialist</li>
+        <li>Infrastructure as Code (IaC)</li>
+        <li>Web Development</li>
+      </ul>
+      <div class="bio">
+        <div class="bio-section">
+          <h4 class="bio-label">Before the Cloud</h4>
+          <p>Before any of this, I spent five years doing finish carpentry: trim, cabinetry, built-ins, the last layer of a build and the first thing anyone actually notices. It's a trade with no room for "close enough." A reveal is either even or it isn't. A joint is either tight or it isn't. There's no code review, no staging environment, no rollback; you cut the piece, you install it, and it's either right or it's wrong in front of the client. That taught me to measure twice and build once, long before I ever heard the phrase applied to software.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">UCO, Physics, and the Course Nobody Else Would Teach</h4>
+          <p>I went on to the University of Central Oklahoma for a degree in Engineering Physics. Most of the curriculum was required, but I kept signing up for the courses that weren't: Quantum Mechanics, Partial Differential Equations, and one gloriously impractical semester of Nonlinear Dynamics and Chaos Theory, just because I wanted to understand how those systems actually behaved. The one I'm proudest of is General Relativity. It wasn't in the course catalog at all, so I petitioned the university to add it. UCO agreed, the course ran, and turnout ended up higher than the same course drew at the top two universities in Oklahoma, schools several times our size with physics departments built for exactly that kind of class.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">Tinker Air Force Base: Where the Discipline Started</h4>
+          <p>My first engineering role out of UCO was at Tinker Air Force Base, doing DevSecOps on systems that couldn't afford to be wrong. I built Jenkins and Make based CI/CD pipelines in Azure DevOps, cutting build times by 65 percent, and automated RedHat virtualization with Bash so the team spent less time on manual setup and more on the engineering itself. Working alongside the cybersecurity side of that pipeline, where issues got caught long before anything reached production, reinforced the same lesson from the job site in different form, just automated: the earlier you catch the flaw, the cheaper it is to fix, so you build the check into the process instead of hoping someone notices later.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">Boeing: Leading Without Losing the Habit of Building</h4>
+          <p>From there I moved to Boeing, eventually leading the team as Senior Lead Site Reliability Engineer and Senior Lead Platform Engineer over three years in Oklahoma City. I architected multi-AZ, Blue/Green GitOps Kubernetes clusters on Terraform, migrated our EKS workloads to Karpenter for a 35 percent cost reduction, and spent plenty of on-call hours doing real-time incident response and root cause analysis when production broke. But the part of the job I valued most was the coaching: walking junior engineers through Infrastructure as Code until their manual work dropped by 40 percent and they didn't need me in the loop anymore. I also helped lead the migration of on-prem workloads into AWS GovCloud, got the program to DoD IL5 and ISO 27001 compliance, and pushed zero-trust from an afterthought to the default. Leading a team never stopped feeling like being the senior carpenter on a job site: still accountable for the work, just doing more of it through other people's hands.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">Mattermost: Teaching Chat How to Run Operations</h4>
+          <p>My current work is at Mattermost, building agentic chat systems that turn a chat window into an actual operations console. The approach is plug and play: plugins that integrate with the APIs and webhooks a team already has, so an operator can trigger real actions, restart a service, pull a dashboard, kick off a runbook, without ever leaving the conversation they're already having about the incident. A good example of what that enables: a postmortem playbook that runs directly inside Mattermost, so the retrospective isn't a document written after the fact in some other tool; it's captured where the incident actually happened, by the people who were there for it. It's the same thread running through every job I've had: close the gap between knowing something is wrong and doing something about it.</p>
+        </div>
+        <div class="bio-section">
+          <h4 class="bio-label">Same Instinct, Different Materials</h4>
+          <p>Both chapters taught the same lesson in different materials. Carpentry is tolerance and precision you can run your hand across; general relativity is tolerance and precision you can only write down and prove. Site reliability engineering turned out to be where those two instincts actually meet: systems built to a tight tolerance, failure modes reasoned through instead of guessed at, postmortems that trust what the system is actually telling you even when it's inconvenient, and the same refusal I had on a job site to hand over something that's merely "close enough."</p>
+        </div>
+      </div>
+    </div>
+    <HeroIllustration />
+  </section>
+</BaseLayout>

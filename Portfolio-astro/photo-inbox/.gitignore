@@ -1,0 +1,7 @@
+# Drop new photos here, one folder per collection.
+# Originals stay on your machine; only the web exports are committed.
+*/*.jpg
+*/*.jpeg
+*/*.png
+*/*.webp
+*/*.heic

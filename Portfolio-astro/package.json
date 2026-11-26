@@ -1,0 +1,40 @@
+{
+  "name": "chris-fickess-portfolio",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node tools/build-guides.mjs && node tools/build-admin.mjs && node tools/build-content.mjs && node tools/build-seo.mjs && astro dev",
+    "prebuild": "node tools/build-guides.mjs && node tools/build-admin.mjs && node tools/build-content.mjs && node tools/build-seo.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "guides": "node tools/build-guides.mjs",
+    "seo": "node tools/build-content.mjs && node tools/build-seo.mjs",
+    "quality": "node tools/quality/check.mjs",
+    "lighthouse": "node tools/quality/lighthouse.mjs",
+    "security:site": "node tools/tests/site-security.mjs",
+    "integrity": "node tools/tests/site-integrity.mjs",
+    "themes": "node tools/quality/theme-matrix.mjs",
+    "behavior": "node tools/tests/behavior.mjs",
+    "check:all": "npm run build && npm test && npm run test:e2e && npm run security:site && npm run integrity && npm run themes && npm run behavior && npm run quality && npm run lighthouse",
+    "serve:h2": "H2=1 node tools/quality/serve.mjs",
+    "content": "node tools/build-content.mjs",
+    "test": "node tools/tests/studio.test.mjs && node tools/tests/sync-env.test.mjs && node tools/tests/configure.test.mjs && node tools/tests/oauth.test.mjs && node tools/tests/travel.test.mjs && node tools/tests/booking-race.test.mjs && node tools/tests/deploy-state.test.mjs && node tools/tests/handlers.test.mjs && node tools/tests/naming.test.mjs && node tools/tests/content.test.mjs && node tools/tests/security.test.mjs && node tools/tests/site-security.test.mjs && node tools/tests/site-integrity.test.mjs && node tools/tests/pipeline.test.mjs",
+    "test:e2e": "node tools/tests/e2e.mjs",
+    "launch-check": "node tools/launch-check.mjs",
+    "new-client": "node tools/new-client.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.7",
+    "astro": "^7.4.4"
+  },
+  "devDependencies": {
+    "axe-core": "^4.14.0",
+    "decap-cms": "^3.17.3",
+    "lighthouse": "^13.6.0",
+    "playwright-core": "^1.65.0"
+  },
+  "overrides": {
+    "trim": "0.0.3"
+  }
+}

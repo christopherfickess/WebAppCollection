@@ -1,0 +1,80 @@
+{
+  "portfolio": {
+    "/": {
+      "performance": 83,
+      "accessibility": 98,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/projects/": {
+      "performance": 97,
+      "accessibility": 98,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/resume/": {
+      "performance": 100,
+      "accessibility": 98,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/contact/": {
+      "performance": 100,
+      "accessibility": 98,
+      "best-practices": 100,
+      "seo": 100
+    }
+  },
+  "fox-and-fern": {
+    "/Photography-Studio/": {
+      "performance": 99,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/Photography-Studio/privacy/": {
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    }
+  },
+  "travel-advisor": {
+    "/travel-advisor/": {
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/travel-advisor/destinations/": {
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/travel-advisor/destinations/paris/": {
+      "performance": 79,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/travel-advisor/field-notes/": {
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/travel-advisor/field-notes/nassau-without-a-car/": {
+      "performance": 99,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "/travel-advisor/packing/": {
+      "performance": 93,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    }
+  }
+}

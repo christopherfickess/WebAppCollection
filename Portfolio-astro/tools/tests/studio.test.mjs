@@ -1,0 +1,217 @@
+import assert from "node:assert/strict";
+import { catalog } from "../../netlify/functions/lib/catalog.mjs";
+
+// These tests check the booking LOGIC, so they run against fixed rules and prices instead of whatever the
+// current client's content says. Without this, a client with different prices or closed days would "break" them.
+catalog.packages = { "Mini session": { amount: 250, deposit: 75 }, "Half day": { amount: 600, deposit: 150 }, "Full day": { amount: 1100, deposit: 275 } };
+catalog.printSizes = { "12x18": 95, "16x20": 140, "24x36": 260, "30x40": 380 };
+Object.assign(catalog.booking, { minLeadDays: 7, closedWeekdays: [], blockedDates: [], refundFullDays: 14, slots: ["Morning", "Afternoon", "Golden hour"] });
+catalog.business = { ...catalog.business, name: "Test Studio" };
+import { createHmac } from "node:crypto";
+import { reportError, sendEmail, emailHtml, calendarInvite, manageToken, manageView, manageAct, handleRefund, sameOrigin, limited, MAX_OPEN_HOLDS, handleRequest, sendReminders, exportData, alertOwner, availability, createCheckout, verifySignature, handleStripeEvent, collect, stats, tokenOk, dayProblem } from "../../netlify/functions/lib/studio.mjs";
+
+const memStore = () => { const m = new Map(); return { get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : null), setJSON: async (k, v) => void m.set(k, structuredClone(v)) }; };
+const NOW = Date.parse("2026-11-06T12:00:00Z");
+const sent = [];
+const fetchMock = async (url, opt) => {
+  if (url.includes("stripe")) return { ok: true, json: async () => ({ id: "cs_1", url: "https://pay.test/cs_1" }), _body: opt.body };
+  sent.push(JSON.parse(opt.body)); return { ok: true };
+};
+const env = { STRIPE_SECRET_KEY: "sk_test", RESEND_API_KEY: "re", EMAIL_FROM: "a@b.co", OWNER_EMAIL: "o@b.co", STATS_TOKEN: "x".repeat(20) };
+const deps = (store) => ({ store, env, fetch: fetchMock, now: NOW, origin: "https://s.test" });
+let n = 0; const ok = (name) => console.log("ok", ++n, name);
+
+const store = memStore();
+assert.equal((await availability({ store, env, now: NOW })).payments, true); ok("availability");
+
+const good = { kind: "session", name: "Ana", email: "ana@x.co", package: "Half day", date: "2026-12-01", message: "hi" };
+let r = await createCheckout(good, deps(store)); assert.equal(r.status, 200); ok("checkout creates session");
+r = await createCheckout(good, deps(store)); assert.equal(r.status, 409); assert.equal((await r.json()).error, "held"); ok("same date is held");
+r = await createCheckout({ ...good, date: "2026-11-08" }, deps(store)); assert.equal(r.status, 409); ok("too soon rejected");
+r = await createCheckout({ ...good, date: "2026-02-30" }, deps(store)); assert.equal(r.status, 409); ok("impossible date rejected");
+r = await createCheckout({ ...good, package: "Free" }, deps(store)); assert.equal(r.status, 400); ok("unknown package");
+r = await createCheckout({ ...good, email: "nope" }, deps(store)); assert.equal(r.status, 400); ok("bad email");
+r = await createCheckout({ kind: "print", photo: "nope", size: "12x18" }, deps(store)); assert.equal(r.status, 400); ok("unknown print");
+r = await createCheckout(good, { ...deps(store), env: {} }); assert.equal(r.status, 503); ok("no stripe key");
+
+// hold limits
+r = await createCheckout({ ...good, date: "2026-12-03" }, deps(store)); assert.equal(r.status, 429); assert.equal((await r.json()).error, "hold-exists"); ok("one open hold per email");
+r = await createCheckout({ ...good, email: "ANA@x.co ", date: "2026-12-03" }, deps(store)); assert.equal(r.status, 429); ok("email compared case-insensitively");
+const crowded = memStore();
+for (let i = 0; i < MAX_OPEN_HOLDS; i++) r = await createCheckout({ ...good, email: `p${i}@x.co`, date: `2026-12-${String(10 + i).padStart(2, "0")}` }, deps(crowded));
+assert.equal(r.status, 200);
+r = await createCheckout({ ...good, email: "late@x.co", date: "2026-12-28" }, deps(crowded)); assert.equal(r.status, 429); assert.equal((await r.json()).error, "too-many-holds"); ok("cap on open holds");
+// origin and rate limit
+const fakeReq = (o) => ({ url: "https://s.test/api/x", headers: { get: (h) => (h === "origin" ? o : null) } });
+assert.equal(sameOrigin(fakeReq("https://s.test")), true); assert.equal(sameOrigin(fakeReq(null)), true); assert.equal(sameOrigin(fakeReq("https://evil.test")), false); ok("origin check");
+const rl = memStore(); let over = false;
+for (let i = 0; i < 4; i++) over = await limited(rl, "a", 3, 60000, NOW);
+assert.equal(over, true); assert.equal(await limited(rl, "b", 3, 60000, NOW), false); ok("rate limit per key");
+
+// a hold expires
+assert.equal(dayProblem("2026-12-01", NOW + 40 * 60 * 1000, { booked: [], blocked: [], held: [] }), null); ok("expired hold frees date");
+
+// webhook
+const ev = { id: "evt_1", type: "checkout.session.completed", data: { object: { customer_details: { email: "ana@x.co" }, metadata: { kind: "session", package: "Half day", date: "2026-12-01", name: "Ana", message: "" } } } };
+await handleStripeEvent(ev, deps(store));
+assert.deepEqual(await store.get("booked"), ["2026-12-01"]); assert.equal(sent.length, 2); ok("webhook books date, emails both");
+assert.equal((await handleStripeEvent(ev, deps(store))).duplicate, true); assert.equal(sent.length, 2); ok("duplicate event ignored");
+assert.ok((await availability({ store, env, now: NOW })).unavailable.includes("2026-12-01")); ok("booked date unavailable");
+
+// signature
+const raw = JSON.stringify(ev), t = Math.floor(NOW / 1000), sec = "whsec_x";
+const v1 = createHmac("sha256", sec).update(`${t}.${raw}`).digest("hex");
+assert.equal(verifySignature(raw, `t=${t},v1=${v1}`, sec, t), true); ok("valid signature");
+assert.equal(verifySignature(raw + " ", `t=${t},v1=${v1}`, sec, t), false); ok("tampered body");
+assert.equal(verifySignature(raw, `t=${t},v1=${v1}`, sec, t + 1000), false); ok("stale timestamp");
+assert.equal(verifySignature(raw, `t=${t},v1=${v1}`, "", t), false); ok("no secret");
+
+// counts
+const req = (h = {}) => new Request("https://s.test/api/collect", { headers: { "user-agent": "Mozilla/5.0", ...h } });
+await collect(req(), { path: "/Photography-Studio/?x=1", ref: "https://google.com/q" }, { store, now: NOW });
+await collect(req({ dnt: "1" }), { path: "/a" }, { store, now: NOW });
+await collect(req({ "user-agent": "Googlebot" }), { path: "/a" }, { store, now: NOW });
+const s = await stats(2, { store, now: NOW });
+assert.equal(s.totalViews, 1); assert.deepEqual(s.topPages, { "/Photography-Studio/": 1 }); assert.deepEqual(s.topReferrers, { "google.com": 1 }); ok("counts respect DNT and bots, strip queries");
+assert.equal(tokenOk(new Request("https://s.test", { headers: { authorization: "Bearer " + "x".repeat(20) } }), env), true);
+assert.equal(tokenOk(new Request("https://s.test", { headers: { authorization: "Bearer wrong" } }), env), false);
+assert.equal(tokenOk(new Request("https://s.test"), { STATS_TOKEN: "" }), false); ok("stats token");
+
+// reminders, export, alerts
+const bk = await store.get("bookings"); assert.equal(bk["2026-12-01"].email, "ana@x.co"); ok("booking details remembered");
+sent.length = 0;
+const DEC = Date.parse("2026-11-29T15:00:00Z");
+assert.deepEqual((await sendReminders({ store, env, fetch: fetchMock, now: Date.parse("2026-11-20T15:00:00Z") })).sent, []); assert.equal(sent.length, 0); ok("no reminder too early");
+assert.deepEqual((await sendReminders({ store, env, fetch: fetchMock, now: DEC })).sent, ["2026-12-01"]); assert.equal(sent.length, 1); assert.match(sent[0].text, /\$450/); ok("reminder sent two days ahead with balance");
+assert.deepEqual((await sendReminders({ store, env, fetch: fetchMock, now: DEC })).sent, []); assert.equal(sent.length, 1); ok("reminder sent only once");
+assert.equal((await exportData({ store })).booked[0], "2026-12-01"); ok("export includes booked dates");
+sent.length = 0; await alertOwner({ env, fetch: fetchMock }, "x failed", new Error("boom")); assert.equal(sent[0].to[0], "o@b.co"); assert.match(sent[0].text, /boom/); ok("owner alert");
+const failing = async () => { throw new Error("network down"); };
+await alertOwner({ env, fetch: failing }, "x failed", new Error("boom")); ok("alert never throws");
+
+// plain request form
+sent.length = 0;
+let rq = await handleRequest({ name: "Ben", email: "ben@x.co", session: "Half day", message: "hello" }, { store, env, fetch: fetchMock, now: NOW });
+assert.equal(rq.status, 200); assert.equal(sent.length, 2); assert.equal(sent[0].to[0], "o@b.co"); assert.equal(sent[1].to[0], "ben@x.co"); ok("request emails owner and sender");
+sent.length = 0; rq = await handleRequest({ name: "Bot", email: "b@x.co", message: "x", "bot-field": "spam" }, { store, env, fetch: fetchMock, now: NOW });
+assert.equal(rq.status, 200); assert.equal(sent.length, 0); ok("honeypot sends nothing");
+rq = await handleRequest({ name: "", email: "bad", message: "" }, { store, env, fetch: fetchMock, now: NOW }); assert.equal(rq.status, 400); ok("invalid request rejected");
+// a session location gets our own travel estimate in the emails, never a figure from the browser
+{
+  const out = [];
+  const tf = async (url, opt) => {
+    const j = (b) => ({ ok: true, status: 200, json: async () => b });
+    if (url.includes("nominatim")) { const q = decodeURIComponent(url.split("q=")[1]).toLowerCase(); return j(q.startsWith("oklahoma") ? [{ lat: "35.4676", lon: "-97.5164", display_name: "Oklahoma City, USA" }] : [{ lat: "36.154", lon: "-95.9928", display_name: "Tulsa, USA" }]); }
+    if (url.includes("osrm")) return j({ routes: [{ distance: 105 * 1609.344, duration: 1.7 * 3600 }] });
+    out.push(JSON.parse(opt.body)); return { ok: true };
+  };
+  const r2 = await handleRequest({ name: "Ann", email: "ann@x.co", message: "hi", location: "Tulsa", travel: "FREE" }, { store: memStore(), env, fetch: tf, now: NOW });
+  assert.equal(r2.status, 200);
+  assert.match(out[0].text, /Location: Tulsa/); assert.match(out[0].text, /Travel estimate: .*\$68/); assert.ok(!out[0].text.includes("FREE"));
+  assert.match(out[1].text, /Travel estimate/);
+  ok("request carries the location and a server-made travel estimate");
+}
+sent.length = 0; for (let i = 0; i < 25; i++) await handleRequest({ name: "N", email: "n@x.co", message: "m" }, { store, env, fetch: fetchMock, now: NOW + 1 });
+assert.equal(sent.filter((m) => m.to[0] === "n@x.co").length <= 20, true); assert.equal(sent.filter((m) => m.to[0] === "o@b.co").length >= 25, true); ok("sender copies are capped per day, owner always notified");
+
+// failures are visible, not swallowed
+const refused = async (url, opt) => (url.includes("stripe") ? fetchMock(url, opt) : { ok: false, status: 403, text: async () => "You can only send testing emails to your own email address" });
+rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store, env, fetch: refused, now: NOW + 5, expose: true });
+assert.equal(rq.status, 502); assert.match((await rq.json()).reason, /only send testing emails/); ok("email refusal reported with reason on test deploys");
+rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store, env, fetch: refused, now: NOW + 5 });
+assert.equal(rq.status, 502); assert.equal((await rq.json()).reason, undefined); ok("reason hidden on real sites");
+rq = await handleRequest({ name: "Cy", email: "cy@x.co", message: "m" }, { store, env: {}, fetch: fetchMock, now: NOW + 5 });
+assert.equal(rq.status, 503); ok("unconfigured email is an error, not a fake success");
+
+// addresses are normalised before sending
+sent.length = 0;
+await handleRequest({ name: "Di", email: "  Di@X.co ", message: "m" }, { store, env: { ...env, OWNER_EMAIL: " Owner@Example.COM " }, fetch: fetchMock, now: NOW + 3 * 864e5 });
+assert.equal(sent[0].to[0], "owner@example.com"); assert.equal(sent[0].reply_to, "di@x.co"); assert.equal(sent[1].to[0], "di@x.co"); ok("addresses are trimmed and lowercased");
+
+// ---- refunds, manage links, balance ----
+{
+  const st = memStore(); const mdeps = { ...deps(st), origin: "https://s.test" };
+  const book = async (date, email, pi, id) => handleStripeEvent({ id, type: "checkout.session.completed", data: { object: { payment_intent: pi, customer_details: { email }, metadata: { kind: "session", package: "Half day", date, name: "Cy", message: "" } } } }, mdeps);
+  sent.length = 0;
+  await book("2026-12-20", "cy@x.co", "pi_1", "evt_a");
+  assert.ok(sent.some((m) => /manage\/\?d=2026-12-20&t=/.test(m.text))); ok("confirmation email has manage link");
+  const t = manageToken(env, "2026-12-20", "cy@x.co");
+  assert.equal((await manageView({ date: "2026-12-20", t: "bad" }, mdeps)).status, 404); ok("bad token rejected");
+  const v = await (await manageView({ date: "2026-12-20", t }, mdeps)).json();
+  assert.equal(v.balance, 450); assert.equal(v.canRefund, true); ok("manage view shows balance and refund eligibility");
+
+  // full refund in Stripe frees the date; partial does not
+  assert.deepEqual(await handleRefund({ payment_intent: "pi_1", amount: 15000, amount_refunded: 5000 }, mdeps), { date: "2026-12-20", full: false });
+  assert.deepEqual(await st.get("booked"), ["2026-12-20"]); ok("partial refund keeps date");
+  await handleStripeEvent({ id: "evt_r", type: "charge.refunded", data: { object: { payment_intent: "pi_1", amount: 15000, amount_refunded: 15000 } } }, mdeps);
+  assert.deepEqual(await st.get("booked"), []); assert.deepEqual(await st.get("bookings"), {}); ok("full refund frees the date");
+  assert.equal((await handleRefund({ payment_intent: "pi_x", amount: 1, amount_refunded: 1 }, mdeps)).ignored, true); ok("unknown refund ignored");
+
+  // client cancel inside / outside window
+  await book("2026-12-22", "cy@x.co", "pi_2", "evt_b");
+  const t2 = manageToken(env, "2026-12-22", "cy@x.co");
+  let calls = []; const f2 = async (url, o) => { calls.push(url); return fetchMock(url, o); };
+  let res = await manageAct({ date: "2026-12-22", t: t2, action: "cancel" }, { ...mdeps, fetch: f2 });
+  assert.equal((await res.json()).refunded, true); assert.ok(calls.some((u) => u.endsWith("/refunds"))); assert.deepEqual(await st.get("booked"), []); ok("early cancel refunds and frees date");
+  await book("2026-11-14", "cy@x.co", "pi_3", "evt_c");
+  calls = [];
+  res = await manageAct({ date: "2026-11-14", t: manageToken(env, "2026-11-14", "cy@x.co"), action: "cancel" }, { ...mdeps, fetch: f2 });
+  assert.equal((await res.json()).refunded, false); assert.equal(calls.some((u) => u.endsWith("/refunds")), false); ok("late cancel keeps deposit but frees date");
+
+  // reschedule once
+  await book("2026-12-24", "cy@x.co", "pi_4", "evt_d");
+  const t4 = manageToken(env, "2026-12-24", "cy@x.co");
+  res = await manageAct({ date: "2026-12-24", t: t4, action: "reschedule", newDate: "2026-11-09" }, mdeps); assert.equal(res.status, 409); ok("reschedule respects notice rule");
+  res = await manageAct({ date: "2026-12-24", t: t4, action: "reschedule", newDate: "2026-12-26" }, mdeps); assert.equal(res.status, 200);
+  assert.deepEqual(await st.get("booked"), ["2026-12-26"]); ok("reschedule moves the date");
+  const t5 = manageToken(env, "2026-12-26", "cy@x.co");
+  res = await manageAct({ date: "2026-12-26", t: t5, action: "reschedule", newDate: "2026-12-28" }, mdeps); assert.equal(res.status, 409); ok("only one reschedule");
+
+  // balance
+  res = await manageAct({ date: "2026-12-26", t: t5, action: "balance" }, mdeps); assert.equal(res.status, 200); assert.ok((await res.json()).url);
+  await handleStripeEvent({ id: "evt_e", type: "checkout.session.completed", data: { object: { amount_total: 45000, customer_details: { email: "cy@x.co" }, metadata: { kind: "balance", date: "2026-12-26" } } } }, mdeps);
+  assert.ok((await st.get("bookings"))["2026-12-26"].balancePaidAt);
+  res = await manageAct({ date: "2026-12-26", t: t5, action: "balance" }, mdeps); assert.equal(res.status, 409); ok("balance paid once");
+}
+
+// ---- email design, calendar invite, time window ----
+{
+  const h = emailHtml("Hi <b>Al</b>,\n\nSee https://s.test/a?x=1&y=2 now");
+  assert.ok(h.includes("&lt;b&gt;") && !h.includes("<b>Al")); assert.ok(h.includes('<a href="https://s.test/a?x=1&amp;y=2"')); ok("html email escapes text and links urls");
+  const c = calendarInvite({ date: "2026-12-31", title: "Fox, Fern", description: "a;b\nc", slot: "Morning" });
+  assert.ok(c.includes("DTSTART;VALUE=DATE:20261231") && c.includes("DTEND;VALUE=DATE:20270101")); assert.ok(c.includes("SUMMARY:Fox\\, Fern")); assert.ok(c.includes("Preferred time: Morning")); ok("calendar invite handles month end and escapes");
+  const st = memStore(); sent.length = 0;
+  const g = { ...good, date: "2026-12-05", email: "slot@x.co", slot: "Golden hour" };
+  const r1 = await createCheckout(g, deps(st)); assert.equal(r1.status, 200);
+  const calls = []; const f3 = async (u, o) => { calls.push(o?.body); return fetchMock(u, o); };
+  await createCheckout({ ...g, date: "2026-12-06", email: "slot2@x.co", slot: "Midnight" }, { ...deps(st), fetch: f3 });
+  assert.equal(String(calls[0]).includes("metadata%5Bslot%5D"), false); ok("unknown time window ignored");
+  await handleStripeEvent({ id: "evt_s", type: "checkout.session.completed", data: { object: { payment_intent: "pi_s", customer_details: { email: "slot@x.co" }, metadata: { kind: "session", package: "Half day", date: "2026-12-05", name: "Sl", message: "", slot: "Golden hour" } } } }, { ...deps(st) });
+  assert.ok(sent.some((m) => m.attachments?.[0]?.filename === "session.ics" && m.to[0] === "slot@x.co")); assert.ok(sent.some((m) => /Time: Golden hour/.test(m.text))); ok("paid booking emails invite and time window");
+}
+
+// ---- browser error reports ----
+{
+  const st = memStore(); sent.length = 0;
+  const rq = (h = {}) => ({ url: "https://s.test/api/client-error", headers: { get: (k) => h[k] ?? null } });
+  const dps = deps(st);
+  const e1 = { message: "x is not a function", source: "https://s.test/Photography-Studio/js/main.js", line: 12, path: "/Photography-Studio/?a=1" };
+  assert.equal((await reportError(rq(), e1, dps)).status, 204);
+  assert.equal(sent.filter((m) => /Browser error/.test(m.subject)).length, 1); assert.ok(sent[0].text.includes("/Photography-Studio/js/main.js:12")); assert.ok(!sent[0].text.includes("a=1")); ok("first error emails the owner, without query strings");
+  await reportError(rq(), e1, dps); await reportError(rq(), e1, dps);
+  assert.equal(sent.length, 1); const day = Object.values((await st.get(`errs:${new Date(NOW).toISOString().slice(0, 10)}`)).errors)[0]; assert.equal(day.count, 3); ok("same error is counted, not re-emailed");
+  for (let i = 0; i < 9; i++) await reportError(rq(), { ...e1, message: `different ${i}` }, dps);
+  assert.equal(sent.length, 5); ok("at most 5 error emails a day");
+  assert.equal((await reportError(rq({ dnt: "1" }), { ...e1, message: "dnt" }, dps)).status, 204); assert.equal(sent.length, 5);
+  assert.equal((await reportError(rq(), { message: "" }, dps)).status, 400); ok("empty and Do Not Track reports ignored");
+}
+
+// customer emails carry the owner's address as Reply-To (the sending address has no mailbox); owner emails do not
+{
+  const sent = []; const f = async (u, o) => (u.includes("resend.com") ? (sent.push(JSON.parse(o.body)), { ok: true, status: 200, json: async () => ({}), text: async () => "" }) : { ok: true, status: 200, json: async () => ({}), text: async () => "" });
+  const env = { RESEND_API_KEY: "re_x", EMAIL_FROM: "Studio <hello@mail.example>", OWNER_EMAIL: "owner@example.com" };
+  await sendEmail({ env, fetch: f }, { to: "client@example.com", subject: "s", text: "t" });
+  await sendEmail({ env, fetch: f }, { to: "owner@example.com", subject: "s", text: "t" });
+  assert.equal(sent[0].reply_to, "owner@example.com"); assert.equal(sent[1].reply_to, undefined);
+}
+console.log("ok customer emails reply to the owner");

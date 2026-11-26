@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "light": "dawn",
+      "title": "Before sunrise",
+      "text": "We meet at the location while it is still dark and walk in together."
+    },
+    {
+      "light": "day",
+      "title": "Mid-morning",
+      "text": "Softer, brighter light for details, wildlife, and a break for coffee."
+    },
+    {
+      "light": "dusk",
+      "title": "Golden hour",
+      "text": "The main event: low, warm light, which is why sessions are booked around it."
+    },
+    {
+      "light": "night",
+      "title": "After dark",
+      "text": "Optional: stars and long exposures when the sky is clear."
+    },
+    {
+      "light": "dawn",
+      "title": "Within two weeks",
+      "text": "Edited photos arrive in a private online gallery."
+    }
+  ]
+}

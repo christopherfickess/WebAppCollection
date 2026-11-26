@@ -1,0 +1,47 @@
+name: Verify deploy
+
+# After every push and on every pull request: wait for Netlify to deploy that exact commit, show its
+# status and error (if any), then check the REAL deployed site: launch check plus a browser and
+# payment smoke test against Stripe's test mode. Use this to confirm a change works before merging.
+# Needs the repository secrets NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID and STRIPE_SECRET_KEY (test key).
+on:
+  push:
+    branches: [redesign/rails-nav-theme, main]
+  pull_request:
+
+concurrency:
+  group: verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: these jobs only read the repository (any extra access they need comes from named secrets).
+permissions: { contents: read }
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Portfolio-astro/package-lock.json
+      - name: Install
+        working-directory: Portfolio-astro
+        run: npm ci && npx playwright-core install --with-deps chromium
+      - name: Wait for the Netlify deploy of this commit
+        id: deploy
+        working-directory: Portfolio-astro
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node tools/verify-deploy.mjs
+      - name: Launch check
+        working-directory: Portfolio-astro
+        run: node tools/launch-check.mjs "${{ steps.deploy.outputs.url }}" --preview
+      - name: Smoke test (browser and Stripe test mode)
+        working-directory: Portfolio-astro
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: node tools/tests/smoke.mjs "${{ steps.deploy.outputs.url }}"

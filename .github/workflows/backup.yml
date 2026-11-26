@@ -1,0 +1,28 @@
+# Weekly private backup of bookings and holds. The file is kept as a workflow artifact
+# (visible only to people with access to this repository) for 90 days.
+# Needs two repository secrets: SITE_URL (https://your-domain, no trailing slash) and STATS_TOKEN.
+# GitHub runs schedules from the default branch only; use "Run workflow" to take a backup any time.
+name: Backup bookings
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download export
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+        run: |
+          test -n "$SITE_URL" && test -n "$STATS_TOKEN" || { echo "::error::Add the SITE_URL and STATS_TOKEN repository secrets"; exit 1; }
+          curl -fsS --retry 3 -H "Authorization: Bearer $STATS_TOKEN" "$SITE_URL/api/export" -o backup.json
+          node -e 'const d=JSON.parse(require("fs").readFileSync("backup.json","utf8")); if(!Array.isArray(d.booked)) throw new Error("unexpected export"); console.log("booked dates:", d.booked.length)'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bookings-backup-${{ github.run_id }}
+          path: backup.json
+          retention-days: 90

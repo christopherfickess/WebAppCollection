@@ -1,0 +1,168 @@
+import assert from "node:assert/strict";
+import { cloudflareEmailRouting, configure } from "../configure-services.mjs";
+
+const cfg = { siteUrl: "https://s.test", customDomain: "https://studio.example", stripe: { webhookEvents: ["checkout.session.completed", "charge.refunded"], webhookDescription: "d", disablePaymentMethods: ["klarna", "affirm"] }, resend: { domain: "mail.studio.example", region: "us-east-1" }, netlify: { forceHttps: true, manageDnsRecords: true } };
+const base = { NETLIFY_AUTH_TOKEN: "nt", NETLIFY_SITE_ID: "S1", STRIPE_SECRET_KEY: "sk_test_a", RESEND_API_KEY: "re_send", RESEND_ADMIN_API_KEY: "re_admin", STATS_TOKEN: "x" };
+
+function world(over = {}) {
+  const calls = [];
+  const w = { endpoints: [], resendDomains: [], dns: [], site: { custom_domain: "", force_ssl: false, name: "n", account_id: "A1", account_slug: "me" }, zones: [{ id: "Z1", name: "studio.example" }], pmcs: [{ id: "pmc_1", is_default: true, klarna: { display_preference: { value: "on" } }, affirm: { display_preference: { value: "off" } } }], ...over };
+  const J = (b, status = 200) => ({ ok: status < 300, status, json: async () => b, text: async () => JSON.stringify(b) });
+  const f = async (url, o = {}) => {
+    const m = o.method || "GET"; calls.push({ m, url, body: o.body });
+    if (url.includes("stripe.com/v1/webhook_endpoints")) {
+      if (m === "GET") return J({ data: w.endpoints });
+      if (m === "DELETE") { w.endpoints = []; return J({}); }
+      if (url.endsWith("/webhook_endpoints")) { w.endpoints = [{ id: "we_new", url: "https://s.test/api/stripe-webhook", enabled_events: new URLSearchParams(o.body).getAll("enabled_events[]"), status: "enabled" }]; return J({ id: "we_new", secret: "whsec_NEW" }); }
+      w.endpoints[0].enabled_events = new URLSearchParams(o.body).getAll("enabled_events[]"); return J({});
+    }
+    if (url.includes("payment_method_configurations")) return m === "GET" ? J({ data: w.pmcs }) : J({});
+    if (url.startsWith("https://api.resend.com/domains") && m === "GET" && url.endsWith("/domains")) return J({ data: w.resendDomains });
+    if (url === "https://api.resend.com/domains" && m === "POST") { w.resendDomains.push({ id: "d1", name: "mail.studio.example" }); return J({ id: "d1" }); }
+    if (url.endsWith("/domains/d1")) return J({ status: "pending", records: [{ type: "TXT", name: "send.mail", value: "v=spf1", ttl: "Auto" }, { type: "MX", name: "send.mail", value: "feedback", priority: 10 }] });
+    if (url.endsWith("/verify")) return J({});
+    if (url.startsWith("https://api.cloudflare.com/client/v4/zones?")) return J({ result: w.cfZones || [] });
+    if (url.includes("api.cloudflare.com") && url.includes("/dns_records")) {
+      if (m === "GET") { const nm = decodeURIComponent(url.split("name=")[1]), ty = url.match(/type=(\w+)/)[1]; return J({ result: (w.cf = w.cf || []).filter((r) => r.name === nm && r.type === ty) }); }
+      const b = JSON.parse(o.body); w.cf = w.cf || [];
+      if (m === "PUT") { const i = w.cf.findIndex((r) => r.id === url.split("/").pop()); w.cf[i] = { id: w.cf[i].id, ...b }; return J({ success: true }); }
+      w.cf.push({ id: "r" + w.cf.length, ...b }); return J({ success: true });
+    }
+    if (url.endsWith("/sites/S1/ssl")) { if (m === "POST") { w.certRequested = (w.certRequested || 0) + 1; w.certAt = calls.length; return J({}); } return w.cert ? J(w.cert) : J({}, 404); }
+    if (url.endsWith("/dns_zones")) return J(w.zones);
+    if (url.includes("/dns_records")) return m === "GET" ? J(w.dns) : (w.dns.push(JSON.parse(o.body)), J({}, 201));
+    if (url.endsWith("/sites/S1")) return m === "PATCH" ? (Object.assign(w.site, JSON.parse(o.body)), J({})) : J(w.site);
+    if (url.includes("/accounts/A1/env")) return { ok: true, status: m === "DELETE" ? 404 : 201, text: async () => "" };
+    throw new Error(`unexpected ${m} ${url}`);
+  };
+  return { f, calls, w };
+}
+const run = async (env, c = cfg, opts = {}) => { const out = []; const gh = []; const wd = world(opts.world); const r = await configure(env, c, { fetchFn: wd.f, log: (m) => out.push(m), dry: opts.dry, setSecret: (...a) => gh.push(a) }); return { r, out, gh, ...wd }; };
+
+// 1. fresh setup creates the webhook with both events, turns off methods, adds domain, sets DNS and Netlify
+let t = await run({ ...base, GH_ADMIN_TOKEN: "gh", GITHUB_REPOSITORY: "o/r" });
+assert.deepEqual(t.w.endpoints[0].enabled_events, ["checkout.session.completed", "charge.refunded"]);
+assert.ok(t.calls.some((c) => c.url.includes("payment_method_configurations/pmc_1") && /klarna.*off/.test(decodeURIComponent(c.body))));
+assert.equal(t.calls.some((c) => /affirm/.test(decodeURIComponent(c.body || ""))), false, "already-off method untouched");
+assert.equal(t.w.dns.length, 2); assert.equal(t.w.dns[0].hostname, "send.mail.studio.example");
+assert.equal(t.w.site.custom_domain, "studio.example");
+assert.deepEqual(t.gh.map((x) => x[0]), ["STRIPE_WEBHOOK_SECRET"]); assert.equal(t.gh[0][1], "whsec_NEW");
+const envPosts = t.calls.filter((c) => c.m === "POST" && c.url.includes("/accounts/A1/env")).map((c) => JSON.parse(c.body)[0]);
+assert.equal(envPosts.find((e) => e.key === "STRIPE_WEBHOOK_SECRET").values[0].value, "whsec_NEW");
+assert.ok(!t.out.join("\n").includes("whsec_NEW") && !t.out.join("\n").includes("sk_test_a")); console.log("ok fresh setup configures every service, never logs secrets");
+
+// DNS: subdomain on a Netlify-hosted zone gets a CNAME to the site; a site address is used until useCustomDomain
+{
+  const c2 = { ...cfg, customDomain: "https://fox.studio.example", resend: {} };
+  const x = await run({ ...base }, c2);
+  assert.ok(x.w.dns.some((r) => r.type === "CNAME" && r.hostname === "fox.studio.example" && r.value === "n.netlify.app"), "cname added");
+  assert.equal(x.w.site.custom_domain, "fox.studio.example");
+  assert.ok(x.calls.some((c) => c.url.includes("webhook_endpoints") && c.m === "POST"));
+  assert.equal(JSON.stringify(x.w.endpoints).includes("s.test"), true, "webhook still points at siteUrl while useCustomDomain is off");
+  const y = await run({ ...base }, { ...c2, useCustomDomain: true });
+  assert.equal(JSON.stringify(y.w.endpoints).includes("fox.studio.example") || y.calls.some((c) => /fox\.studio\.example/.test(c.body || "")), true, "webhook moves to the custom domain once enabled");
+}
+console.log("ok custom domain: CNAME created, webhook address follows useCustomDomain");
+
+// 2. second run with the stored secret changes nothing on Stripe
+const again = await run({ ...base, STRIPE_WEBHOOK_SECRET: "whsec_KEEP" }, cfg, { world: { endpoints: [{ id: "we_1", url: "https://s.test/api/stripe-webhook", enabled_events: ["charge.refunded", "checkout.session.completed"], status: "enabled" }], site: { custom_domain: "studio.example", force_ssl: true, name: "n", account_id: "A1" }, resendDomains: [{ id: "d1", name: "mail.studio.example" }], pmcs: [] } });
+assert.equal(again.calls.filter((c) => c.url.includes("webhook_endpoints") && c.m !== "GET").length, 0); assert.equal(again.calls.some((c) => c.m === "PATCH"), false); assert.deepEqual(again.r.derived, []); console.log("ok idempotent: nothing to change, secret kept");
+
+// 3. missing event gets added without replacing the endpoint
+const fix = await run({ ...base, STRIPE_WEBHOOK_SECRET: "whsec_KEEP" }, cfg, { world: { endpoints: [{ id: "we_1", url: "https://s.test/api/stripe-webhook", enabled_events: ["checkout.session.completed"], status: "enabled" }] } });
+assert.deepEqual(fix.w.endpoints[0].enabled_events, ["checkout.session.completed", "charge.refunded"]); assert.equal(fix.calls.some((c) => c.m === "DELETE" && c.url.includes("webhook_endpoints")), false); console.log("ok adds charge.refunded to an existing webhook");
+
+// 4. existing endpoint with no stored secret is replaced and the new secret reaches Netlify
+const rot = await run({ ...base }, cfg, { world: { endpoints: [{ id: "we_1", url: "https://s.test/api/stripe-webhook", enabled_events: ["checkout.session.completed"], status: "enabled" }] } });
+assert.deepEqual(rot.r.derived, ["STRIPE_WEBHOOK_SECRET"]); console.log("ok unknown secret: endpoint replaced");
+
+// 5. dry run only reads
+const dry = await run({ ...base }, cfg, { dry: true });
+assert.deepEqual(dry.calls.filter((c) => c.m !== "GET"), []); console.log("ok dry run makes no changes");
+
+// 6. live mode: live key used, previews stay test
+const live = await run({ ...base, GO_LIVE: "true", LIVE_STRIPE_SECRET_KEY: "sk_live_b", STRIPE_WEBHOOK_SECRET: "whsec_T", LIVE_STRIPE_WEBHOOK_SECRET: "whsec_L" }, { ...cfg, resend: {} });
+assert.equal(live.r.live, true); assert.ok(live.calls.some((c) => c.url.includes("webhook_endpoints")));
+await assert.rejects(run({ ...base, STRIPE_SECRET_KEY: "sk_live_x" }), /must be a test key/);
+await assert.rejects(run(base, { ...cfg, siteUrl: "http://x" }), /https/); console.log("ok live mode and guard rails");
+
+// a failing step does not stop the others, and is reported at the end
+{
+  const w = world(); const orig = w.f;
+  const f = async (url, o) => (url.startsWith("https://api.resend.com") ? { ok: false, status: 403, json: async () => ({ message: "This API key is restricted to only send emails" }) } : orig(url, o));
+  const out = [];
+  await assert.rejects(configure({ ...base }, cfg, { fetchFn: f, log: (m) => out.push(m), setSecret: () => {} }), /1 step\(s\) failed[\s\S]*Resend domain/);
+  assert.ok(w.calls.some((c) => c.url.includes("/accounts/A1/env")), "Netlify variables still synced after Resend failed");
+  assert.equal(w.w.site.custom_domain, "studio.example", "Netlify site still configured");
+  const noAdmin = []; await configure({ ...base, RESEND_ADMIN_API_KEY: "" }, cfg, { fetchFn: orig, log: (m) => noAdmin.push(m), dry: true });
+  assert.ok(noAdmin.some((m) => /RESEND_ADMIN_API_KEY/.test(m)));
+}
+console.log("ok failures are isolated; missing Resend admin key is explained");
+
+// Cloudflare: CNAME and Resend records go there (DNS-only) in place of Netlify DNS; re-run changes nothing
+{
+  const cfEnv = { ...base, CLOUDFLARE_API_TOKEN: "cf" };
+  const w1 = world({ cfZones: [{ id: "CZ", name: "example" }], zones: [] });
+  const out = [];
+  await configure(cfEnv, { ...cfg, customDomain: "https://fox.studio.example" }, { fetchFn: w1.f, log: (m) => out.push(m), setSecret: () => {} });
+  const cname = w1.w.cf.find((r) => r.type === "CNAME");
+  assert.ok(cname, "CNAME created at Cloudflare"); assert.equal(cname.name, "fox.studio.example"); assert.equal(cname.content, "n.netlify.app"); assert.equal(cname.proxied, false);
+  assert.equal(w1.w.dns.length, 0, "nothing written to Netlify DNS");
+  const before = w1.w.cf.length;
+  await configure(cfEnv, { ...cfg, customDomain: "https://fox.studio.example" }, { fetchFn: w1.f, log: () => {}, setSecret: () => {} });
+  assert.equal(w1.w.cf.length, before, "second run adds nothing");
+}
+console.log("ok Cloudflare DNS");
+
+// Cloudflare Email Routing: destination added, routing enabled, rule created; a second run changes nothing
+{
+  const st = { dests: [], enabled: false, rules: [], calls: [] };
+  const J = (result) => ({ ok: true, status: 200, json: async () => ({ success: true, result }), text: async () => "" });
+  const f = async (url, o = {}) => {
+    const m = o.method || "GET", u = url.replace("https://api.cloudflare.com/client/v4", "");
+    st.calls.push(`${m} ${u}`);
+    if (u.startsWith("/zones?name=")) return J([{ id: "Z", name: "example", account: { id: "A" } }]);
+    if (u === "/accounts/A/email/routing/addresses") { if (m === "POST") { st.dests.push({ ...JSON.parse(o.body), verified: null }); return J(st.dests.at(-1)); } return J(st.dests); }
+    if (u === "/zones/Z/email/routing") return J({ enabled: st.enabled });
+    if (u === "/zones/Z/email/routing/enable") { st.enabled = true; return J({}); }
+    if (u === "/zones/Z/email/routing/rules") { if (m === "POST") { st.rules.push({ tag: "t1", ...JSON.parse(o.body) }); return J({}); } return J(st.rules); }
+    throw new Error("unexpected " + m + " " + u);
+  };
+  const out = [];
+  const args = { token: "cf", zoneName: "example", address: "hello", forwardTo: "me@gmail.test", dry: false, fetchFn: f, log: (m) => out.push(m) };
+  await cloudflareEmailRouting(args);
+  assert.equal(st.rules[0].matchers[0].value, "hello@example"); assert.deepEqual(st.rules[0].actions[0].value, ["me@gmail.test"]);
+  assert.ok(st.enabled && st.dests.length === 1); assert.ok(out.some((m) => /confirmation link/.test(m)), "tells the owner to confirm");
+  assert.ok(!out.some((m) => m.includes("me@gmail.test")), "full address never logged");
+  const n = st.calls.length; await cloudflareEmailRouting(args);
+  assert.ok(st.calls.slice(n).every((c) => c.startsWith("GET")), "second run only reads");
+}
+console.log("ok Cloudflare email forwarding");
+
+// the certificate is requested after the DNS record exists, and not again once one covers the domain
+{
+  const cfEnv = { ...base, CLOUDFLARE_API_TOKEN: "cf" };
+  const c2 = { ...cfg, customDomain: "https://fox.studio.example" };
+  const w1 = world({ cfZones: [{ id: "CZ", name: "example" }], zones: [] });
+  await configure(cfEnv, c2, { fetchFn: w1.f, log: () => {}, setSecret: () => {} });
+  const order = w1.calls.map((c) => `${c.m} ${c.url}`);
+  const dnsAt = order.findIndex((c) => c.startsWith("POST https://api.cloudflare.com") && c.includes("/dns_records"));
+  const certAt = order.findIndex((c) => c === "POST https://api.netlify.com/api/v1/sites/S1/ssl");
+  assert.ok(dnsAt >= 0 && certAt > dnsAt, "certificate requested after the DNS record");
+  w1.w.cert = { domains: ["fox.studio.example"], state: "issued" };
+  const before = w1.w.certRequested;
+  await configure(cfEnv, c2, { fetchFn: w1.f, log: () => {}, setSecret: () => {} });
+  assert.equal(w1.w.certRequested, before, "no new request when a certificate already covers the domain");
+}
+console.log("ok certificate comes after DNS and is not repeated");
+
+// an orange-cloud (proxied) CNAME is switched to DNS only
+{
+  const w2 = world({ cfZones: [{ id: "CZ", name: "example" }], zones: [] });
+  w2.w.cf = [{ id: "r0", type: "CNAME", name: "fox.studio.example", content: "n.netlify.app", proxied: true }];
+  const out = [];
+  await configure({ ...base, CLOUDFLARE_API_TOKEN: "cf" }, { ...cfg, customDomain: "https://fox.studio.example" }, { fetchFn: w2.f, log: (m) => out.push(m), setSecret: () => {} });
+  assert.equal(w2.w.cf.find((r) => r.name === "fox.studio.example").proxied, false);
+  assert.ok(out.some((m) => /switch to DNS only/.test(m)));
+}
+console.log("ok proxied CNAME switched to DNS only");

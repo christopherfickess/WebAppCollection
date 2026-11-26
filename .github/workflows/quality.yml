@@ -1,0 +1,56 @@
+name: Quality checks
+
+# Runs the browser checks (errors, broken images, sideways scroll, accessibility)
+# and a Lighthouse run on every push and pull request. Not yet run on GitHub:
+# the same commands pass locally.
+on:
+  push:
+  pull_request:
+
+# Least privilege: these jobs only read the repository (any extra access they need comes from named secrets).
+permissions: { contents: read }
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Portfolio-astro
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Portfolio-astro/package-lock.json
+      - run: npm ci
+      - name: Dependency audit (fails on high or critical, including build tools)
+        run: npm audit --audit-level=high
+      - run: npx playwright-core install --with-deps chromium
+      - name: Build the site (what Netlify publishes)
+        run: npm run build
+      - name: Generated pages in the repo are up to date
+        run: git diff --exit-code -- public || (echo "::error::Generated files in public/ differ from what the build produces. Run npm run build and commit the result." && exit 1)
+      - name: Unit tests, security tests and pipeline tests
+        run: npm test
+      - name: Booking flow in a real browser (fake Stripe and email)
+        run: npm run test:e2e
+      - name: Built pages scan (inline code, unsafe links, source maps, secrets), all three sites
+        run: node tools/tests/site-security.mjs
+      - name: Links, anchors, sitemap, canonicals and robots, all three sites
+        run: node tools/tests/site-integrity.mjs
+      - name: Contrast in every colour preset, light and dark
+        run: node tools/quality/theme-matrix.mjs
+      - name: Behaviour in a real browser (theme, uptime widget, contact form, lightbox, slideshow, manage page)
+        run: node tools/tests/behavior.mjs
+      - name: Browser checks, every page of the three sites (errors, images, sideways scroll, accessibility)
+        run: node tools/quality/check.mjs
+      - name: Lighthouse (mobile, over HTTP/2), page types of each site
+        run: node tools/quality/lighthouse.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-report
+          path: |
+            Portfolio-astro/quality-report.md
+            Portfolio-astro/lighthouse.json

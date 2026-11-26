@@ -1,0 +1,49 @@
+{
+  "_about": "Pipeline scripts in tools/ with no unit test of their own. Each one says how it IS checked and what is still not covered. Add a test and delete the entry, or add an entry when you add a script. tools/tests/pipeline.test.mjs enforces this.",
+  "tools/build-admin.mjs": {
+    "how": "content.test.mjs checks every editor entry points at a real file, has fields and unique names; the admin pages are loaded in the browser checks.",
+    "gap": "Signing in to the editor with real GitHub and saving an edit as a pull request is only possible by hand."
+  },
+  "tools/build-content.mjs": {
+    "how": "content.test.mjs runs it against 15 kinds of bad edit plus broken and empty files, and checks the editor config (admin/config.yml) matches the content files.",
+    "gap": "The editor's per-field widget types are not checked against the schema rules (for example that a price field is a number widget)."
+  },
+  "tools/build-guides.mjs": {
+    "how": "Output pages are crawled by the browser checks, link and anchor checked, weight-budgeted and Lighthouse-tested (3 destination pages).",
+    "gap": "No unit test of the generator on its own; its copy is not proofread."
+  },
+  "tools/build-seo.mjs": {
+    "how": "site-integrity.mjs checks the sitemap lists every indexable page of the three sites, canonicals are absolute and match, robots points at the sitemap; Lighthouse SEO must stay at or above 95.",
+    "gap": "Titles and descriptions are checked for presence and uniqueness, not for quality."
+  },
+  "tools/email-check.mjs": {
+    "how": "The Email check workflow runs it against the real DNS, Cloudflare and Resend.",
+    "gap": "Needs live secrets, so it cannot run in pull request CI; a real inbound message to the forwarding address is sent by hand."
+  },
+  "tools/launch-check.mjs": {
+    "how": "Runs in Verify deploy against the deployed site.",
+    "gap": "Only checks the deployed address; no test of its own checks against a mock site."
+  },
+  "tools/new-client.mjs": {
+    "how": "Run by hand when starting a client site.",
+    "gap": "No test; the copy it makes is not built or browser-checked."
+  },
+  "tools/verify-deploy.mjs": {
+    "how": "State handling is unit tested in deploy-state.test.mjs; the script runs on every push in Verify deploy.",
+    "gap": "Polling, probing addresses and redirects need the live Netlify API."
+  },
+  "_sites": {
+    "portfolio": {
+      "covered": "Every page in a real browser at 3 widths (errors, CSP, images, sideways scroll, axe); contrast in 3 presets x light/dark; link, anchor, sitemap, canonical and robots check; page-weight budget; Lighthouse on 4 page types; theme and preset persistence including junk saved values; uptime widget on 404/500/network failure/503/empty/down; contact form validation, success, failure and honeypot; built-page security scan; headers test; npm audit; CodeQL.",
+      "gaps": "Page-weight budgets are enforced only in local runs (npm run quality): on the CI runner the same build weighs 2 to 6 times more, so CI reports overages without failing. The GitHub activity widget is only tested with third-party calls answered empty. Real devices are not tested."
+    },
+    "fox-and-fern": {
+      "covered": "Everything above, plus every Netlify function handler (method, origin, size, rate limit, token and signature checks, status codes), booking, payment, refund, webhook, concurrency and travel unit tests, bad-content tests for the editor files, the end-to-end booking test, gallery and viewer, manage page (change date, refused change, cancel with refund rule, bad link), the live smoke test against Stripe test mode, Email check and Verify deploy.",
+      "gaps": "Live-mode Stripe, real card payments, Resend delivery to customers, live geocoding and routing, and real inbound mail are not exercised by any pipeline (they need live accounts). The print order screens are covered by the e2e and unit tests but not by a browser test of the screens. Admin pages are excluded from the browser checks."
+    },
+    "travel-advisor": {
+      "covered": "All pages in a real browser at 3 widths, contrast in light and dark, link and anchor check, page-weight budgets (1300 KB, 3000 KB for guides; enforced when run locally, only reported on CI), Lighthouse on 6 page types, viewer (open, arrow keys, wrap, Escape, close), slideshow (reduced motion, wrap-around, one slide exposed), seasons ranges and bad input.",
+      "gaps": "Guide pages score about 80 to 84 on mobile Lighthouse because the hero photo is built by a script (floor set at 75); prerendering the hero would fix it. Guide pages are photo galleries and weigh 1.1 to 2.6 MB with every image loaded (budget 3000 KB), so the budget only catches a large regression; slimming the photos would allow a tighter one. Outbound links and image licences are not checked."
+    }
+  }
+}
