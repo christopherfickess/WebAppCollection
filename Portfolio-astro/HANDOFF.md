@@ -580,6 +580,10 @@ internal links return 200, autoplay advances and pauses.
 - Canonicals are now absolute everywhere (relative ones lowered the SEO score).
 - Still not covered, on purpose (see `coverage-gaps.json`): live Stripe, real Resend delivery to customers, real inbound mail, live geocoding, GitHub secret scanning / push protection / Dependabot security updates (repository settings), real devices, and a browser test of the print order screens.
 
+## Naming (2026-11-26)
+
+- All one- and two-letter variable and parameter names in `netlify/functions` were renamed to say what they hold (520 references, done with a scope-aware script, behaviour unchanged: all tests and e2e pass). `tools/tests/naming.test.mjs` keeps it that way; the rule is also in the `pr-security-review` skill. Other code (browser scripts, tools/) still has short names and was not touched.
+
 ## Known gaps / things to watch
 
 - **Travel Advisor guide facts will go stale** (added 2026-11-03) —

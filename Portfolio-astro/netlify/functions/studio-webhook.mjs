@@ -6,8 +6,8 @@ export default async (req) => {
   if (!verifySignature(raw, req.headers.get("stripe-signature"), deps.env.STRIPE_WEBHOOK_SECRET, Math.floor(deps.now / 1000))) return json(400, { error: "bad-signature" });
   try {
     return json(200, await handleStripeEvent(JSON.parse(raw), deps));
-  } catch (e) {
-    await alertOwner(deps, "A payment notice could not be processed", e);
+  } catch (error) {
+    await alertOwner(deps, "A payment notice could not be processed", error);
     return json(500, { error: "processing-failed" }); // Stripe retries on a 500
   }
 };

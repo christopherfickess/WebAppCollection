@@ -6,8 +6,8 @@ export default async (req) => {
   const ip = req.headers.get("x-nf-client-connection-ip") || "unknown";
   if (await limited(deps.store, "mg:" + ip, 60, 3600000, deps.now)) return json(429, { error: "slow-down" });
   if (req.method === "GET") {
-    const u = new URL(req.url);
-    return manageView({ date: u.searchParams.get("d") || "", t: u.searchParams.get("t") || "" }, deps);
+    const url = new URL(req.url);
+    return manageView({ date: url.searchParams.get("d") || "", t: url.searchParams.get("t") || "" }, deps);
   }
   if (req.method !== "POST") return json(405, { error: "get-or-post" });
   if (!sameOrigin(req)) return json(403, { error: "bad-origin" });

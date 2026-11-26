@@ -77,3 +77,6 @@ After pushing, re-read PR comments and review threads, including new bot reviews
 ## Phase 7: Report back
 
 Summarize what changed, what was verified and how, what remains open, and any coverage gaps still unaddressed.
+
+## Naming
+Variables and parameters must say what they hold: `counterKey`, not `k`; `paymentIntent`, not `pi`; `allBookings`, not `bk`. Flag one- and two-letter names in new or changed code, above all in payment, booking and email logic, where a wrong guess about what a value is costs money. `tools/tests/naming.test.mjs` enforces this for `netlify/functions` (allowed: `i`, `id`, `ip`, `to`, `ok`).

@@ -7,13 +7,13 @@ export default async (req) => {
   // (yes or no only, never the values), to help with first-time set-up.
   if (new URL(req.url).searchParams.has("setup")) {
     const names = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "EMAIL_FROM", "OWNER_EMAIL", "STATS_TOKEN", "OAUTH_GITHUB_CLIENT_ID", "OAUTH_GITHUB_CLIENT_SECRET"];
-    body.setup = Object.fromEntries(names.map((n) => [n, Boolean(deps.env[n])]));
+    body.setup = Object.fromEntries(names.map((name) => [name, Boolean(deps.env[name])]));
     body.setup.stripeKeyLooksRight = /^sk_(test|live)_/.test(deps.env.STRIPE_SECRET_KEY || "");
     body.setup.stripeMode = (/^sk_(test|live)_/.exec(deps.env.STRIPE_SECRET_KEY || "") || [])[1] || "unknown";
     body.setup.context = deps.env.CONTEXT || "unknown";
     // On *.netlify.app test deploys only: a masked view of the two addresses, to catch typos and mismatches.
     if (new URL(req.url).hostname.endsWith(".netlify.app")) {
-      const mask = (v) => { if (!v) return null; const [u, d = ""] = String(v).trim().replace(/^.*</, "").replace(/>$/, "").split("@"); return `${u.slice(0, 2)}***@${d}`; };
+      const mask = (address) => { if (!address) return null; const [local, domain = ""] = String(address).trim().replace(/^.*</, "").replace(/>$/, "").split("@"); return `${local.slice(0, 2)}***@${domain}`; };
       body.setup.ownerEmailLooksLike = mask(deps.env.OWNER_EMAIL);
       body.setup.emailFromLooksLike = mask(deps.env.EMAIL_FROM);
       body.setup.ownerEmailHasSpaces = /\s/.test((deps.env.OWNER_EMAIL || "").trim());

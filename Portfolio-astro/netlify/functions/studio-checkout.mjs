@@ -9,6 +9,6 @@ export default async (req) => {
   let body;
   try { body = await req.json(); } catch { return json(400, { error: "bad-json" }); }
   try { return await createCheckout(body, { ...deps, origin: originOf(req) }); }
-  catch (e) { await alertOwner(deps, "A visitor could not start checkout", e); return json(e.status || 500, { error: "checkout-failed" }); }
+  catch (error) { await alertOwner(deps, "A visitor could not start checkout", error); return json(error.status || 500, { error: "checkout-failed" }); }
 };
 export const config = { path: "/api/checkout" };

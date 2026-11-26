@@ -10,23 +10,23 @@ export const json = (status, body) => new Response(status === 204 ? null : JSON.
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const HOLD_MS = 31 * 60 * 1000; // Stripe's shortest checkout lifetime is 30 minutes
-const clip = (v, n) => String(v ?? "").trim().slice(0, n);
-const iso = (d) => d.toISOString().slice(0, 10);
-const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
+const clip = (value, maxLength) => String(value ?? "").trim().slice(0, maxLength);
+const iso = (day) => day.toISOString().slice(0, 10);
+const money = (amount) => `$${Number(amount).toLocaleString("en-US")}`;
 
 // Read-modify-write with compare-and-swap, so two requests at the same moment cannot overwrite each other's change.
 // fn gets a copy of the stored value and returns the new value, or undefined to leave it alone. Retries when
 // another request wrote first. Stores without conditional writes (the test fakes) fall back to a plain write.
-export async function update(store, key, fn, init = {}, tries = 12) {
+export async function update(store, key, mutate, init = {}, tries = 12) {
   for (let i = 0; i < tries; i++) {
-    if (i) await new Promise((r) => setTimeout(r, Math.random() * 10 * i)); // a little random wait, so contenders stop colliding in lockstep
+    if (i) await new Promise((resolve) => setTimeout(resolve, Math.random() * 10 * i)); // a little random wait, so contenders stop colliding in lockstep
     const cas = typeof store.getWithMetadata === "function";
-    const r = cas ? await store.getWithMetadata(key, { type: "json" }) : null;
-    const cur = cas ? (r ? r.data : null) : await store.get(key, { type: "json" });
-    const next = fn(structuredClone(cur ?? init));
+    const record = cas ? await store.getWithMetadata(key, { type: "json" }) : null;
+    const cur = cas ? (record ? record.data : null) : await store.get(key, { type: "json" });
+    const next = mutate(structuredClone(cur ?? init));
     if (next === undefined) return cur ?? init;
     // A key that does not exist yet must be created only if still absent; one that exists only if unchanged.
-    const opts = cas ? (r?.etag ? { onlyIfMatch: r.etag } : { onlyIfNew: true }) : undefined;
+    const opts = cas ? (record?.etag ? { onlyIfMatch: record.etag } : { onlyIfNew: true }) : undefined;
     const res = await store.setJSON(key, next, opts);
     if (!res || res.modified !== false) return next;
   }
@@ -38,17 +38,17 @@ export async function update(store, key, fn, init = {}, tries = 12) {
 export async function unavailable(store, now, rules = catalog.booking) {
   const booked = (await store.get("booked", { type: "json" })) || [];
   const holds = (await store.get("holds", { type: "json" })) || {};
-  const held = Object.entries(holds).filter(([, v]) => v.expires > now).map(([d]) => d);
+  const held = Object.entries(holds).filter(([, hold]) => hold.expires > now).map(([day]) => day);
   return { booked, held, blocked: rules.blockedDates || [] };
 }
 
 export function dayProblem(date, now, taken, rules = catalog.booking) {
   if (!DATE.test(date)) return "invalid-date";
-  const d = new Date(`${date}T12:00:00Z`);
-  if (Number.isNaN(d.getTime()) || iso(d) !== date) return "invalid-date";
+  const noon = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(noon.getTime()) || iso(noon) !== date) return "invalid-date";
   const earliest = new Date(now + (rules.minLeadDays || 0) * 864e5);
   if (date < iso(earliest)) return "too-soon";
-  if ((rules.closedWeekdays || []).includes(d.getUTCDay())) return "closed";
+  if ((rules.closedWeekdays || []).includes(noon.getUTCDay())) return "closed";
   if (taken.blocked.includes(date)) return "blocked";
   if (taken.booked.includes(date)) return "booked";
   if (taken.held.includes(date)) return "held";
@@ -86,54 +86,54 @@ async function stripe(env, fetchFn, params) {
 // The session location a visitor typed, and our own estimate for it (never the figure the browser claims).
 async function travelOf(raw, deps) {
   const location = clip(raw, 120);
-  const t = catalog.booking.travel;
+  const travelConfig = catalog.booking.travel;
   if (!location) return { location: "", travel: "" };
-  if (!t || t.enabled === false) return { location, travel: "" };
+  if (!travelConfig || travelConfig.enabled === false) return { location, travel: "" };
   // The estimate is a courtesy: never let a slow public service hold up a payment or the form.
-  const q = await Promise.race([quoteTravel(location, deps, t), new Promise((r) => setTimeout(() => r({ ok: false }), 3500))]);
-  return { location, travel: q.ok ? q.summary : "Distance could not be worked out automatically; please check the location." };
+  const quote = await Promise.race([quoteTravel(location, deps, travelConfig), new Promise((resolve) => setTimeout(() => resolve({ ok: false }), 3500))]);
+  return { location, travel: quote.ok ? quote.summary : "Distance could not be worked out automatically; please check the location." };
 }
-const slotOf = (v) => { const x = clip(v, 40); return (catalog.booking.slots || []).includes(x) ? x : ""; };
+const slotOf = (value) => { const slot = clip(value, 40); return (catalog.booking.slots || []).includes(slot) ? slot : ""; };
 
 export const MAX_OPEN_HOLDS = 10; // total unpaid date holds at once, so checkouts cannot be used to lock the calendar
 
 // Requests must come from the site itself. Browsers always send Origin on cross-site POSTs.
 export function sameOrigin(req) {
-  const o = req.headers.get("origin");
-  if (!o) return true; // non-browser callers (Stripe webhook, curl) carry no Origin; they are not the abuse path
-  try { return new URL(o).host === new URL(req.url).host; } catch { return false; }
+  const originHeader = req.headers.get("origin");
+  if (!originHeader) return true; // non-browser callers (Stripe webhook, curl) carry no Origin; they are not the abuse path
+  try { return new URL(originHeader).host === new URL(req.url).host; } catch { return false; }
 }
 
 // Fixed-window counter in the store. Returns true when the caller is over the limit.
 export async function limited(store, key, max, windowMs, now) {
-  const k = `rl:${key}:${Math.floor(now / windowMs)}`;
-  const n = ((await store.get(k, { type: "json" })) || 0) + 1;
-  await store.setJSON(k, n);
-  return n > max;
+  const counterKey = `rl:${key}:${Math.floor(now / windowMs)}`;
+  const count = ((await store.get(counterKey, { type: "json" })) || 0) + 1;
+  await store.setJSON(counterKey, count);
+  return count > max;
 }
 
 export async function createCheckout(body, { origin, env, store, fetch: fetchFn, now }) {
   if (!env.STRIPE_SECRET_KEY) return json(503, { error: "payments-not-configured" });
   const base = `${origin}/Photography-Studio/`;
-  const p = new URLSearchParams();
-  p.set("mode", "payment");
-  p.set("line_items[0][quantity]", "1");
-  p.set("line_items[0][price_data][currency]", "usd");
+  const stripeParams = new URLSearchParams();
+  stripeParams.set("mode", "payment");
+  stripeParams.set("line_items[0][quantity]", "1");
+  stripeParams.set("line_items[0][price_data][currency]", "usd");
 
   if (body?.kind === "print") {
-    const photo = catalog.photos.find((x) => x.id === body.photo);
+    const photo = catalog.photos.find((candidate) => candidate.id === body.photo);
     const size = catalog.printSizes[body.size];
     if (!photo || !size) return json(400, { error: "unknown-print" });
-    p.set("line_items[0][price_data][unit_amount]", String(size.price * 100));
-    p.set("line_items[0][price_data][product_data][name]", `Print: ${photo.title}, ${body.size}`);
-    p.set("shipping_address_collection[allowed_countries][0]", "US");
-    p.set("success_url", `${base}thanks/?order=1`);
-    p.set("cancel_url", `${base}#wall`);
-    p.set("metadata[kind]", "print");
-    p.set("metadata[photo]", photo.id);
-    p.set("metadata[size]", body.size);
-    const s = await stripe(env, fetchFn, p);
-    return json(200, { url: s.url });
+    stripeParams.set("line_items[0][price_data][unit_amount]", String(size.price * 100));
+    stripeParams.set("line_items[0][price_data][product_data][name]", `Print: ${photo.title}, ${body.size}`);
+    stripeParams.set("shipping_address_collection[allowed_countries][0]", "US");
+    stripeParams.set("success_url", `${base}thanks/?order=1`);
+    stripeParams.set("cancel_url", `${base}#wall`);
+    stripeParams.set("metadata[kind]", "print");
+    stripeParams.set("metadata[photo]", photo.id);
+    stripeParams.set("metadata[size]", body.size);
+    const session = await stripe(env, fetchFn, stripeParams);
+    return json(200, { url: session.url });
   }
 
   const name = clip(body?.name, 100), email = clip(body?.email, 200), message = clip(body?.message, 400), date = clip(body?.date, 10);
@@ -146,7 +146,7 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
 
   // Look the travel estimate up BEFORE claiming the date: it can take seconds, and a crash or timeout during it must not leave a hold behind.
   // Then check the date again, because someone may have booked it while we waited; the claim below follows immediately.
-  const tv = await travelOf(body?.location, { env, store, fetch: fetchFn, now, origin });
+  const travelInfo = await travelOf(body?.location, { env, store, fetch: fetchFn, now, origin });
   const problemNow = dayProblem(date, now, await unavailable(store, now));
   if (problemNow) return json(409, { error: problemNow });
 
@@ -154,42 +154,42 @@ export async function createCheckout(body, { origin, env, store, fetch: fetchFn,
   const mine = email.toLowerCase();
   let refused = null;
   await update(store, "holds", (holds) => {
-    for (const [d, v] of Object.entries(holds)) if (v.expires <= now) delete holds[d];
+    for (const [day, hold] of Object.entries(holds)) if (hold.expires <= now) delete holds[day];
     const open = Object.entries(holds);
-    if (open.some(([d, v]) => v.email === mine && d !== date)) { refused = json(429, { error: "hold-exists" }); return undefined; }
+    if (open.some(([day, hold]) => hold.email === mine && day !== date)) { refused = json(429, { error: "hold-exists" }); return undefined; }
     if (open.length >= MAX_OPEN_HOLDS && !holds[date]) { refused = json(429, { error: "too-many-holds" }); return undefined; }
     if (holds[date] && holds[date].email !== mine) { refused = json(409, { error: "held" }); return undefined; }
     holds[date] = { expires: now + HOLD_MS, session: null, email: mine };
     return holds;
   });
   if (refused) return refused;
-  const release = () => update(store, "holds", (h) => { if (h[date] && h[date].email === mine && !h[date].session) { delete h[date]; return h; } return undefined; }).catch(() => {});
+  const release = () => update(store, "holds", (holds) => { if (holds[date] && holds[date].email === mine && !holds[date].session) { delete holds[date]; return holds; } return undefined; }).catch(() => {});
 
   const expires = Math.floor((now + HOLD_MS) / 1000);
-  p.set("line_items[0][price_data][unit_amount]", String(pkg.deposit * 100));
-  p.set("line_items[0][price_data][product_data][name]", `${body.package} deposit for ${date}`);
-  p.set("customer_email", email);
-  p.set("expires_at", String(expires));
-  p.set("success_url", `${base}thanks/?paid=1`);
-  p.set("cancel_url", `${base}#contact`);
-  p.set("metadata[kind]", "session");
-  p.set("metadata[package]", body.package);
-  p.set("metadata[date]", date);
-  p.set("metadata[name]", name);
-  p.set("metadata[message]", message);
+  stripeParams.set("line_items[0][price_data][unit_amount]", String(pkg.deposit * 100));
+  stripeParams.set("line_items[0][price_data][product_data][name]", `${body.package} deposit for ${date}`);
+  stripeParams.set("customer_email", email);
+  stripeParams.set("expires_at", String(expires));
+  stripeParams.set("success_url", `${base}thanks/?paid=1`);
+  stripeParams.set("cancel_url", `${base}#contact`);
+  stripeParams.set("metadata[kind]", "session");
+  stripeParams.set("metadata[package]", body.package);
+  stripeParams.set("metadata[date]", date);
+  stripeParams.set("metadata[name]", name);
+  stripeParams.set("metadata[message]", message);
   const slot = slotOf(body?.slot);
-  if (slot) p.set("metadata[slot]", slot);
-  if (tv.location) p.set("metadata[location]", tv.location);
-  if (tv.travel) p.set("metadata[travel]", tv.travel.slice(0, 480));
-  let s;
-  try { s = await stripe(env, fetchFn, p); } catch (e) { await release(); throw e; }
-  await update(store, "holds", (h) => { if (h[date] && h[date].email === mine) { h[date].session = s.id; return h; } return undefined; }).catch(() => {});
-  return json(200, { url: s.url });
+  if (slot) stripeParams.set("metadata[slot]", slot);
+  if (travelInfo.location) stripeParams.set("metadata[location]", travelInfo.location);
+  if (travelInfo.travel) stripeParams.set("metadata[travel]", travelInfo.travel.slice(0, 480));
+  let session;
+  try { session = await stripe(env, fetchFn, stripeParams); } catch (error) { await release(); throw error; }
+  await update(store, "holds", (holds) => { if (holds[date] && holds[date].email === mine) { holds[date].session = session.id; return holds; } return undefined; }).catch(() => {});
+  return json(200, { url: session.url });
 }
 
 // ---- email --------------------------------------------------------------
 
-const esc = (v) => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const esc = (value) => String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 // Turns a plain-text message into a branded HTML email. The plain text still goes along for clients that want it.
 export function emailHtml(text, brand = catalog.business) {
@@ -200,11 +200,11 @@ export function emailHtml(text, brand = catalog.business) {
 
 // A one-day calendar entry the client can add with one tap.
 export function calendarInvite({ date, title, description, slot, uid }) {
-  const d = date.replace(/-/g, "");
+  const compactDate = date.replace(/-/g, "");
   const next = new Date(`${date}T12:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
   const end = next.toISOString().slice(0, 10).replace(/-/g, "");
-  const fold = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
-  return ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${catalog.business.name}//Booking//EN`, "BEGIN:VEVENT", `UID:${uid || `${date}-${catalog.business.name.replace(/\W+/g, "")}`}@booking`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${end}`, `SUMMARY:${fold(title)}`, `DESCRIPTION:${fold(description + (slot ? `\nPreferred time: ${slot}` : ""))}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const fold = (text) => String(text).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${catalog.business.name}//Booking//EN`, "BEGIN:VEVENT", `UID:${uid || `${date}-${catalog.business.name.replace(/\W+/g, "")}`}@booking`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, `DTSTART;VALUE=DATE:${compactDate}`, `DTEND;VALUE=DATE:${end}`, `SUMMARY:${fold(title)}`, `DESCRIPTION:${fold(description + (slot ? `\nPreferred time: ${slot}` : ""))}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
 
 export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, replyTo, attachments }) {
@@ -222,9 +222,9 @@ export async function sendEmail({ env, fetch: fetchFn }, { to, subject, text, re
   return { ok: res.ok, status: res.status, detail: res.ok ? "" : String(await res.text().catch(() => "")).slice(0, 200) };
 }
 
-const ics = (d, text, form) => [{ filename: "session.ics", content: Buffer.from(calendarInvite({ date: d, title: `${catalog.business.name}: ${form.package || form.session || "session"}`, description: text, slot: form.slot })).toString("base64") }];
+const ics = (date, text, form) => [{ filename: "session.ics", content: Buffer.from(calendarInvite({ date: date, title: `${catalog.business.name}: ${form.package || form.session || "session"}`, description: text, slot: form.slot })).toString("base64") }];
 
-const sign = (n) => `${catalog.business.name}`;
+const sign = (name) => `${catalog.business.name}`;
 
 export async function notifyBooking(deps, form, { paid } = {}) {
   const { env } = deps;
@@ -244,47 +244,47 @@ export async function notifyBooking(deps, form, { paid } = {}) {
 
 export function verifySignature(raw, header, secret, nowSec, toleranceSec = 300) {
   if (!header || !secret) return false;
-  const parts = Object.fromEntries(header.split(",").map((kv) => kv.split("=")));
-  const t = Number(parts.t);
-  if (!t || Math.abs(nowSec - t) > toleranceSec) return false;
-  const expected = createHmac("sha256", secret).update(`${t}.${raw}`).digest("hex");
-  const given = header.split(",").filter((kv) => kv.startsWith("v1=")).map((kv) => kv.slice(3));
-  return given.some((g) => g.length === expected.length && timingSafeEqual(Buffer.from(g), Buffer.from(expected)));
+  const parts = Object.fromEntries(header.split(",").map((pair) => pair.split("=")));
+  const timestamp = Number(parts.t);
+  if (!timestamp || Math.abs(nowSec - timestamp) > toleranceSec) return false;
+  const expected = createHmac("sha256", secret).update(`${timestamp}.${raw}`).digest("hex");
+  const given = header.split(",").filter((pair) => pair.startsWith("v1=")).map((pair) => pair.slice(3));
+  return given.some((signature) => signature.length === expected.length && timingSafeEqual(Buffer.from(signature), Buffer.from(expected)));
 }
 
 export async function handleStripeEvent(event, deps) {
   const { store, env, now } = deps;
   if (await store.get(`event:${event.id}`, { type: "json" })) return { duplicate: true };
   if (event.type === "checkout.session.completed") {
-    const s = event.data.object;
-    const m = s.metadata || {};
-    if (m.kind === "session") {
-      const email = s.customer_details?.email || s.customer_email;
+    const session = event.data.object;
+    const metadata = session.metadata || {};
+    if (metadata.kind === "session") {
+      const email = session.customer_details?.email || session.customer_email;
       // Never overwrite another client's paid booking for the same date: refund this payment and tell both people.
       let clash = false, replay = false, finish = false;
-      const pi = s.payment_intent || null;
+      const paymentIntent = session.payment_intent || null;
       // Each payment is recorded once (pay:<pi>), wherever its booking has gone since: moved by a reschedule, cancelled or refunded.
       // A later delivery of the same payment under a new event id must not write a booking again or send mail again.
-      const seen = pi ? await store.get(`pay:${pi}`, { type: "json" }) : null;
+      const seen = paymentIntent ? await store.get(`pay:${paymentIntent}`, { type: "json" }) : null;
       if (seen) {
-        const ex = ((await store.get("bookings", { type: "json" })) || {})[m.date];
-        replay = true; finish = Boolean(ex && ex.pi === pi && ex.notified === false); // an earlier attempt died before the confirmation: finish it
+        const existing = ((await store.get("bookings", { type: "json" })) || {})[metadata.date];
+        replay = true; finish = Boolean(existing && existing.pi === paymentIntent && existing.notified === false); // an earlier attempt died before the confirmation: finish it
       } else {
-        await update(store, "bookings", (bk) => {
-          const ex = bk[m.date];
-          if (ex && ex.pi !== pi) { clash = true; return undefined; }
+        await update(store, "bookings", (allBookings) => {
+          const existing = allBookings[metadata.date];
+          if (existing && existing.pi !== paymentIntent) { clash = true; return undefined; }
           // Two deliveries of the same payment at once: the second finds the first's booking and leaves it alone.
-          if (ex) { replay = true; finish = ex.notified === false; return undefined; }
-          bk[m.date] = { name: m.name, email, package: m.package, slot: m.slot || "", location: m.location || "", paidAt: now, reminded: false, pi, notified: false };
-          return bk;
+          if (existing) { replay = true; finish = existing.notified === false; return undefined; }
+          allBookings[metadata.date] = { name: metadata.name, email, package: metadata.package, slot: metadata.slot || "", location: metadata.location || "", paidAt: now, reminded: false, pi: paymentIntent, notified: false };
+          return allBookings;
         });
-        if (pi && !clash) await store.setJSON(`pay:${pi}`, { date: m.date, at: now }).catch(() => {}); // a clash is recorded only once its refund and emails are done
+        if (paymentIntent && !clash) await store.setJSON(`pay:${paymentIntent}`, { date: metadata.date, at: now }).catch(() => {}); // a clash is recorded only once its refund and emails are done
       }
       if (clash) {
-        const ok = s.payment_intent && env.STRIPE_SECRET_KEY ? await refundIntent(fetchOf(deps), env, s.payment_intent) : false;
-        await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Double booking prevented: ${m.date}`, text: `${m.name} <${email}> paid a deposit for ${m.date}, but another client already holds that date.\n${ok ? "Their payment was refunded automatically." : "REFUND THEM in the Stripe dashboard: the automatic refund did not go through."}` });
-        await sendEmail(deps, { to: email, subject: "Your date was just taken", text: `Hi ${m.name},\n\nSomeone else booked ${m.date} at the same moment, so your deposit is being refunded in full. Please pick another date.\n\n${sign()}` });
-        if (pi) await store.setJSON(`pay:${pi}`, { date: m.date, at: now, clash: true }).catch(() => {});
+        const ok = session.payment_intent && env.STRIPE_SECRET_KEY ? await refundIntent(fetchOf(deps), env, session.payment_intent) : false;
+        await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Double booking prevented: ${metadata.date}`, text: `${metadata.name} <${email}> paid a deposit for ${metadata.date}, but another client already holds that date.\n${ok ? "Their payment was refunded automatically." : "REFUND THEM in the Stripe dashboard: the automatic refund did not go through."}` });
+        await sendEmail(deps, { to: email, subject: "Your date was just taken", text: `Hi ${metadata.name},\n\nSomeone else booked ${metadata.date} at the same moment, so your deposit is being refunded in full. Please pick another date.\n\n${sign()}` });
+        if (paymentIntent) await store.setJSON(`pay:${paymentIntent}`, { date: metadata.date, at: now, clash: true }).catch(() => {});
         await store.setJSON(`event:${event.id}`, { at: now });
         return { handled: event.type, clash: true };
       }
@@ -292,21 +292,21 @@ export async function handleStripeEvent(event, deps) {
         await store.setJSON(`event:${event.id}`, { at: now });
         return { handled: event.type, duplicate: true };
       }
-      await update(store, "booked", (arr) => (arr.includes(m.date) ? undefined : [...arr, m.date].sort()), []);
-      await update(store, "holds", (h) => { if (h[m.date]) { delete h[m.date]; return h; } return undefined; });
-      await notifyBooking(deps, { name: m.name, email: s.customer_details?.email || s.customer_email, package: m.package, date: m.date, slot: m.slot, message: m.message, location: m.location, travel: m.travel }, { paid: true });
-      await update(store, "bookings", (bk) => { if (bk[m.date]?.pi === pi && bk[m.date].notified === false) { bk[m.date].notified = true; return bk; } return undefined; });
-    } else if (m.kind === "balance") {
-      await update(store, "bookings", (bk) => { if (!bk[m.date]) return undefined; bk[m.date].balancePaidAt = now; bk[m.date].balancePi = s.payment_intent || null; return bk; });
-      await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Balance paid: ${m.date}`, text: `The balance for the session on ${m.date} was paid (${money((s.amount_total || 0) / 100)}).` });
-      await sendEmail(deps, { to: s.customer_details?.email || s.customer_email, subject: "Balance received", text: `Thank you. Your balance for ${m.date} is paid.\n\n${sign()}` });
-    } else if (m.kind === "print") {
-      const ship = s.shipping_details || s.collected_information?.shipping_details;
-      const a = ship?.address || {};
-      const to = s.customer_details?.email;
-      const text = `Print order\n${m.photo}, ${m.size}\nTotal: ${money((s.amount_total || 0) / 100)}\nCustomer: ${s.customer_details?.name || ""} <${to || ""}>\nShip to: ${[ship?.name, a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean).join(", ")}`;
-      await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Print order: ${m.photo}, ${m.size}`, text, replyTo: to });
-      await sendEmail(deps, { to, subject: "Your print order", text: `Thank you for your order of ${m.photo}, ${m.size}. I will email tracking details when it ships.\n\n${sign()}` });
+      await update(store, "booked", (arr) => (arr.includes(metadata.date) ? undefined : [...arr, metadata.date].sort()), []);
+      await update(store, "holds", (holds) => { if (holds[metadata.date]) { delete holds[metadata.date]; return holds; } return undefined; });
+      await notifyBooking(deps, { name: metadata.name, email: session.customer_details?.email || session.customer_email, package: metadata.package, date: metadata.date, slot: metadata.slot, message: metadata.message, location: metadata.location, travel: metadata.travel }, { paid: true });
+      await update(store, "bookings", (allBookings) => { if (allBookings[metadata.date]?.pi === paymentIntent && allBookings[metadata.date].notified === false) { allBookings[metadata.date].notified = true; return allBookings; } return undefined; });
+    } else if (metadata.kind === "balance") {
+      await update(store, "bookings", (allBookings) => { if (!allBookings[metadata.date]) return undefined; allBookings[metadata.date].balancePaidAt = now; allBookings[metadata.date].balancePi = session.payment_intent || null; return allBookings; });
+      await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Balance paid: ${metadata.date}`, text: `The balance for the session on ${metadata.date} was paid (${money((session.amount_total || 0) / 100)}).` });
+      await sendEmail(deps, { to: session.customer_details?.email || session.customer_email, subject: "Balance received", text: `Thank you. Your balance for ${metadata.date} is paid.\n\n${sign()}` });
+    } else if (metadata.kind === "print") {
+      const ship = session.shipping_details || session.collected_information?.shipping_details;
+      const address = ship?.address || {};
+      const to = session.customer_details?.email;
+      const text = `Print order\n${metadata.photo}, ${metadata.size}\nTotal: ${money((session.amount_total || 0) / 100)}\nCustomer: ${session.customer_details?.name || ""} <${to || ""}>\nShip to: ${[ship?.name, address.line1, address.line2, address.city, address.state, address.postal_code, address.country].filter(Boolean).join(", ")}`;
+      await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Print order: ${metadata.photo}, ${metadata.size}`, text, replyTo: to });
+      await sendEmail(deps, { to, subject: "Your print order", text: `Thank you for your order of ${metadata.photo}, ${metadata.size}. I will email tracking details when it ships.\n\n${sign()}` });
     }
   }
   if (event.type === "charge.refunded") await handleRefund(event.data.object, deps);
@@ -320,7 +320,7 @@ export async function handleStripeEvent(event, deps) {
 export async function handleRefund(charge, { store, env, now, ...rest }) {
   const deps = { store, env, now, ...rest };
   const bookings = (await store.get("bookings", { type: "json" })) || {};
-  const date = Object.keys(bookings).find((d) => charge.payment_intent && (bookings[d].pi === charge.payment_intent || bookings[d].balancePi === charge.payment_intent));
+  const date = Object.keys(bookings).find((day) => charge.payment_intent && (bookings[day].pi === charge.payment_intent || bookings[day].balancePi === charge.payment_intent));
   if (!date) return { ignored: true };
   // Only a full refund of the deposit frees the date; a refunded balance does not.
   const full = charge.amount_refunded >= charge.amount && bookings[date].pi === charge.payment_intent;
@@ -330,108 +330,108 @@ export async function handleRefund(charge, { store, env, now, ...rest }) {
 }
 
 async function freeDate(store, date) {
-  await update(store, "booked", (arr) => (arr.includes(date) ? arr.filter((d) => d !== date) : undefined), []);
-  await update(store, "bookings", (bk) => { if (!bk[date]) return undefined; delete bk[date]; return bk; });
+  await update(store, "booked", (arr) => (arr.includes(date) ? arr.filter((day) => day !== date) : undefined), []);
+  await update(store, "bookings", (allBookings) => { if (!allBookings[date]) return undefined; delete allBookings[date]; return allBookings; });
 }
 
 const fetchOf = (deps) => deps.fetch;
 // One refund for one payment. A payment that is already fully refunded counts as success, so a retry is safe.
-async function refundIntent(fetchFn, env, pi) {
-  const res = await fetchFn("https://api.stripe.com/v1/refunds", { method: "POST", headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ payment_intent: pi }).toString() });
+async function refundIntent(fetchFn, env, paymentIntent) {
+  const res = await fetchFn("https://api.stripe.com/v1/refunds", { method: "POST", headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ payment_intent: paymentIntent }).toString() });
   if (res.ok) return true;
-  const j = await res.json().catch(() => ({}));
-  return j?.error?.code === "charge_already_refunded";
+  const data = await res.json().catch(() => ({}));
+  return data?.error?.code === "charge_already_refunded";
 }
 
 // Links in emails carry an HMAC of date + email, so no login is needed and links cannot be guessed.
 const secretOf = (env) => env.MANAGE_SECRET || env.STATS_TOKEN || "";
 export const manageToken = (env, date, email) => createHmac("sha256", secretOf(env)).update(`${date}|${String(email).toLowerCase()}`).digest("hex").slice(0, 32);
 export const manageLink = ({ env, origin }, date, email) => (secretOf(env) && origin ? `${origin}/Photography-Studio/manage/?d=${date}&t=${manageToken(env, date, email)}` : "");
-function authorised(env, date, t) {
+function authorised(env, date, token) {
   return async (bookings) => {
-    const b = bookings[date];
-    if (!b || !t || !secretOf(env)) return null;
-    const want = manageToken(env, date, b.email);
-    return want.length === String(t).length && timingSafeEqual(Buffer.from(want), Buffer.from(String(t))) ? b : null;
+    const booking = bookings[date];
+    if (!booking || !token || !secretOf(env)) return null;
+    const want = manageToken(env, date, booking.email);
+    return want.length === String(token).length && timingSafeEqual(Buffer.from(want), Buffer.from(String(token))) ? booking : null;
   };
 }
 
-export async function manageView({ date, t }, { store, env, now }) {
+export async function manageView({ date, t: token }, { store, env, now }) {
   const bookings = (await store.get("bookings", { type: "json" })) || {};
-  const b = await authorised(env, date, t)(bookings);
-  if (!b) return json(404, { error: "not-found" });
-  const pkg = catalog.packages[b.package];
+  const booking = await authorised(env, date, token)(bookings);
+  if (!booking) return json(404, { error: "not-found" });
+  const pkg = catalog.packages[booking.package];
   const daysLeft = Math.floor((Date.parse(`${date}T12:00:00Z`) - now) / 864e5);
   const fullDays = catalog.booking.refundFullDays ?? 14;
-  return json(200, { date, name: b.name, package: b.package, deposit: pkg?.deposit ?? null, balance: pkg ? pkg.amount - pkg.deposit : null, balancePaid: Boolean(b.balancePaidAt), canRefund: daysLeft >= fullDays && Boolean(b.pi), refundFullDays: fullDays, rescheduled: Boolean(b.rescheduledFrom), payments: Boolean(env.STRIPE_SECRET_KEY) });
+  return json(200, { date, name: booking.name, package: booking.package, deposit: pkg?.deposit ?? null, balance: pkg ? pkg.amount - pkg.deposit : null, balancePaid: Boolean(booking.balancePaidAt), canRefund: daysLeft >= fullDays && Boolean(booking.pi), refundFullDays: fullDays, rescheduled: Boolean(booking.rescheduledFrom), payments: Boolean(env.STRIPE_SECRET_KEY) });
 }
 
 export async function manageAct(body, deps) {
   const { store, env, fetch: fetchFn, now, origin } = deps;
   const date = clip(body?.date, 10), action = clip(body?.action, 12);
   const bookings = (await store.get("bookings", { type: "json" })) || {};
-  const b = await authorised(env, date, body?.t)(bookings);
-  if (!b) return json(404, { error: "not-found" });
+  const booking = await authorised(env, date, body?.t)(bookings);
+  if (!booking) return json(404, { error: "not-found" });
   const daysLeft = Math.floor((Date.parse(`${date}T12:00:00Z`) - now) / 864e5);
   if (daysLeft < 0) return json(409, { error: "past" });
 
   if (action === "cancel") {
-    const refund = daysLeft >= (catalog.booking.refundFullDays ?? 14) && b.pi && env.STRIPE_SECRET_KEY;
+    const refund = daysLeft >= (catalog.booking.refundFullDays ?? 14) && booking.pi && env.STRIPE_SECRET_KEY;
     if (refund) {
       // The deposit and, if the client paid it early, the balance are separate payments: refund both.
-      for (const pi of [b.pi, b.balancePi].filter(Boolean)) {
-        if (!(await refundIntent(fetchFn, env, pi))) { await alertOwner(deps, `Refund failed for ${date}`, new Error(`Stripe refused the refund for ${pi}`)); return json(502, { error: "refund-failed" }); }
+      for (const paymentIntent of [booking.pi, booking.balancePi].filter(Boolean)) {
+        if (!(await refundIntent(fetchFn, env, paymentIntent))) { await alertOwner(deps, `Refund failed for ${date}`, new Error(`Stripe refused the refund for ${paymentIntent}`)); return json(502, { error: "refund-failed" }); }
       }
-      if (b.balancePaidAt && !b.balancePi) await alertOwner(deps, `Balance refund needed: ${date}`, new Error("The client paid the balance before payment references were saved; refund that payment in the Stripe dashboard."));
+      if (booking.balancePaidAt && !booking.balancePi) await alertOwner(deps, `Balance refund needed: ${date}`, new Error("The client paid the balance before payment references were saved; refund that payment in the Stripe dashboard."));
     }
     await freeDate(store, date);
-    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Cancelled: ${b.name}, ${date}`, text: `${b.name} cancelled ${date}.\n${refund ? (b.balancePi ? "The deposit and the balance were refunded in full." : "The deposit was refunded in full.") : "Inside the refund window, so the deposit was kept."}`, replyTo: b.email });
-    await sendEmail(deps, { to: b.email, subject: `Your session on ${date} is cancelled`, text: `Hi ${b.name},\n\nYour session on ${date} is cancelled. ${refund ? `${b.balancePi ? "Your deposit and balance are" : "Your deposit is"} being refunded and should reach you in 5 to 10 days.` : `Cancellations less than ${catalog.booking.refundFullDays ?? 14} days before the session keep the deposit.`}\n\n${sign()}` });
+    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Cancelled: ${booking.name}, ${date}`, text: `${booking.name} cancelled ${date}.\n${refund ? (booking.balancePi ? "The deposit and the balance were refunded in full." : "The deposit was refunded in full.") : "Inside the refund window, so the deposit was kept."}`, replyTo: booking.email });
+    await sendEmail(deps, { to: booking.email, subject: `Your session on ${date} is cancelled`, text: `Hi ${booking.name},\n\nYour session on ${date} is cancelled. ${refund ? `${booking.balancePi ? "Your deposit and balance are" : "Your deposit is"} being refunded and should reach you in 5 to 10 days.` : `Cancellations less than ${catalog.booking.refundFullDays ?? 14} days before the session keep the deposit.`}\n\n${sign()}` });
     return json(200, { ok: true, refunded: Boolean(refund) });
   }
 
   if (action === "reschedule") {
-    if (b.rescheduledFrom) return json(409, { error: "already-rescheduled" });
+    if (booking.rescheduledFrom) return json(409, { error: "already-rescheduled" });
     const to = clip(body?.newDate, 10);
     const problem = dayProblem(to, now, await unavailable(store, now));
     if (problem) return json(409, { error: problem });
     let taken = false;
-    await update(store, "booked", (arr) => { if (arr.includes(to)) { taken = true; return undefined; } return [...arr.filter((d) => d !== date), to].sort(); }, []);
+    await update(store, "booked", (arr) => { if (arr.includes(to)) { taken = true; return undefined; } return [...arr.filter((day) => day !== date), to].sort(); }, []);
     if (taken) return json(409, { error: "booked" });
     // A payment can land on `to` between our "booked" check and now (the webhook writes "bookings" first). Never overwrite it:
     // put the old date back and refuse, so the paying client keeps their booking.
     let paidThere = false;
-    await update(store, "bookings", (bk) => {
-      if (bk[to]) { paidThere = true; return undefined; }
-      delete bk[date]; bk[to] = { ...b, rescheduledFrom: date, reminded: false }; return bk;
+    await update(store, "bookings", (allBookings) => {
+      if (allBookings[to]) { paidThere = true; return undefined; }
+      delete allBookings[date]; allBookings[to] = { ...booking, rescheduledFrom: date, reminded: false }; return allBookings;
     });
     if (paidThere) {
       await update(store, "booked", (arr) => (arr.includes(date) ? undefined : [...arr, date].sort()), []);
       return json(409, { error: "booked" });
     }
-    const link = manageLink({ env, origin }, to, b.email);
-    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Rescheduled: ${b.name}`, text: `${b.name} moved ${date} to ${to}.`, replyTo: b.email });
-    await sendEmail(deps, { to: b.email, subject: `Your session is moved to ${to}`, text: `Hi ${b.name},\n\nYour ${b.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}`, attachments: ics(to, `Your ${b.package} session.`, b) });
+    const link = manageLink({ env, origin }, to, booking.email);
+    await sendEmail(deps, { to: env.OWNER_EMAIL, subject: `Rescheduled: ${booking.name}`, text: `${booking.name} moved ${date} to ${to}.`, replyTo: booking.email });
+    await sendEmail(deps, { to: booking.email, subject: `Your session is moved to ${to}`, text: `Hi ${booking.name},\n\nYour ${booking.package} session is now on ${to}.${link ? `\nManage it here: ${link}` : ""}\n\n${sign()}`, attachments: ics(to, `Your ${booking.package} session.`, booking) });
     return json(200, { ok: true, date: to });
   }
 
   if (action === "balance") {
-    const pkg = catalog.packages[b.package];
+    const pkg = catalog.packages[booking.package];
     if (!env.STRIPE_SECRET_KEY || !pkg) return json(503, { error: "payments-not-configured" });
-    if (b.balancePaidAt) return json(409, { error: "already-paid" });
-    const p = new URLSearchParams();
-    p.set("mode", "payment");
-    p.set("line_items[0][quantity]", "1");
-    p.set("line_items[0][price_data][currency]", "usd");
-    p.set("line_items[0][price_data][unit_amount]", String((pkg.amount - pkg.deposit) * 100));
-    p.set("line_items[0][price_data][product_data][name]", `${b.package} balance for ${date}`);
-    p.set("customer_email", b.email);
-    p.set("success_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}&paid=1`);
-    p.set("cancel_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}`);
-    p.set("metadata[kind]", "balance");
-    p.set("metadata[date]", date);
-    const s = await stripe(env, fetchFn, p);
-    return json(200, { url: s.url });
+    if (booking.balancePaidAt) return json(409, { error: "already-paid" });
+    const stripeParams = new URLSearchParams();
+    stripeParams.set("mode", "payment");
+    stripeParams.set("line_items[0][quantity]", "1");
+    stripeParams.set("line_items[0][price_data][currency]", "usd");
+    stripeParams.set("line_items[0][price_data][unit_amount]", String((pkg.amount - pkg.deposit) * 100));
+    stripeParams.set("line_items[0][price_data][product_data][name]", `${booking.package} balance for ${date}`);
+    stripeParams.set("customer_email", booking.email);
+    stripeParams.set("success_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}&paid=1`);
+    stripeParams.set("cancel_url", `${origin}/Photography-Studio/manage/?d=${date}&t=${body.t}`);
+    stripeParams.set("metadata[kind]", "balance");
+    stripeParams.set("metadata[date]", date);
+    const session = await stripe(env, fetchFn, stripeParams);
+    return json(200, { url: session.url });
   }
   return json(400, { error: "unknown-action" });
 }
@@ -447,8 +447,8 @@ export async function collect(req, body, { store, now }) {
   if (!path.startsWith("/")) return json(400, { error: "bad-path" });
   let ref = "";
   try {
-    const r = new URL(clip(body?.ref, 300));
-    if (r.hostname !== new URL(req.url).hostname) ref = r.hostname;
+    const refUrl = new URL(clip(body?.ref, 300));
+    if (refUrl.hostname !== new URL(req.url).hostname) ref = refUrl.hostname;
   } catch {}
   const key = `day:${iso(new Date(now))}`;
   const day = (await store.get(key, { type: "json" })) || { views: 0, paths: {}, refs: {} };
@@ -462,12 +462,12 @@ export async function collect(req, body, { store, now }) {
 export async function stats(days, { store, now }) {
   const out = [];
   for (let i = 0; i < days; i++) {
-    const d = iso(new Date(now - i * 864e5));
-    const v = await store.get(`day:${d}`, { type: "json" });
-    out.push({ date: d, views: v?.views || 0, paths: v?.paths || {}, refs: v?.refs || {} });
+    const day = iso(new Date(now - i * 864e5));
+    const counts = await store.get(`day:${day}`, { type: "json" });
+    out.push({ date: day, views: counts?.views || 0, paths: counts?.paths || {}, refs: counts?.refs || {} });
   }
-  const total = (k) => out.reduce((acc, d) => { for (const [n, c] of Object.entries(d[k])) acc[n] = (acc[n] || 0) + c; return acc; }, {});
-  return { days: out, totalViews: out.reduce((a, d) => a + d.views, 0), topPages: total("paths"), topReferrers: total("refs") };
+  const total = (field) => out.reduce((acc, dayStats) => { for (const [name, count] of Object.entries(dayStats[field])) acc[name] = (acc[name] || 0) + count; return acc; }, {});
+  return { days: out, totalViews: out.reduce((sum, dayStats) => sum + dayStats.views, 0), topPages: total("paths"), topReferrers: total("refs") };
 }
 
 export function tokenOk(req, env) {
@@ -484,15 +484,15 @@ export async function sendReminders(deps, daysAhead = 2) {
   const bookings = (await store.get("bookings", { type: "json" })) || {};
   const target = iso(new Date(now + daysAhead * 864e5));
   const sent = [];
-  for (const [date, b] of Object.entries(bookings)) {
-    if (date !== target || b.reminded || !b.email) continue;
-    const pkg = catalog.packages[b.package];
-    const balance = pkg && !b.balancePaidAt ? pkg.amount - pkg.deposit : null;
-    const text = `Hi ${b.name},\n\nA reminder that your ${b.package} session is on ${date}.\n${balance ? `The remaining balance of ${money(balance)} is due on the day.\n` : ""}\n${manageLink(deps, date, b.email) ? `Change the date, cancel, or pay the balance online:\n${manageLink(deps, date, b.email)}` : "If you need to change the date, reply to this email as soon as you can and we will find a new one."}\n\n${sign()}`;
-    const r = await sendEmail(deps, { to: b.email, subject: `Your session is on ${date}`, text });
-    if (r.ok) sent.push(date);
+  for (const [date, booking] of Object.entries(bookings)) {
+    if (date !== target || booking.reminded || !booking.email) continue;
+    const pkg = catalog.packages[booking.package];
+    const balance = pkg && !booking.balancePaidAt ? pkg.amount - pkg.deposit : null;
+    const text = `Hi ${booking.name},\n\nA reminder that your ${booking.package} session is on ${date}.\n${balance ? `The remaining balance of ${money(balance)} is due on the day.\n` : ""}\n${manageLink(deps, date, booking.email) ? `Change the date, cancel, or pay the balance online:\n${manageLink(deps, date, booking.email)}` : "If you need to change the date, reply to this email as soon as you can and we will find a new one."}\n\n${sign()}`;
+    const result = await sendEmail(deps, { to: booking.email, subject: `Your session is on ${date}`, text });
+    if (result.ok) sent.push(date);
   }
-  if (sent.length) await update(store, "bookings", (bk) => { for (const d of sent) if (bk[d]) bk[d].reminded = true; return bk; });
+  if (sent.length) await update(store, "bookings", (allBookings) => { for (const sentDate of sent) if (allBookings[sentDate]) allBookings[sentDate].reminded = true; return allBookings; });
   return { sent };
 }
 
@@ -553,8 +553,8 @@ export async function handleRequest(body, deps) {
   const session = clip(body?.session, 60), date = clip(body?.date, 10), slot = slotOf(body?.slot);
   if (!name || !EMAIL.test(email) || !message) return json(400, { error: "invalid-contact" });
   if (date && !DATE.test(date)) return json(400, { error: "invalid-date" });
-  const tv = await travelOf(body?.location, deps);
-  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, ...(slot ? [`Time: ${slot}`] : []), ...(tv.location ? [`Location: ${tv.location}`] : []), ...(tv.travel ? [`Travel estimate: ${tv.travel}`] : []), `Message: ${message}`];
+  const travelInfo = await travelOf(body?.location, deps);
+  const lines = [`Name: ${name}`, `Email: ${email}`, `Session: ${session || "not chosen"}`, `Date: ${date || "not chosen"}`, ...(slot ? [`Time: ${slot}`] : []), ...(travelInfo.location ? [`Location: ${travelInfo.location}`] : []), ...(travelInfo.travel ? [`Travel estimate: ${travelInfo.travel}`] : []), `Message: ${message}`];
   const owner = await sendEmail(deps, { to: deps.env.OWNER_EMAIL, subject: `New request: ${name}`, text: lines.join("\n"), replyTo: email });
   if (owner.skipped) return json(503, { error: "email-not-configured" }); // never tell a visitor "sent" when nothing was
   if (!owner.ok) {
